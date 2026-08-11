@@ -7,6 +7,10 @@ import Film from './film/Film';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// mobile browser chrome collapsing on scroll changes viewport height mid-scrub;
+// without this the film jumps to a different beat as the address bar hides
+ScrollTrigger.config({ ignoreMobileResize: true });
+
 // captions: id -> (text, italic, white-on-blackout vs dark-on-paper)
 const CAPTIONS: { id: string; text: string; onPaper?: boolean }[] = [
   { id: 'open1', text: 'Every campaign begins the same way…' },

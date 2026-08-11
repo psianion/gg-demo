@@ -3,18 +3,26 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { buildWorld } from './world';
 import { buildTimeline } from './timeline';
+import { fitFov } from './framing';
 
 const PAPER = 0xf7f5f0;
 
 export default function Film({ caps }: { caps: Record<string, HTMLElement> }) {
   const world = useMemo(buildWorld, []);
-  const { scene, camera } = useThree();
+  const { scene, camera, size } = useThree();
 
   // background + fog match the paper — distant line-work fades like pencil
   useEffect(() => {
     scene.background = new THREE.Color(PAPER);
     scene.fog = new THREE.FogExp2(PAPER, 0.012);
   }, [scene]);
+
+  // keep the composed horizontal field on narrow viewports instead of cropping it
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.fov = fitFov(size.width / size.height);
+    cam.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
 
   // beat sheet lives entirely in the scroll timeline
   useEffect(() => {

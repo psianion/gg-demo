@@ -27,7 +27,7 @@ Rejected: Pixi-only 2.5D (signature 3D shots become hand-faked projections), pre
 
 1. **Skeleton** — scaffold, scroll/timeline/canvas rig, world geometry, full beat sheet. ✅ **done**
 2. **Previz review** — walk the pencil film, lock pacing and camera. ✅ **done**
-3. **Goblin puppet refinement** — richer action set on the locked rig. ⬅ **current**
+3. **Goblin puppet refinement** — richer action set on the locked rig. Deferred: expressiveness waits until it can be judged against real art. The rig's blocker is recorded below. ⬅ **current**
 4. **Art pass** — painted layers replace pencil primitives, scene by scene, in story order; the graphite post-pass ships here (pencil look becomes the Behind-the-Curtain state).
 5. **Ending morph + polish** — d20 → board transition, micro-interaction polish, performance, reduced-motion, audio mix.
 6. **Copy + release gate** — final wording, deployed browser walk, zero console errors.
@@ -42,3 +42,8 @@ Milestone 1+2 complete. The entire film plays as black pencil line-work on paper
 - Previz review done (human walk-through): scroll feel and pacing accepted as-is; one camera change locked — the C2 tracking shot is now a three-quarter-back over-the-shoulder follow instead of a flat side-track (spec + timeline updated together). Pacing and camera are locked.
 
 Numbers in the beat sheet are previz targets, not sacred. Pacing changes go into `story/src/film/timeline.ts` (one beat-sheet-shaped file); set/prop changes into `story/src/film/world.ts`.
+
+## Standing constraints
+
+- **Mobile is a release requirement, not a late polish item.** The goblin, the art, and the animations must not look bad on a phone. `framing.ts` holds the composed horizontal field across viewports so the locked camera survives portrait, but portrait still reads tighter than desktop once it hits the 70° cap — judge every art-pass scene at phone aspect, not only on a laptop.
+- **The gait blocks the beat sheet from posing the body.** `Film.tsx` writes `legL/legR.rotation.x`, both `arm.swing.rotation.x`, and `torso.position.y` absolutely every frame; tweening `goblin.speed` to 0 pins those channels to neutral rather than releasing them. Legs and torso are unreachable from `timeline.ts`, which is why every action so far is arms-and-head. Make the gait additive over a timeline-owned base pose before writing any beat that needs a crouch, a shrug, or a weight shift.
