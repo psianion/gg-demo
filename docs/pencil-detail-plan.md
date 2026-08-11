@@ -1,0 +1,92 @@
+# Pencil detail pass — plan
+
+Milestone 3, rescoped. The pencil previz stops being a wireframe stand-in and becomes a finished
+pencil-illustration state: denser forms, real tone, hand-drawn line quality, and the interaction
+layer that the site has never had. The output is not a throwaway — it is the stencil the milestone 4
+art pass paints over, and it is the Behind-the-Curtain state the finished film cuts to.
+
+Nothing here adds a dependency. Everything used ships inside the installed `three@0.185.1`.
+
+## The problem with what we have
+
+`sketch()` renders a white fill mesh plus a black `EdgesGeometry` overlay. That is **hidden-line CAD**,
+not pencil. Three specific things give it away, and each has a fix:
+
+| Tell | Why it reads wrong | Fix |
+|---|---|---|
+| Uniform hairlines | `LineBasicMaterial.linewidth` is capped at 1px on every desktop GL driver, so every edge in the film is the same weight regardless of importance or distance | `LineSegments2` + `LineMaterial`, which render lines as screen-space quads with genuine width |
+| Perfectly straight, perfectly closed | Hand-drawn strokes wobble, overshoot corners, and get struck twice. Machine-exact edges read as engineering | Bake per-vertex jitter and endpoint overshoot into the line geometry at build time |
+| No tone anywhere | The world is pure outline. Pencil illustration carries **value** — that is what separates a drawing from a diagram, and value is the single most useful thing a stencil can hand the art pass | A `hatch()` primitive: parallel stroke clusters at a density that encodes light/mid/dark |
+
+## Rendering vocabulary
+
+Five helpers in one new module. Every set piece is built from these, so the look is consistent by
+construction and the art pass inherits one legible system rather than per-prop improvisation.
+
+1. **`sketch(geom, opts)`** — the existing helper, upgraded. Same call shape so existing world code
+   keeps working. Fill mesh unchanged; the edge overlay becomes width-aware and jittered.
+2. **`hatch(area, density, angle)`** — a cluster of parallel strokes filling a region. Density is the
+   value: sparse = light, dense = mid, crossed = dark. This is where shadow, ground contact, and
+   material weight come from.
+3. **`weight(object, tier)`** — line-weight tier. Silhouette and hero props carry heavier contour;
+   background set pieces thin out. Combined with the existing `FogExp2`, this builds real depth.
+4. **`rays(...)`** — unchanged. Already the film's "light" idiom and it works.
+5. **`contact(object)`** — the ground shadow: a short hatch smear under anything resting on the
+   ground. Currently nothing in the film touches the ground convincingly; this fixes it everywhere at
+   once.
+
+## Paper
+
+The background is flat `#f7f5f0` with no tooth. Real paper grain is worth a surprising amount of
+perceived quality, and the cheapest correct place for it is **not** WebGL: make the canvas
+transparent and put a procedural grain on the page behind it in CSS. Zero GPU cost, zero draw calls,
+no post-processing chain, and it survives on the weakest phone. Scene fog already fades geometry
+toward the same paper value, so the two layers agree.
+
+Deliberately NOT building an `EffectComposer` pass for this. The graphite/parchment post-pass belongs
+to milestone 4 where it is gated by a mask render-target; standing one up now to draw paper texture
+would cost a full-screen pass on mobile for something CSS does free.
+
+## Mobile budget
+
+Mobile is a release gate, not late polish. `LineSegments2` is heavier than `LineSegments` — each
+segment becomes an instanced quad — so line width and hatch density are the two dials that get turned
+down on small viewports, not the geometry itself. Composition must stay identical across devices;
+only stroke cost varies. Every scene gets judged at 390px wide before it is called done.
+
+## Status
+
+**Done and verified** (build clean, `npm run check` passing):
+
+- The vocabulary module `src/film/pencil.ts` — `sketch`, `hatch`, `crossHatch`, `contact`, `weight`,
+  `rays`, on `LineSegments2` with three weight tiers, deterministic wobble and corner overshoot.
+  `world.ts` now imports it instead of defining its own materials, so all 60 existing `sketch()`
+  call sites picked up the new look without being touched.
+- Paper grain in CSS behind a transparent canvas. Zero GPU cost.
+- Interaction layer: scroll-timeline progress rail that inks itself in, drawn scroll-hint arrow,
+  `prefers-reduced-motion` path (no Lenis glide, ambient motion damped to 0.3, rail static),
+  themed browser surfaces (selection, focus-visible, caret, scrollbar), a screen-reader narrative
+  summary for a film that otherwise has no text at all, and phone `theme-color`.
+- Detailed set pieces: `buildFlames` (5 leaning tongues + embers), `buildChest` (banding, lock
+  plate, interior tone, contact), `buildPine` (3 stacked tiers), `buildRaven` (head, beak, tail,
+  wings), `buildMushroom` (gills, contact), `buildHouse` (ridged roof, door, windows, chimney).
+
+**Still crude — the remaining detail work:**
+
+`buildGoblin`, `buildAdventurer`, `buildAmbush`, `buildPathProps` (lantern, cave door, signpost),
+`buildTheatre`, `buildTavern`, `buildMontage` (12 primitives covering six cuts), `buildCliffWorld`,
+`buildGround`. These are the larger sets rather than the hero props, and several of them are what
+the camera lingers on longest.
+
+Deliberately left flat: the ground plane. In pencil illustration the paper *is* the ground; hatching
+600×300 units of it would cost a fortune and read worse than nothing.
+
+## Open decisions for the client
+
+- **The wordmark is set in Georgia.** The endcard "GOOD GOBLIN" and every caption run on the system
+  serif. A system face as the display voice of an own-world page is the one thing the craft floor
+  refuses outright, and this is the brand's name. It needs a real face, self-hosted, chosen against
+  the pencil world — that is a typographic decision with a licence attached, not something to pick
+  silently.
+- **Chapter ticks on the progress rail** were skipped: placing them requires exact chapter
+  boundaries from the timeline, and wrong ticks are worse than none.

@@ -1,40 +1,5 @@
 import * as THREE from 'three';
-
-// Pencil previz visual language: white paper fill, black line edges, no color, no texture.
-const PAPER = 0xf7f5f0;
-const LINE = 0x222222;
-
-// Shared across every sketch() call so the whole film draws with one look.
-const fillMaterial = new THREE.MeshBasicMaterial({
-  color: PAPER,
-  polygonOffset: true,
-  polygonOffsetFactor: 1,
-  polygonOffsetUnits: 1,
-});
-const lineMaterial = new THREE.LineBasicMaterial({ color: LINE });
-
-// One solid = paper-fill mesh (occludes) + black edge lines (draws the form).
-function sketch(geom: THREE.BufferGeometry, threshold = 25): THREE.Group {
-  const group = new THREE.Group();
-  const mesh = new THREE.Mesh(geom, fillMaterial);
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geom, threshold), lineMaterial);
-  group.add(mesh, edges);
-  return group;
-}
-
-// A ray burst — pencil-language "light" — n radial spokes from r0 to r1.
-function rays(n = 10, r0 = 0.25, r1 = 0.55): THREE.LineSegments {
-  const positions = new Float32Array(n * 2 * 3);
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    positions.set([cos * r0, sin * r0, 0, cos * r1, sin * r1, 0], i * 6);
-  }
-  const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  return new THREE.LineSegments(geom, lineMaterial);
-}
+import { LINE, fillMaterial, lineMaterial, sketch, rays, hatch, contact, weight } from './pencil';
 
 // A ray burst wrapped in a Group so timeline can own its scale (and ambient
 // rotation reads world.t elsewhere) — every "*Rays" field is this shape.
@@ -46,17 +11,38 @@ function buildRayBurst(x: number, y: number, z: number): THREE.Group {
   return g;
 }
 
-// Campfire/lantern flame — 2-3 cones; Film.tsx drives scale off userData.lit.
+// Campfire/lantern flame. This is the film's proof that time stopped, so it has to
+// read as fire at a glance: tongues of different heights leaning off-vertical, not a
+// stack of symmetrical cones. Film.tsx drives scale off userData.lit.
 function buildFlames(lit: number): THREE.Group {
   const g = new THREE.Group();
   g.userData.lit = lit;
-  const cone1 = sketch(new THREE.ConeGeometry(0.12, 0.4, 8));
-  cone1.position.y = 0.2;
-  const cone2 = sketch(new THREE.ConeGeometry(0.08, 0.28, 8));
-  cone2.position.set(0.05, 0.15, 0.02);
-  const cone3 = sketch(new THREE.ConeGeometry(0.07, 0.24, 8));
-  cone3.position.set(-0.05, 0.13, -0.02);
-  g.add(cone1, cone2, cone3);
+
+  // [radius, height, x, z, lean] — the lean is what stops them reading as traffic cones
+  const tongues: [number, number, number, number, number][] = [
+    [0.12, 0.42, 0, 0, 0.05],
+    [0.085, 0.3, 0.06, 0.02, -0.22],
+    [0.07, 0.24, -0.055, -0.025, 0.26],
+    [0.05, 0.17, 0.02, -0.06, 0.12],
+    [0.042, 0.13, -0.03, 0.055, -0.15],
+  ];
+  for (const [r, h, x, z, lean] of tongues) {
+    const tongue = sketch(new THREE.ConeGeometry(r, h, 7), 18);
+    tongue.position.set(x, h / 2, z);
+    tongue.rotation.z = lean;
+    g.add(tongue);
+  }
+
+  // embers riding above the fire — small, and they sell the heat
+  for (const [x, y, z] of [
+    [0.05, 0.5, 0.01],
+    [-0.06, 0.58, -0.03],
+  ] as [number, number, number][]) {
+    const ember = sketch(new THREE.TetrahedronGeometry(0.016), 8, 'faint');
+    ember.position.set(x, y, z);
+    g.add(ember);
+  }
+
   return g;
 }
 
@@ -69,16 +55,40 @@ function buildChest(x: number, y: number, z: number) {
   const container = new THREE.Group();
   container.position.set(x, y, z);
 
-  const body = sketch(new THREE.BoxGeometry(width, height, depth));
+  // the camera stops on this one, so it carries the heavier stroke
+  const body = sketch(new THREE.BoxGeometry(width, height, depth), 25, 'hero');
   body.position.y = height / 2;
   container.add(body);
 
+  // iron banding — two straps around the body, and the lock plate between them
+  for (const sx of [-0.19, 0.19]) {
+    const strap = sketch(new THREE.BoxGeometry(0.05, height + 0.01, depth + 0.012), 25, 'hero');
+    strap.position.set(sx, height / 2, 0);
+    container.add(strap);
+  }
+  const lock = sketch(new THREE.BoxGeometry(0.09, 0.1, 0.02), 25, 'hero');
+  lock.position.set(0, height * 0.62, depth / 2);
+  container.add(lock);
+
+  // the inside of an open chest is the darkest value in the shot
+  const wellShadow = hatch(width * 0.8, depth * 0.75, 16, 0.35);
+  wellShadow.rotation.x = -Math.PI / 2;
+  wellShadow.position.y = height - 0.005;
+  container.add(wellShadow);
+
   const lid = new THREE.Group();
   lid.position.set(0, height, -depth / 2); // hinge: back top edge
-  const lidMesh = sketch(new THREE.BoxGeometry(width, height * 0.25, depth));
+  const lidMesh = sketch(new THREE.BoxGeometry(width, height * 0.25, depth), 25, 'hero');
   lidMesh.position.z = depth / 2; // extends forward from the hinge
   lid.add(lidMesh);
+  for (const sx of [-0.19, 0.19]) {
+    const strap = sketch(new THREE.BoxGeometry(0.05, height * 0.25 + 0.012, depth + 0.012), 25, 'hero');
+    strap.position.set(sx, 0, depth / 2);
+    lid.add(strap);
+  }
   container.add(lid);
+
+  container.add(contact(width * 1.25, depth * 1.1));
 
   const coins = new THREE.Group();
   coins.position.set(0, height * 0.6, 0);
@@ -100,49 +110,107 @@ function buildChest(x: number, y: number, z: number) {
   return { container, lid, coins };
 }
 
-// A small pine: stub trunk + cone foliage.
+// A pine drawn as stacked tiers rather than one cone — the stepped silhouette is what
+// makes a conifer read as a conifer. This one is instanced across the whole backdrop,
+// so it stays lean and lets fog do the rest of the work.
 function buildPine(r: number, h: number, trunkH = 0.15): THREE.Group {
   const g = new THREE.Group();
-  const trunk = sketch(new THREE.CylinderGeometry(r * 0.15, r * 0.15, trunkH, 8));
+  const trunk = sketch(new THREE.CylinderGeometry(r * 0.13, r * 0.18, trunkH, 6), 25, 'faint');
   trunk.position.y = trunkH / 2;
-  const foliage = sketch(new THREE.ConeGeometry(r, h, 10));
-  foliage.position.y = trunkH + h / 2;
-  g.add(trunk, foliage);
+  g.add(trunk);
+
+  // three overlapping skirts, each narrower and shorter than the one below
+  const tiers = 3;
+  for (let i = 0; i < tiers; i++) {
+    const f = i / tiers;
+    const tier = sketch(new THREE.ConeGeometry(r * (1 - f * 0.42), h * 0.52, 9), 25, 'faint');
+    tier.position.y = trunkH + h * (0.26 + f * 0.3);
+    tier.rotation.y = i * 0.7; // break the seam alignment between tiers
+    g.add(tier);
+  }
   return g;
 }
 
+// A bird, not a bead: body, head, beak, swept tail and two wings.
 function buildRaven(): THREE.Group {
   const g = new THREE.Group();
-  const body = sketch(new THREE.SphereGeometry(0.07, 8, 6));
+
+  const body = sketch(new THREE.SphereGeometry(0.07, 8, 6), 22);
   body.scale.set(1, 0.8, 1.4);
   g.add(body);
-  const beak = sketch(new THREE.ConeGeometry(0.02, 0.06, 6));
+
+  const head = sketch(new THREE.SphereGeometry(0.038, 7, 5), 22);
+  head.position.set(0, 0.045, 0.075);
+  g.add(head);
+
+  const beak = sketch(new THREE.ConeGeometry(0.016, 0.055, 5));
   beak.rotation.x = Math.PI / 2;
-  beak.position.z = 0.1;
+  beak.position.set(0, 0.04, 0.13);
   g.add(beak);
+
+  const tail = sketch(new THREE.ConeGeometry(0.035, 0.12, 4), 20);
+  tail.rotation.x = -Math.PI / 2 - 0.25;
+  tail.position.set(0, 0.01, -0.13);
+  g.add(tail);
+
+  // wings held mid-beat — these are birds caught scattering
+  for (const side of [-1, 1]) {
+    const wing = sketch(new THREE.ConeGeometry(0.045, 0.19, 4), 20);
+    wing.rotation.set(0.15, 0, side * (Math.PI / 2 - 0.5));
+    wing.position.set(side * 0.1, 0.035, -0.01);
+    g.add(wing);
+  }
   return g;
 }
 
 function buildMushroom(): THREE.Group {
   const g = new THREE.Group();
   g.scale.set(0, 0, 0);
-  const stem = sketch(new THREE.CylinderGeometry(0.02, 0.025, 0.12, 8));
+
+  const stem = sketch(new THREE.CylinderGeometry(0.018, 0.028, 0.12, 7));
   stem.position.y = 0.06;
-  const cap = sketch(new THREE.SphereGeometry(0.08, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2));
+  stem.rotation.z = 0.07; // nothing in nature grows plumb
+  const cap = sketch(new THREE.SphereGeometry(0.08, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), 22);
   cap.position.y = 0.12;
-  g.add(stem, cap);
+
+  // gills — the shaded underside is most of what says "mushroom" in line-work
+  const gills = hatch(0.13, 0.13, 26, 0);
+  gills.rotation.x = Math.PI / 2;
+  gills.position.y = 0.117;
+
+  g.add(stem, cap, gills, contact(0.17, 0.14));
   return g;
 }
 
-// A mini house: box body + 4-segment (pyramid) roof.
+// A cottage: body, pitched roof with a ridge, door, windows and a chimney. The old
+// version was a box under a pyramid, which read as a tent.
 function buildHouse(): THREE.Group {
   const g = new THREE.Group();
+
   const body = sketch(new THREE.BoxGeometry(0.4, 0.35, 0.4));
   body.position.y = 0.175;
-  const roof = sketch(new THREE.ConeGeometry(0.32, 0.35, 4));
-  roof.position.y = 0.35 + 0.175;
+  g.add(body);
+
+  const roof = sketch(new THREE.ConeGeometry(0.33, 0.3, 4), 25);
+  roof.position.y = 0.35 + 0.15;
   roof.rotation.y = Math.PI / 4;
-  g.add(body, roof);
+  g.add(roof);
+
+  const door = sketch(new THREE.BoxGeometry(0.1, 0.16, 0.02));
+  door.position.set(0, 0.08, 0.205);
+  g.add(door);
+
+  for (const sx of [-0.12, 0.12]) {
+    const win = sketch(new THREE.BoxGeometry(0.07, 0.07, 0.02));
+    win.position.set(sx, 0.23, 0.205);
+    g.add(win);
+  }
+
+  const chimney = sketch(new THREE.BoxGeometry(0.06, 0.16, 0.06));
+  chimney.position.set(0.11, 0.46, -0.06);
+  g.add(chimney);
+
+  g.add(contact(0.5, 0.42));
   return g;
 }
 
