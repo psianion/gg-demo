@@ -88,19 +88,25 @@ canvas {
   font-size: clamp(1.15rem, 2.2vw, 1.7rem);
 }
 
+/* The endcard is the drawn lockup (src/Wordmark.tsx), so none of the type rules a
+   line of text needed apply any more — the mark is sized as an object instead. */
 #endcard {
-  /* the d20 lands dead centre and the board is centred behind it; a wordmark at 50%
-     runs straight through the die. Sitting it low reads as a title card under the
-     final image instead of on top of it. */
-  top: 72%;
-  font-style: normal;
-  /* the wordmark's tracking has to come down with the type, or eleven letters at
-     0.35em run past the edge of a 390px phone */
-  letter-spacing: clamp(0.12em, 0.6vw, 0.35em);
-  font-size: clamp(1.75rem, 6vw, 4.5rem);
-  /* the trailing letter-space would otherwise push the centred line off-centre */
-  text-indent: clamp(0.12em, 0.6vw, 0.35em);
-  overflow-wrap: break-word;
+  /* the d20 lands dead centre and the board is centred behind it; a mark at 50% runs
+     straight through the die. Sitting it low reads as a title card under the final
+     image instead of on top of it. The lockup is two lines tall where the old text
+     was one, so it sits a touch higher than 72% to keep its foot clear of the
+     home indicator on a phone. */
+  top: 71%;
+  /* 30vw keeps it in proportion to the frame on a desktop; the floor stops it
+     shrinking to nothing on a phone, where 78vw is the real constraint */
+  width: clamp(240px, 30vw, 440px);
+  max-width: 78vw;
+}
+
+#endcard svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 #hint {
@@ -129,6 +135,57 @@ canvas {
   stroke-width: 1.2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* The film opens on a blackout and spends the rest of its length on paper, so a control
+   fixed in one colour is invisible for half the runtime. Difference blending against a
+   near-white stroke inverts it: near-black on paper, near-white on the blackout, and it
+   crosses the fade between them without a transition to author. */
+#play {
+  position: fixed;
+  z-index: 11;
+  bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* the glyph is 34px, which is under the 44px a thumb needs — the padding buys the tap
+     target and the matching negative margin keeps the drawing where it was placed */
+  padding: 5px 8px;
+  margin: -5px -8px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  mix-blend-mode: difference;
+  opacity: 0.75;
+  transition: opacity 0.25s ease;
+}
+
+#play:hover,
+#play:focus-visible {
+  opacity: 1;
+}
+
+#play svg {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* the ring is scenery, the glyph is the button — the weights say so */
+#play .play-ring {
+  stroke-width: 1;
+  opacity: 0.55;
 }
 
 /* The rail inks itself in as the film is scrubbed. No JS: the scroll position drives
