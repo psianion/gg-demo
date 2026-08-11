@@ -12,6 +12,13 @@ type Vec3 = [number, number, number];
 // position) — there is no slack left in that window to also reach x=34
 // before t=30, so the post-C2 dash (30->31.5) starts from x=30 instead.
 // order and total length (66) are unchanged.
+//
+// camera grammar revised per review: travel/work beats (C2 run t17-30,
+// theatre dash/wide t30-31.5, off-to-tavern t36-38, C5 montage t50-57.5)
+// now follow the goblin three-quarter-back over-the-shoulder instead of
+// a lateral side dolly. Cold open/ambush/freeze (t0-17), the dice/tavern
+// scene (t38-50), and the cliff OTS + top-down ending (t57.5-66) keep
+// their original staging.
 
 export function buildTimeline(
   world: World,
@@ -151,8 +158,8 @@ export function buildTimeline(
     const backDur = 0.15;
 
     tl.to(goblin.root.position, { x, duration: runDur }, segAt);
-    tl.to(camera.position, { x, y: 2.3, z: 6, duration: c2Window }, segAt);
-    tl.to(world.look, { x, y: 0.8, z: 0, duration: c2Window }, segAt);
+    tl.to(camera.position, { x: x - 3.2, y: 1.6, z: 2.8, duration: c2Window }, segAt);
+    tl.to(world.look, { x: x + 2.2, y: 0.6, z: 0.5, duration: c2Window }, segAt);
 
     tl.to(goblin, { speed: 0, duration: reachDur }, reachAt);
     tl.to(goblin.armR.pose.rotation, { x: -2.0, duration: reachDur }, reachAt);
@@ -165,7 +172,7 @@ export function buildTimeline(
 
   // ---- t30-31.5: dash to the rope, camera settles wide -------------------
   tl.to(goblin.root.position, { x: 38.5, duration: 1.5 }, 30);
-  cam(30, 1.5, [44, 3.5, 14], [44, 1.4, -2]);
+  cam(30, 1.5, [31.5, 4.5, 6], [42, 1.0, -2]);
 
   // ---- t31.5-35: rope pull swings the theatre disc ------------------------
   tl.to(goblin, { speed: 0, duration: 0.2 }, 31.5);
@@ -185,14 +192,16 @@ export function buildTimeline(
   tl.to(goblin.root.rotation, { z: 0, duration: 0.5 }, 34.5);
 
   // ---- t35-36: wave to camera ----------------------------------------------
+  tl.to(goblin.root.rotation, { y: -0.94, duration: 0.35 }, 34.9);
   tl.to(goblin.armR.pose.rotation, { z: -2.6, duration: 0.2 }, 35);
   tl.to(goblin.armR.pose.rotation, { z: '+=0.3', duration: 0.15, yoyo: true, repeat: 3 }, 35.2);
   tl.to(goblin.armR.pose.rotation, { z: 0, duration: 0.2 }, 35.8);
+  tl.to(goblin.root.rotation, { y: Math.PI / 2, duration: 0.3 }, 36);
 
   // ---- t36-38: off to the tavern, camera hands off to him -------------------
   tl.to(goblin, { speed: 1, duration: 0.3 }, 36);
   tl.to(goblin.root.position, { x: 54, duration: 2 }, 36);
-  cam(36, 2, [50, 1.6, 5], [52, 0.7, 0]);
+  cam(36, 2, [50.8, 1.6, 3.7], [56.2, 0.6, 1.4]);
 
   // ---- t38: C4 hard cut ------------------------------------------------------
   cut(38, [80, 2.1, 6.2], [80, 1.0, 0]);
@@ -265,11 +274,11 @@ export function buildTimeline(
     const at = 50 + i * 1.25;
     const dur = 0.9;
 
-    cut(at, [x, 1.9, -35.6], [x, 0.7, -40]);
+    cut(at, [x - 4.3, 1.9, -35.7], [x, 0.6, -40]);
 
     // goblin is mid-job in every frame: set into place at the cut
     tl.set(goblin.root.position, { x: x - 1.5, y: 0, z: -38.5 }, at);
-    tl.set(goblin.root.rotation, { y: Math.PI / 2, z: 0 }, at);
+    tl.set(goblin.root.rotation, { y: 2.36, z: 0 }, at);
     tl.set(goblin, { speed: 0 }, at);
     tl.set(goblin.armR.pose.rotation, { x: -1.2 }, at);
 

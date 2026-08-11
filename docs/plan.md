@@ -26,8 +26,8 @@ Rejected: Pixi-only 2.5D (signature 3D shots become hand-faked projections), pre
 ## Build order
 
 1. **Skeleton** — scaffold, scroll/timeline/canvas rig, world geometry, full beat sheet. ✅ **done**
-2. **Previz review** — walk the pencil film, lock pacing and camera. ⬅ **current**
-3. **Goblin puppet refinement** — richer action set on the locked rig.
+2. **Previz review** — walk the pencil film, lock pacing and camera. ✅ **done**
+3. **Goblin puppet refinement** — richer action set on the locked rig. ⬅ **current**
 4. **Art pass** — painted layers replace pencil primitives, scene by scene, in story order; the graphite post-pass ships here (pencil look becomes the Behind-the-Curtain state).
 5. **Ending morph + polish** — d20 → board transition, micro-interaction polish, performance, reduced-motion, audio mix.
 6. **Copy + release gate** — final wording, deployed browser walk, zero console errors.
@@ -39,6 +39,6 @@ Milestone 1+2 complete. The entire film plays as black pencil line-work on paper
 - All chapters implemented per `skeleton-spec.md`: cold open → ambush + freeze ("That was me.") → lighting-the-world tracking shot (7 props) → theatre-set disc rotation → the dice scene (tumble, freeze, nudge, natural 20) → six-cut montage → cliff rise + world flatten → d20 throw → board + endcard.
 - Both freeze clocks verified working (world clock stops, goblin clock doesn't).
 - Build is clean (tsc + vite); zero console errors; all nine beat-sheet checkpoints verified against the spec (camera, goblin pose, captions, freeze state).
-- Known open item: real wheel-scroll *feel* (Lenis scrub pacing) has only been machine-verified, not human-reviewed — that review is the next step, before any art.
+- Previz review done (human walk-through): scroll feel and pacing accepted as-is; one camera change locked — the C2 tracking shot is now a three-quarter-back over-the-shoulder follow instead of a flat side-track (spec + timeline updated together). Pacing and camera are locked.
 
 Numbers in the beat sheet are previz targets, not sacred. Pacing changes go into `story/src/film/timeline.ts` (one beat-sheet-shaped file); set/prop changes into `story/src/film/world.ts`.
