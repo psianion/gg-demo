@@ -68,6 +68,10 @@ canvas {
   font-style: italic;
   font-size: clamp(1.4rem, 3.2vw, 2.4rem);
   letter-spacing: 0.04em;
+  /* captions wrap to two lines on a phone; the browser default leading is too tight
+     for italic serif at that size */
+  line-height: 1.32;
+  text-wrap: balance;
   opacity: 0;
   color: var(--paper);
 }
@@ -78,13 +82,19 @@ canvas {
 
 #endcard {
   font-style: normal;
-  letter-spacing: 0.35em;
-  font-size: clamp(2rem, 6vw, 4.5rem);
+  /* the wordmark's tracking has to come down with the type, or eleven letters at
+     0.35em run past the edge of a 390px phone */
+  letter-spacing: clamp(0.12em, 0.6vw, 0.35em);
+  font-size: clamp(1.75rem, 6vw, 4.5rem);
+  /* the trailing letter-space would otherwise push the centred line off-centre */
+  text-indent: clamp(0.12em, 0.6vw, 0.35em);
+  overflow-wrap: break-word;
 }
 
 #hint {
   position: absolute;
-  bottom: 3rem;
+  /* clears the home indicator / gesture bar on notched phones */
+  bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;

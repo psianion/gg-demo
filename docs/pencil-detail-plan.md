@@ -71,6 +71,27 @@ only stroke cost varies. Every scene gets judged at 390px wide before it is call
   plate, interior tone, contact), `buildPine` (3 stacked tiers), `buildRaven` (head, beak, tail,
   wings), `buildMushroom` (gills, contact), `buildHouse` (ridged roof, door, windows, chimney).
 
+**Why this milestone is worth doing properly.** From `art-direction.md`: "When the art pass lands,
+the pencil look does not disappear — it becomes the Behind-the-Curtain state, and the Normal World
+gets painted on top." The pencil line-work is not scaffolding. It graduates into the finished film's
+graphite/ink state, which is the film's whole thesis moment. It has to hold up as final art.
+
+**Ranked crudest set pieces** (from a full read of all 176 `sketch()` call sites — 352 objects,
+~365 renderable Object3Ds, two shared materials):
+
+1. **The cliff is a bare 6×6×6 cube.** It is the climactic set piece, and it is a box.
+2. **The board is grid lines only** — no fill, no thickness, no tiles. The film's final image.
+3. **The lantern is a bare pole** with no housing; light exists only as ray lines.
+4. **The cave door is a flat plane** with no thickness and no cave opening behind it.
+5. **The rope is a rigid straight cylinder** that cannot read as rope.
+6. **The raven's branch floats unsupported**, attached to no tree.
+7. **Roads and the river are 3-point polylines** across a 40×32 mini-world footprint.
+
+**Sparse regions the camera crosses with nothing to look at**, ranked: the 600×300 ground plane
+(flat paper everywhere but a handful of prop clusters and one 5-point path line); the 32-unit voids
+between all six montage platforms; the theatre disc outside its two clusters; the tavern's single
+flat wall and empty floor.
+
 **Still crude — the remaining detail work:**
 
 `buildGoblin`, `buildAdventurer`, `buildAmbush`, `buildPathProps` (lantern, cave door, signpost),
@@ -111,3 +132,17 @@ thing the whole film is about.
   silently.
 - **Chapter ticks on the progress rail** were skipped: placing them requires exact chapter
   boundaries from the timeline, and wrong ticks are worse than none.
+
+## Further findings, not yet fixed
+
+- **Captions can land on top of the thing they describe.** At the endcard beat on a phone,
+  "Natural 20." sits directly over the d20 — dark italic serif on dark line-work, effectively
+  unreadable. Captions are centred absolutely with no awareness of what is behind them. Either the
+  caption positions vary per beat, or captions need a paper scrim behind them.
+- **A 23-second stretch with no captions**, t17–40: the whole C2 prop run, rope pull, wave and
+  tavern travel. Whether that silence is intentional is a story question worth confirming.
+- **Georgia is absent on Android**, so a large share of phone traffic silently falls back to
+  generic serif with different metrics — which compounds the wordmark decision below.
+- **No WebGL fallback.** If the context fails, the visitor gets a blank paper page and nothing else.
+- **The board and the ground still draw with the old hairline material**, so they read as thin CAD
+  lines next to the new strokes. They convert when those set pieces get their detail pass.
