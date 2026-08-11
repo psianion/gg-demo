@@ -858,10 +858,12 @@ function buildMontage() {
   mapTable.position.set(xs[0], 0.9, Z);
   container.add(mapTable);
   const roadLine = new THREE.Group();
-  roadLine.position.set(xs[0] - 1.5, 0.96, Z);
+  // 1.8 long, not 3: a three-unit road cannot fit a phone frame at any distance close
+  // enough to read the goblin drawing it, and it overhung the table on both sides.
+  roadLine.position.set(xs[0] - 0.9, 0.96, Z);
   roadLine.scale.x = 0;
-  const roadBox = sketch(new THREE.BoxGeometry(3, 0.02, 0.12));
-  roadBox.position.x = 1.5; // grows away from the anchor as scale.x -> 1
+  const roadBox = sketch(new THREE.BoxGeometry(1.8, 0.02, 0.12));
+  roadBox.position.x = 0.9; // grows away from the anchor as scale.x -> 1
   roadLine.add(roadBox);
   container.add(roadLine);
 
@@ -869,7 +871,10 @@ function buildMontage() {
   const monster = new THREE.Group();
   monster.position.set(xs[1], 0.9, Z);
   monster.scale.set(0, 0, 0);
-  monster.add(sketch(new THREE.SphereGeometry(0.7, 14, 10)));
+  // 8x6, not 14x10: a smooth sphere has no silhouette for EdgesGeometry to draw, so at
+  // 14x10 the monster rendered as a grey blob with spikes and no outline at all. Coarse
+  // facets give it real edges, and a lumpy hide suits it better than a ball anyway.
+  monster.add(sketch(new THREE.SphereGeometry(0.7, 8, 6)));
   const spikeCount = 6;
   for (let i = 0; i < spikeCount; i++) {
     const a = (i / spikeCount) * Math.PI * 2;
@@ -889,14 +894,16 @@ function buildMontage() {
   container.add(monster);
 
   // vignette 2 — tavern wall fragment + bracket + hanging sign
-  const wallFrag = sketch(new THREE.BoxGeometry(2, 2, 0.15));
-  wallFrag.position.set(xs[2], 1, Z - 0.4);
+  // 1.7x1.5, not 2x2: a wall more than twice the goblin's height read as a blank plane
+  // filling the frame, and the bracket at 1.6 put the sign's whole drop above his head.
+  const wallFrag = sketch(new THREE.BoxGeometry(1.7, 1.5, 0.15));
+  wallFrag.position.set(xs[2], 0.75, Z - 0.4);
   container.add(wallFrag);
   const bracket = sketch(new THREE.BoxGeometry(0.5, 0.06, 0.06));
-  bracket.position.set(xs[2], 1.6, Z - 0.3);
+  bracket.position.set(xs[2], 1.2, Z - 0.3);
   container.add(bracket);
   const tavernSign = new THREE.Group();
-  tavernSign.position.set(xs[2], 1.6 + 1.2, Z - 0.3); // 1.2 above its bracket
+  tavernSign.position.set(xs[2], 1.2 + 0.95, Z - 0.3); // 0.95 above its bracket
   tavernSign.add(sketch(new THREE.BoxGeometry(0.7, 0.4, 0.05)));
   container.add(tavernSign);
 

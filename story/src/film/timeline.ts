@@ -335,31 +335,81 @@ export function buildTimeline(
   cap('welcome', 48.4, 1.6);
 
   // ---- t50-57.5: C5 montage — six hard-cut vignettes ------------------------------
+  // One shared camera could not frame six different jobs. The sign drops at y 2.8 while
+  // the chest opens at y 0.5; the road is three units wide where the candles are a hand
+  // across. So each vignette carries its own shot: what the frame is about (`focus`),
+  // where the lens sits, where he works from, and how high his hand ends up.
+  //
+  // Three constraints shape every entry. `focus` sits between his chest and the job, not
+  // on the job — aiming at the prop alone pushed him to the edge of frame or off it. The
+  // lens stays under ~3 units out; from four and a half the whole vignette was a speck
+  // in the middle of an empty frame, with the platform disc eating the bottom third. And
+  // it stays above the work surface: dropping below prop height showed the map table's
+  // underside, hiding the road being drawn on top, which is that shot's entire point.
+  // A near straight-on angle keeps the neighbouring platforms outside the frustum, so
+  // the row never reads as discs floating in a void.
+  //
+  // The lens also sits just outboard of `stand`, shooting down the line from him to the
+  // job rather than across it. A phone's frame is 36 degrees wide against the desktop's
+  // 69, and a goblin staged beside his work simply falls out of the side of it — staged
+  // in front of it, he holds the middle at both aspects. Sides alternate so six shots
+  // down one axis don't all look like the same shot.
+  const c5Shots: {
+    focus: [number, number, number]; // offsets from the vignette centre (x, y, z)
+    cam: [number, number, number];
+    stand: [number, number]; // x/z offsets — where his hand can actually reach the job
+    reach: number; // armR.pose.rotation.x once the hand arrives
+  }[] = [
+    // 0 map table — the road grows out of his hand, so the frame favours the near corner
+    { focus: [-0.5, 0.9, 0.25], cam: [-1.5, 2.0, 2.6], stand: [-1.15, 0.65], reach: -1.45 },
+    // 1 monster — rears to ~1.6, and he works it from the far side for the cut's sake
+    { focus: [0.55, 0.98, 0.25], cam: [1.55, 1.78, 2.95], stand: [1.2, 0.5], reach: -1.85 },
+    // 2 tavern sign — the drop runs 2.15 down onto the bracket at 1.2, above his reach
+    { focus: [-0.45, 1.0, 0.15], cam: [-1.5, 1.62, 3.5], stand: [-1.15, 0.5], reach: -2.2 },
+    // 3 pines — three of them across a unit, tops at 1.8
+    { focus: [0.55, 1.0, 0.2], cam: [1.7, 1.8, 3.05], stand: [1.35, 0.55], reach: -1.45 },
+    // 4 chest — low and small, so the lens drops to meet it instead of looking down
+    { focus: [-0.5, 0.72, 0.25], cam: [-1.4, 1.62, 2.85], stand: [-1.05, 0.55], reach: -1.1 },
+    // 5 candles — the smallest subject here, and so the tightest shot
+    { focus: [0.5, 0.95, 0.3], cam: [1.45, 1.7, 2.75], stand: [1.1, 0.6], reach: -1.8 },
+  ];
+
   const c5Xs = [0, 8, 16, 24, 32, 40];
   c5Xs.forEach((x, i) => {
     const at = 50 + i * 1.25;
     const dur = 0.5;
+    const shot = c5Shots[i];
+    const [fx, fy, fz] = [x + shot.focus[0], shot.focus[1], -40 + shot.focus[2]];
+    const [cx, cy, cz] = [x + shot.cam[0], shot.cam[1], -40 + shot.cam[2]];
+    const [sx, sz] = [x + shot.stand[0], -40 + shot.stand[1]];
 
-    // Tight on one platform, and looking DOWN on it. Six units back put the neighbouring
-    // vignettes in frame and showed the montage for what it is — discs floating in a
-    // void. Below prop height it was worse: the map table showed only its underside, so
-    // the road being drawn on top, which is the entire point of the shot, was invisible.
-    cut(at, [x - 2.5, 2.4, -36.9], [x - 0.1, 1.0, -39.7]);
+    cut(at, [cx, cy, cz], [fx, fy, fz]);
 
     // and each cut drifts a little closer. Six locked-off frames in a row read as a
     // slideshow; the drift is what makes it a montage.
-    cam(at + 0.04, 1.15, [x - 2.05, 2.2, -37.6], [x - 0.1, 0.95, -39.8], 'power1.out');
+    // 0.09, not 0.12: the drift is what makes six cuts a montage rather than a slideshow,
+    // but at 0.12 it closed enough distance to push his feet out of the bottom of frame
+    // on the shot with the least headroom.
+    const push = 0.09;
+    cam(
+      at + 0.04,
+      1.15,
+      [cx + (fx - cx) * push, cy + (fy - cy) * push, cz + (fz - cz) * push],
+      [fx, fy, fz],
+      'power1.out',
+    );
 
     // He arrives on the beat instead of being posted there mid-pose. Gait running, a
     // short step in to the job, then the hand comes down — and only then does the prop
     // move. Standing still while the work does itself was the whole problem.
-    tl.set(goblin.root.position, { x: x - 1.35, y: 0, z: -38.6 }, at);
-    tl.set(goblin.root.rotation, { y: 2.36, z: 0 }, at);
+    // y=0.2 is the platform's top face; at y=0 his feet sank into the disc.
+    tl.set(goblin.root.position, { x: sx - 0.42, y: 0.2, z: sz + 0.34 }, at);
+    tl.set(goblin.root.rotation, { y: Math.atan2(x - sx, -40 - sz), z: 0 }, at);
     tl.set(goblin.armR.pose.rotation, { x: -2.15 }, at);
     tl.set(goblin, { speed: 1 }, at);
-    tl.to(goblin.root.position, { x: x - 0.8, z: -39.1, duration: 0.5 }, at);
+    tl.to(goblin.root.position, { x: sx, z: sz, duration: 0.5 }, at);
     tl.to(goblin, { speed: 0, duration: 0.12 }, at + 0.5);
-    tl.to(goblin.armR.pose.rotation, { x: -1.1, duration: 0.32 }, at + 0.5);
+    tl.to(goblin.armR.pose.rotation, { x: shot.reach, duration: 0.32 }, at + 0.5);
 
     // the job lands as the hand does
     const actAt = at + 0.72;
@@ -372,7 +422,7 @@ export function buildTimeline(
         tl.to(world.monster.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, actAt);
         break;
       case 2: // sign drops onto its bracket
-        tl.to(world.tavernSign.position, { y: '-=1.2', duration: dur, ease: 'bounce.out' }, actAt);
+        tl.to(world.tavernSign.position, { y: '-=0.95', duration: dur, ease: 'bounce.out' }, actAt);
         break;
       case 3: // trees planted
         world.trees5.forEach((tree, ti) => {
