@@ -90,11 +90,29 @@ graphite/ink state, which is the film's whole thesis moment. It has to hold up a
    Note: at the final framing the camera is close enough that only ~8 of the board's 24 units
    are on screen, so the ruled edge and trim marks are currently out of frame. They will matter
    when the milestone 5 d20→board morph reframes this shot.
-3. **The lantern is a bare pole** with no housing; light exists only as ray lines.
-4. **The cave door is a flat plane** with no thickness and no cave opening behind it.
-5. **The rope is a rigid straight cylinder** that cannot read as rope.
-6. **The raven's branch floats unsupported**, attached to no tree.
+3. ~~**The lantern is a bare pole.**~~ **Done.** Cross-arm, drop and a real housing for
+   the ray burst to come from.
+4. ~~**The cave door is a flat plane.**~~ **Done.** A slab with plank seams, banding and a
+   handle, opening onto a cross-hatched cave mouth in the rocks. Hinge point unchanged.
+5. ~~**The rope is a rigid straight cylinder.**~~ **Done.** Hangs on a curve with strand
+   wraps and a knot.
+6. ~~**The raven's branch floats unsupported.**~~ **Done.** It grows from a tree, sited clear
+   of where the birds perch and scatter to.
 7. **Roads and the river are 3-point polylines** across a 40×32 mini-world footprint.
+
+## The lighting run now plays as a freeze
+
+The run used to happen in a live world — `timeScale` returned to 1 at t16.5, before the
+sequence started. That contradicted the art direction, whose campfire example is explicit:
+time freezes, the goblin walks in and does the work, *then* it snaps back. The world now
+holds still from t9.5 all the way to t30, and a fire he lights mid-freeze sits lit and
+perfectly motionless until time resumes. The stillness is the grammar, not a bug.
+
+He also never actually touched anything. He stopped on the path at each prop's own x and
+reached straight ahead — but the cave door is 2 units off the path, the mushrooms 1.2 off,
+and the branch 1.6 up while he is 0.9 tall. He was grasping at air and the props were moving
+on their own. Each stop is now a spot *beside* the prop with a heading toward it, a per-prop
+reach height, and the prop action fires only once his hand has arrived.
 
 **Sparse regions the camera crosses with nothing to look at**, ranked: the 600×300 ground plane
 (flat paper everywhere but a handful of prop clusters and one 5-point path line); the 32-unit voids
