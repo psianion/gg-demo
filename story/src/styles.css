@@ -81,6 +81,10 @@ canvas {
 }
 
 #endcard {
+  /* the d20 lands dead centre and the board is centred behind it; a wordmark at 50%
+     runs straight through the die. Sitting it low reads as a title card under the
+     final image instead of on top of it. */
+  top: 72%;
   font-style: normal;
   /* the wordmark's tracking has to come down with the type, or eleven letters at
      0.35em run past the edge of a 390px phone */

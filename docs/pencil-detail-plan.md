@@ -79,8 +79,17 @@ graphite/ink state, which is the film's whole thesis moment. It has to hold up a
 **Ranked crudest set pieces** (from a full read of all 176 `sketch()` call sites — 352 objects,
 ~365 renderable Object3Ds, two shared materials):
 
-1. **The cliff is a bare 6×6×6 cube.** It is the climactic set piece, and it is a box.
-2. **The board is grid lines only** — no fill, no thickness, no tiles. The film's final image.
+1. ~~**The cliff is a bare 6×6×6 cube.**~~ **Done.** Now three seven-sided tiers, so it has a
+   rock outline from directly above (where the camera ends) and a stepped face as the camera
+   lifts, plus crack tone on the plateau and talus around the base. The goblin's stance at
+   local x=2.6, y=6 is preserved exactly.
+2. ~~**The board is grid lines only.**~~ **Done.** Paper fill so it stops reading as a wireframe,
+   a double-ruled edge and corner trim marks. Every material in the group is board-local,
+   transparent, starting at opacity 0 — the timeline traverses the group and fades up whatever
+   it finds, so a shared material in there would drag the whole film's line-work up with it.
+   Note: at the final framing the camera is close enough that only ~8 of the board's 24 units
+   are on screen, so the ruled edge and trim marks are currently out of frame. They will matter
+   when the milestone 5 d20→board morph reframes this shot.
 3. **The lantern is a bare pole** with no housing; light exists only as ray lines.
 4. **The cave door is a flat plane** with no thickness and no cave opening behind it.
 5. **The rope is a rigid straight cylinder** that cannot read as rope.
@@ -135,10 +144,12 @@ thing the whole film is about.
 
 ## Further findings, not yet fixed
 
-- **Captions can land on top of the thing they describe.** At the endcard beat on a phone,
-  "Natural 20." sits directly over the d20 — dark italic serif on dark line-work, effectively
-  unreadable. Captions are centred absolutely with no awareness of what is behind them. Either the
-  caption positions vary per beat, or captions need a paper scrim behind them.
+- **Captions can land on top of the thing they describe.** Every caption is centred at 50%/50%
+  with no awareness of what is behind it. At the ending this stacked "Natural 20." on the endcard
+  *and* ran the wordmark straight through the d20. Fixed for that beat — `nat20` now clears the
+  screen before the endcard begins, and the wordmark sits at 72% as a title card under the final
+  image — but the underlying collision risk applies to every caption in the film and has only
+  been checked at the beats that were screenshotted.
 - **A 23-second stretch with no captions**, t17–40: the whole C2 prop run, rope pull, wave and
   tavern travel. Whether that silence is intentional is a story question worth confirming.
 - **Georgia is absent on Android**, so a large share of phone traffic silently falls back to

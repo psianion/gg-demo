@@ -338,7 +338,10 @@ export function buildTimeline(
   tl.to(boardMaterials, { opacity: 1, duration: 0.6 }, 64.5);
   tl.to(world.die2.position, { y: '-=0.15', duration: 0.2, yoyo: true, repeat: 1 }, 64.5);
 
-  cap('nat20', 64.7, 1.2);
+  // pulled earlier and shortened from (64.7, 1.2): every caption is centred in the same
+  // spot, so any overlap with the endcard at 65.5 stacked two lines of type on the
+  // film's last image. This now clears the screen exactly as the wordmark begins.
+  cap('nat20', 64.4, 0.7);
 
   // ---- t65.5-66: endcard, stays up -----------------------------------------------------
   if (caps.endcard) {

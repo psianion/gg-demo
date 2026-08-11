@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LINE, fillMaterial, lineMaterial, sketch, rays, hatch, contact, weight } from './pencil';
+import { PAPER, LINE, fillMaterial, lineMaterial, sketch, rays, hatch, contact, weight } from './pencil';
 
 // A ray burst wrapped in a Group so timeline can own its scale (and ambient
 // rotation reads world.t elsewhere) — every "*Rays" field is this shape.
@@ -717,14 +717,47 @@ function buildMontage() {
 function buildCliffWorld() {
   const container = new THREE.Group();
 
+  // The climactic set piece. The camera arrives above the rim looking down at the
+  // goblin (who stands at local x=2.6, y=6) and then rises to dead top-down, so what
+  // reads here is the plateau's outline and its top surface — not the side faces.
+  // A square box gave both away; seven-sided tiers give it a rock outline from above
+  // and a stepped face as the camera lifts.
   const cliff = new THREE.Group();
   cliff.position.set(120, 0, 0);
-  const cliffBox = sketch(new THREE.BoxGeometry(6, 6, 6));
-  cliffBox.position.y = 3; // top at y=6
-  cliff.add(cliffBox);
+
+  // [radiusTop, radiusBottom, height, y, spin] — top of the stack lands exactly at y=6
+  const tiers: [number, number, number, number, number][] = [
+    [3.6, 4.05, 2.2, 1.1, 0],
+    [3.35, 3.65, 2.2, 3.3, 0.42],
+    [3.2, 3.45, 1.6, 5.2, 0.83],
+  ];
+  for (const [rt, rb, h, y, spin] of tiers) {
+    const tier = sketch(new THREE.CylinderGeometry(rt, rb, h, 7));
+    tier.position.y = y;
+    tier.rotation.y = spin; // stagger the facets so the tiers don't stack into one prism
+    cliff.add(tier);
+  }
+
+  // fractured rock on the plateau, kept clear of the goblin's stance at local x=2.6
+  const cracks: [number, number, number, number, number][] = [
+    [-1.4, 0.6, 2.2, 1.1, 0.4],
+    [0.3, -1.5, 1.6, 0.9, -0.9],
+  ];
+  cracks.forEach(([cx, cz, w, h, angle]) => {
+    const crack = hatch(w, h, 4, angle);
+    crack.rotation.x = -Math.PI / 2;
+    crack.position.set(cx, 6.01, cz);
+    cliff.add(crack);
+  });
+
+  // loose rock: a couple on the top, and talus fallen around the base
   const chunkSpots: [number, number, number, number][] = [
     [-2, 6.2, 2, 0.5],
     [2.3, 6.15, -1.6, 0.45],
+    [-3.6, 0.4, 2.9, 0.55],
+    [3.4, 0.3, 3.1, 0.42],
+    [-2.4, 0.35, -3.7, 0.5],
+    [3.9, 0.25, -2.4, 0.36],
   ];
   chunkSpots.forEach(([ox, oy, oz, r]) => {
     const chunk = sketch(new THREE.DodecahedronGeometry(r));
@@ -809,23 +842,64 @@ function buildCliffWorld() {
   die2.scale.set(0, 0, 0);
   container.add(die2);
 
-  // board: 24x24 grid + outer border, lying flat (facing +y), own transparent materials
+  // The board is the film's last image — the d20's face becomes it, and the visitor is
+  // meant to land on an actual map. Floating grid lines with nothing behind them read as
+  // a wireframe, so it gets paper to sit on, a double-ruled edge and corner registration
+  // marks, the way a printed board is trimmed.
+  //
+  // Every material in this group MUST be board-local, transparent and start at opacity 0:
+  // the timeline traverses the group, collects whatever it finds and fades it all up. A
+  // shared material in here would drag the rest of the film up with it.
   const board = new THREE.Group();
   board.position.set(145, 35.4, 0);
+
+  const boardFill = new THREE.Mesh(
+    new THREE.PlaneGeometry(25.4, 25.4),
+    new THREE.MeshBasicMaterial({
+      color: PAPER,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+    }),
+  );
+  boardFill.rotation.x = -Math.PI / 2;
+  boardFill.position.y = -0.02; // under the grid, clear of z-fighting
+  board.add(boardFill);
+
   const grid = new THREE.GridHelper(24, 24, LINE, LINE);
   const gridMat = grid.material as THREE.LineBasicMaterial;
   gridMat.transparent = true;
   gridMat.opacity = 0;
   board.add(grid);
-  const borderPts = [
-    new THREE.Vector3(-12, 0, -12),
-    new THREE.Vector3(12, 0, -12),
-    new THREE.Vector3(12, 0, 12),
-    new THREE.Vector3(-12, 0, 12),
-  ];
-  const borderMat = new THREE.LineBasicMaterial({ color: LINE, transparent: true, opacity: 0 });
-  const border = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(borderPts), borderMat);
-  board.add(border);
+
+  const boardInk = new THREE.LineBasicMaterial({ color: LINE, transparent: true, opacity: 0 });
+  const ruleAt = (r: number) =>
+    new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-r, 0, -r),
+        new THREE.Vector3(r, 0, -r),
+        new THREE.Vector3(r, 0, r),
+        new THREE.Vector3(-r, 0, r),
+      ]),
+      boardInk,
+    );
+  board.add(ruleAt(12), ruleAt(12.55));
+
+  // trim marks at the corners
+  const tickPts: THREE.Vector3[] = [];
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      tickPts.push(
+        new THREE.Vector3(sx * 12.9, 0, sz * 12.55),
+        new THREE.Vector3(sx * 13.5, 0, sz * 12.55),
+        new THREE.Vector3(sx * 12.55, 0, sz * 12.9),
+        new THREE.Vector3(sx * 12.55, 0, sz * 13.5),
+      );
+    }
+  }
+  board.add(
+    new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(tickPts), boardInk),
+  );
   container.add(board);
 
   return { container, miniWorld, cliff, die2, board };
