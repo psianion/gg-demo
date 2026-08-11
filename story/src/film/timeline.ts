@@ -276,51 +276,61 @@ export function buildTimeline(
   tl.set(world.dieInner.rotation, { x: -9, y: -5.5, z: 0 }, dieAt);
   tl.to(world.dieInner.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: 'power3.out' }, dieAt);
 
+  // ---- t38.3-39.8: the camera comes in WHILE the die is still rolling -----------
+  // We should watch it land, not arrive after the fact. The move settles before the die
+  // does, so the 1 comes up already in the close view. About 37 degrees above the
+  // table: steep enough to read the top face, shallow enough that the die still hides
+  // the patch of table right behind it, which is where the finger comes from.
+  cam(38.3, 1.5, [80.42, 2.42, 1.5], [80, 1.28, 0], 'power2.inOut');
+
   cap('nat1', 40.2, 1.4);
 
-  // ---- t40.6-43: tick, FREEZE, camera comes right in on the die ----------------
+  // ---- t40.6: tick, FREEZE -----------------------------------------------------
   // The goblin is never seen at this table. He is nine tenths of a unit tall and the
   // die sits at 1.21 on the tabletop, so putting him in shot only ever showed him
-  // stranded underneath it. The scene plays entirely on the die, and the only part of
-  // him it shows is a finger.
+  // stranded underneath it. The scene plays entirely on the die.
   tl.to(world, { timeScale: 0, duration: 0.15 }, 40.6);
-  tl.set(world, { dieWobble: 1 }, 40.6);
-  // Close enough to read the face, far enough that the die still reads as an object on
-  // a table — under a unit it simply fills the lens. And high enough to actually SEE the
-  // top face: at eye level with the die the upward face is edge-on, so the number that
-  // the whole scene turns on cannot be read at all.
-  // ~48 degrees above the table: the die tips toward the lens, so the face that comes
-  // up is the far one, and only a steep angle reads it. Level with the die you see no
-  // top face at all; halfway you watch the 20 arrive edge-on.
-  cam(40.6, 2.4, [80.4, 2.62, 1.16], [80, 1.25, 0], 'power1.inOut');
   tl.set(goblin.root.position, { x: 84.5, y: 0, z: 1.5 }, 40.6);
 
-  // ---- t43-44.2: a finger slides in from behind the die -------------------------
-  tl.set(world.nudgeFinger.scale, { x: 1, y: 1, z: 1 }, 42.9);
+  // Caught mid-motion the die rocks, then holds. It is a held breath, not a loop — run
+  // across the whole freeze it stops reading as stopped time and just looks like a die
+  // that never settles.
+  tl.set(world, { dieWobble: 1 }, 40.6);
+  tl.to(world, { dieWobble: 0, duration: 1.2, ease: 'power2.out' }, 40.85);
+
+  // ---- t42.4-43.6: a finger rises from directly behind the die ------------------
+  // Not a hand crossing the table. It starts low in the die's own blind spot, where the
+  // die hides it completely from this angle, and rises into view over the back edge —
+  // so it appears from nowhere rather than travelling in from somewhere.
+  tl.set(world.nudgeFinger.scale, { x: 1, y: 1, z: 1 }, 42.4);
   tl.fromTo(
     world.nudgeFinger.position,
-    { z: -1.4 },
-    { z: -0.44, duration: 1.0, ease: 'power2.out' },
-    43,
+    { y: 1.02, z: -0.56 },
+    { y: 1.44, z: -0.35, duration: 1.2, ease: 'power2.out' },
+    42.4,
   );
 
-  // ---- t44.2-45: one tilt, and the 1 rolls over into the 20 ---------------------
+  // ---- t43.7-44.4: one tilt, and the 1 rolls over into the 20 -------------------
   // Not another spin: the die goes over exactly one face, about the edge the geometry
   // was built to roll on. That is the whole cheat — the smallest possible nudge.
-  tl.to(world.nudgeFinger.position, { z: -0.31, duration: 0.5, ease: 'power2.inOut' }, 44.2);
+  tl.to(world.nudgeFinger.position, { z: -0.3, duration: 0.45, ease: 'power2.inOut' }, 43.7);
   tl.to(
     world.dieInner.rotation,
-    { x: world.dieTipAngle, duration: 0.55, ease: 'power2.inOut' },
-    44.25,
+    { x: world.dieTipAngle, duration: 0.5, ease: 'power2.inOut' },
+    43.75,
   );
-  tl.to(world, { dieWobble: 0, duration: 0.3 }, 44.4);
 
-  // ---- t45-46: the finger withdraws the way it came ------------------------------
-  tl.to(world.nudgeFinger.position, { z: -1.5, duration: 1.0, ease: 'power2.in' }, 45);
-  tl.set(world.nudgeFinger.scale, { x: 0, y: 0, z: 0 }, 46);
+  // ---- t44.5-45.4: and it drops back out of sight the way it came ---------------
+  tl.to(world.nudgeFinger.position, { y: 1.0, z: -0.58, duration: 0.9, ease: 'power2.in' }, 44.5);
+  tl.set(world.nudgeFinger.scale, { x: 0, y: 0, z: 0 }, 45.4);
 
   cap('nat20', 46.8, 1.3);
   tl.to(world, { timeScale: 1, duration: 0.3 }, 47);
+
+  // ---- t46.5-49: ease back out before the montage cuts --------------------------
+  // Cutting to the montage straight off a macro shot is a jolt. This hands the scene
+  // over from a normal-scale view of the table instead.
+  cam(46.5, 2.5, [80.9, 2.55, 3.2], [80, 1.15, 0], 'power2.inOut');
 
   cap('welcome', 48.4, 1.6);
 

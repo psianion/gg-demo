@@ -776,6 +776,20 @@ function buildTavern() {
     const mx = new THREE.Vector3().crossVectors(ref, n).normalize();
     const my = new THREE.Vector3().crossVectors(n, mx);
     mark.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(mx, my, n));
+
+    // The 20 is only ever read after the die has tipped, when this face is the one
+    // pointing up. Orienting it in its rest pose lands it upside down at the moment it
+    // matters, so it is set upright in its post-tilt frame and rotated back into place.
+    if (f === built.neighbour) {
+      const upright = new THREE.Vector3(0, 1, 0);
+      const ax = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 0, -1), upright).normalize();
+      const ay = new THREE.Vector3().crossVectors(upright, ax);
+      mark.quaternion
+        .setFromRotationMatrix(new THREE.Matrix4().makeBasis(ax, ay, upright))
+        .premultiply(
+          new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -built.tipAngle),
+        );
+    }
     dieInner.add(mark);
   }
 
@@ -783,9 +797,9 @@ function buildTavern() {
   container.add(die);
 
   const nudgeFinger = buildFinger();
-  // waits off camera behind the die, and rides high enough to clear it — level with the
-  // die's middle it would be hidden behind the very thing it has to push
-  nudgeFinger.position.set(80.04, 1.45, -1.4);
+  // waits in the die's blind spot: low and just behind it, where the die itself hides
+  // the finger from the camera until it rises over the back edge
+  nudgeFinger.position.set(80.04, 1.02, -0.56);
   nudgeFinger.scale.setScalar(0);
   container.add(nudgeFinger);
 
