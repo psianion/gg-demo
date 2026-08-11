@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { sketch, hatch, rays } from '../src/film/pencil.ts';
+import { sketch, hatch, rays, numeral } from '../src/film/pencil.ts';
 
 const SUB = 3; // no `window` in node, so pencil.ts builds at full detail
 
@@ -31,5 +31,31 @@ assert.equal(segments(hatch(1, 2, 10)), 20 * SUB);
 
 // light: one spoke per ray
 assert.equal(segments(rays(10)), 10 * SUB);
+
+// numerals: a digit is a handful of segments, so a real stroke count comes out
+const numeralLine = (n: THREE.Group) => n.children[0] as any;
+const one = numeral(1);
+const oneSegs = segments(numeralLine(one));
+assert.ok(oneSegs > 0, 'a single digit should draw strokes');
+
+// a two-digit number draws strictly more strokes than a one-digit number
+const twenty = numeral(20);
+const twentySegs = segments(numeralLine(twenty));
+assert.ok(twentySegs > oneSegs, `expected 20 (${twentySegs}) to draw more than 1 (${oneSegs})`);
+
+// the whole run is centred on the local origin, not left-aligned from it
+for (const n of [1, 13, 20]) {
+  const geom = (numeralLine(numeral(n)) as any).geometry.attributes;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  for (let i = 0; i < geom.instanceStart.count; i++) {
+    for (const x of [geom.instanceStart.getX(i), geom.instanceEnd.getX(i)]) {
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+    }
+  }
+  const mid = (minX + maxX) / 2;
+  assert.ok(Math.abs(mid) < 0.05, `numeral(${n}) bounding box centred at ${mid}, expected near 0`);
+}
 
 console.log('pencil ok');

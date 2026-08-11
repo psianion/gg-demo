@@ -1,5 +1,18 @@
 import * as THREE from 'three';
-import { PAPER, LINE, fillMaterial, lineMaterial, sketch, rays, hatch, crossHatch, contact, weight } from './pencil';
+import { dieFaces } from './dieGeometry';
+import {
+  PAPER,
+  LINE,
+  fillMaterial,
+  lineMaterial,
+  sketch,
+  rays,
+  hatch,
+  crossHatch,
+  contact,
+  weight,
+  numeral,
+} from './pencil';
 
 // A ray burst wrapped in a Group so timeline can own its scale (and ambient
 // rotation reads world.t elsewhere) — every "*Rays" field is this shape.
@@ -257,6 +270,8 @@ export interface World {
   die: THREE.Group; // OUTER wobble wrapper — useFrame writes its rotation.z
   dieInner: THREE.Group; // icosahedron inside; timeline tweens THIS position/rotation
   dieWobble: number; // 0..1, tweened by timeline (frozen mid-wobble)
+  dieTipAngle: number; // rotation about dieInner's local X that rolls 1 onto 20
+  nudgeFinger: THREE.Group; // the only part of him the table scene shows
 
   // chapter 5 — montage vignettes (index 0..5, world positions below)
   roadLine: THREE.Group; // scale.x starts 0 (road being drawn)
@@ -678,6 +693,34 @@ function buildTheatre() {
   return { container, stageDisc, rope };
 }
 
+// The only part of him the table scene ever shows. It slides in from behind the die,
+// tips it one face, and leaves.
+function buildFinger(): THREE.Group {
+  const g = new THREE.Group();
+
+  const knuckle = sketch(new THREE.CylinderGeometry(0.05, 0.045, 0.17, 7), 22);
+  knuckle.rotation.x = Math.PI / 2;
+  knuckle.position.z = -0.085;
+  g.add(knuckle);
+
+  const tipSeg = sketch(new THREE.CylinderGeometry(0.042, 0.048, 0.13, 7), 22);
+  tipSeg.rotation.set(Math.PI / 2 - 0.16, 0, 0);
+  tipSeg.position.set(0, 0.012, 0.06);
+  g.add(tipSeg);
+
+  const pad = sketch(new THREE.SphereGeometry(0.042, 8, 6), 22);
+  pad.position.set(0, 0.022, 0.122);
+  g.add(pad);
+
+  // one crease so it reads as a knuckle rather than a dowel
+  const crease = hatch(0.07, 0.02, 40, 0, 'faint');
+  crease.position.set(0, 0.048, -0.01);
+  crease.rotation.x = -Math.PI / 2.4;
+  g.add(crease);
+
+  return g;
+}
+
 // C4 — tavern interior: floor, wall, table, die, DM + two players, mugs, door.
 function buildTavern() {
   const container = new THREE.Group();
@@ -709,10 +752,42 @@ function buildTavern() {
   container.add(tableLeg);
 
   const die = new THREE.Group();
-  const dieInner = sketch(new THREE.IcosahedronGeometry(0.35));
+  const built = dieFaces(0.35);
+  const dieInner = sketch(built.geom, 25, 'hero');
   dieInner.position.set(78.6, 1.7, 0.6); // tumbles to rest near (80, 1.21, 0)
+
+  // Number every face, so the die reads as a die from any angle and the camera can come
+  // close enough to watch one number become another. 1 sits on the face that lands
+  // upward; 20 sits on its rolling neighbour. On a real d20 those two are opposite
+  // rather than adjacent — here they share an edge, because the whole gag is that one
+  // small tilt is all it takes.
+  const faceNumbers = [1, 20, 7, 13, 4, 16, 9, 11, 6, 14, 3, 18, 8, 12, 5, 15, 10, 2, 17, 19];
+  for (let f = 0; f < built.faceCount; f++) {
+    const outward = built.faceDir(f);
+    const mark = numeral(faceNumbers[f] ?? f + 1, 0.1, 'form');
+    mark.position.copy(outward).multiplyScalar(1.03);
+
+    // face the numeral out along its own face, upright about that normal
+    const n = outward.clone().normalize();
+    // on a face that points nearly straight up or down there is no natural "up" for the
+    // glyph, so it is picked to read the right way round from where the camera watches
+    // the tilt rather than upside down
+    const ref = Math.abs(n.y) > 0.9 ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+    const mx = new THREE.Vector3().crossVectors(ref, n).normalize();
+    const my = new THREE.Vector3().crossVectors(n, mx);
+    mark.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(mx, my, n));
+    dieInner.add(mark);
+  }
+
   die.add(dieInner);
   container.add(die);
+
+  const nudgeFinger = buildFinger();
+  // waits off camera behind the die, and rides high enough to clear it — level with the
+  // die's middle it would be hidden behind the very thing it has to push
+  nudgeFinger.position.set(80.04, 1.45, -1.4);
+  nudgeFinger.scale.setScalar(0);
+  container.add(nudgeFinger);
 
   const dm = buildAdventurer(false);
   dm.scale.setScalar(1.3);
@@ -749,7 +824,7 @@ function buildTavern() {
   doorFrame.rotation.y = Math.PI / 2; // faces into the room
   container.add(doorFrame);
 
-  return { container, die, dieInner };
+  return { container, die, dieInner, dieTipAngle: built.tipAngle, nudgeFinger };
 }
 
 // C5 — six montage vignette platforms at z=-40, x = 0/8/16/24/32/40.
@@ -1099,6 +1174,8 @@ export function buildWorld(): World {
     die: tavern.die,
     dieInner: tavern.dieInner,
     dieWobble: 0,
+    dieTipAngle: tavern.dieTipAngle,
+    nudgeFinger: tavern.nudgeFinger,
 
     roadLine: montage.roadLine,
     monster: montage.monster,

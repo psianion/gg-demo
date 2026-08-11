@@ -206,3 +206,68 @@ export function rays(n = 10, r0 = 0.25, r1 = 0.55, w: Weight = 'form'): LineSegm
   }
   return drawn(strokes(new Float32Array(positions)), w);
 }
+
+// Digits as a seven-segment cell: six named points around a W×H rectangle, and each
+// digit is just the subset of the seven edges between them that's lit. Straight lines
+// only — this is a pencil mark on a die face, not a font.
+// '1' is handled separately below — a bare right-hand stroke reads as an edge, not a
+// digit, and leaves the glyph's ink lopsided in its cell instead of centred.
+type Seg = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
+const DIGIT_SEGMENTS: Record<string, Seg[]> = {
+  '0': ['a', 'b', 'c', 'd', 'e', 'f'],
+  '2': ['a', 'b', 'g', 'e', 'd'],
+  '3': ['a', 'b', 'g', 'c', 'd'],
+  '4': ['f', 'g', 'b', 'c'],
+  '5': ['a', 'f', 'g', 'c', 'd'],
+  '6': ['a', 'f', 'g', 'e', 'c', 'd'],
+  '7': ['a', 'b', 'c'],
+  '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+  '9': ['a', 'b', 'c', 'd', 'f', 'g'],
+};
+
+// A number, laid out digit by digit and centred on the origin, lying flat in XY. Built
+// from the same stroke pipeline as every other primitive so it wobbles and weights like
+// the rest of the film's line-work — this is what gets stamped on a d20's faces.
+export function numeral(value: number, height = 1, w: Weight = 'form'): THREE.Group {
+  const digits = Math.trunc(Math.abs(value)).toString().split('');
+  const W = height * 0.6; // digit width
+  const gap = height * 0.22; // space between digits
+  const total = digits.length * W + (digits.length - 1) * gap;
+  const x0 = -total / 2; // centres the whole run on the origin
+  const top = height / 2;
+  const mid = 0;
+  const bot = -height / 2;
+
+  const positions: number[] = [];
+  digits.forEach((d, i) => {
+    const l = x0 + i * (W + gap);
+    const r = l + W;
+    const c = (l + r) / 2;
+    // the seven-segment corners, plus a middle column for the '1' stroke
+    const pt: Record<string, [number, number]> = {
+      TL: [l, top], TR: [r, top], TM: [c, top],
+      ML: [l, mid], MR: [r, mid],
+      BL: [l, bot], BR: [r, bot], BM: [c, bot],
+    };
+    if (d === '1') {
+      // a stem down the centre plus a full-width foot — the foot is what keeps this
+      // digit's ink spanning the same [l, r] as every other digit's
+      positions.push(...pt.TM, 0, ...pt.BM, 0, ...pt.BL, 0, ...pt.BR, 0);
+      return;
+    }
+    const edge: Record<Seg, [string, string]> = {
+      a: ['TL', 'TR'], b: ['TR', 'MR'], c: ['MR', 'BR'],
+      d: ['BL', 'BR'], e: ['ML', 'BL'], f: ['TL', 'ML'], g: ['ML', 'MR'],
+    };
+    for (const seg of DIGIT_SEGMENTS[d] ?? []) {
+      const [p, q] = edge[seg];
+      const [px, py] = pt[p];
+      const [qx, qy] = pt[q];
+      positions.push(px, py, 0, qx, qy, 0);
+    }
+  });
+
+  const group = new THREE.Group();
+  group.add(drawn(strokes(new Float32Array(positions)), w));
+  return group;
+}
