@@ -88,6 +88,14 @@ canvas {
   font-size: clamp(1.15rem, 2.2vw, 1.7rem);
 }
 
+/* The four lines he says straight to the lens. They play on the freeze push-in, which
+   frames his head dead centre — so centred type ran through his eyes and mouth. Above
+   him is empty paper at every aspect, and it keeps the full statement size: these are
+   spoken to the viewer, not muttered over the work. */
+.caption.above {
+  top: 24%;
+}
+
 /* The endcard is the drawn lockup (src/Wordmark.tsx), so none of the type rules a
    line of text needed apply any more — the mark is sized as an object instead. */
 #endcard {

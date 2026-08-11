@@ -81,7 +81,13 @@ export function buildTimeline(
   cam(9.5, 1, [2.5, 1.1, 3.2], [2.5, 0.7, 0.9], 'power2.inOut');
 
   // ---- t10.2-11: goblin looks at camera ---------------------------------
-  tl.to(goblin.head.rotation, { y: -2.2, duration: 0.5 }, 10.2);
+  // His root is turned to +x by the bolt, so facing the lens at +z is -PI/2 of head
+  // turn, not -2.2 — that overshot the camera by 36 degrees. It read as "roughly
+  // toward us" while the head was a sphere with a nose; now that he has eyes, 36
+  // degrees off is unmistakably looking past the viewer, in the one shot of the film
+  // where he is supposed to look straight down the lens. A hair under square keeps
+  // the nose in profile against his cheek instead of flattening it.
+  tl.to(goblin.head.rotation, { y: -1.62, duration: 0.5 }, 10.2);
 
   cap('me1', 10.8, 1.6);
   cap('me2', 12.8, 1.4);

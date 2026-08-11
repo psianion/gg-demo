@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { sketch, hatch, rays, numeral } from '../src/film/pencil.ts';
+import { sketch, hatch, rays, numeral, polyline, curveLine } from '../src/film/pencil.ts';
 
 const SUB = 3; // no `window` in node, so pencil.ts builds at full detail
 
@@ -24,6 +24,42 @@ for (let i = 0; i < start.count; i++) {
     assert.ok(Math.abs(v) <= 0.5 + 0.06, `stroke strayed to ${v}`);
   }
 }
+
+// the silhouette shell is opt-in, sits behind the fill, and comes out a constant rim
+// thickness whatever the form's size — a flat scale factor was the bug this replaces
+const plain = sketch(new THREE.SphereGeometry(0.16, 12, 10));
+assert.equal(plain.children.length, 2, 'no shell unless asked for');
+for (const [radius, thickness] of [
+  [0.16, 0.013],
+  [0.7, 0.02],
+] as [number, number][]) {
+  const shelled = sketch(new THREE.SphereGeometry(radius, 12, 10), 25, 'form', thickness);
+  assert.equal(shelled.children.length, 3, 'shell adds exactly one mesh');
+  const rim = shelled.children[2] as THREE.Mesh;
+  assert.equal((rim.material as THREE.MeshBasicMaterial).side, THREE.BackSide);
+  const grown = (rim.scale.x - 1) * radius;
+  assert.ok(
+    Math.abs(grown - thickness) < 1e-6,
+    `rim came out ${grown} thick, expected ${thickness}`,
+  );
+}
+
+// a drawn polyline chains its points; closing it adds the one segment back to the start
+assert.equal(segments(polyline([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)])), 1 * SUB);
+const square = [
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(1, 0, 0),
+  new THREE.Vector3(1, 1, 0),
+  new THREE.Vector3(0, 1, 0),
+];
+assert.equal(segments(polyline(square)), 3 * SUB);
+assert.equal(segments(polyline(square, 'form', true)), 4 * SUB);
+
+// a curve is resampled into `segments` spans — getPoints(n) returns n+1 points
+assert.equal(
+  segments(curveLine([new THREE.Vector3(), new THREE.Vector3(1, 0, 1), new THREE.Vector3(2, 0, 0)], 'form', 12)),
+  12 * SUB,
+);
 
 // tone: density is strokes per unit of height
 assert.equal(segments(hatch(1, 1, 14)), 14 * SUB);

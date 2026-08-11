@@ -70,6 +70,10 @@ only stroke cost varies. Every scene gets judged at 390px wide before it is call
 - Detailed set pieces: `buildFlames` (5 leaning tongues + embers), `buildChest` (banding, lock
   plate, interior tone, contact), `buildPine` (3 stacked tiers), `buildRaven` (head, beak, tail,
   wings), `buildMushroom` (gills, contact), `buildHouse` (ridged roof, door, windows, chimney).
+- Vocabulary additions the larger sets needed: `polyline` and `curveLine` (drawn lines through a
+  run of points, replacing the last `THREE.Line` hairlines), `inkMaterial` (the film's only
+  filled black — pupils, a maw, a wick), and the back-face `shell` option on `sketch`.
+- Every set piece above verified against rendered frames at 1440×900 and 390×844.
 
 **Why this milestone is worth doing properly.** From `art-direction.md`: "When the art pass lands,
 the pencil look does not disappear — it becomes the Behind-the-Curtain state, and the Normal World
@@ -98,7 +102,11 @@ graphite/ink state, which is the film's whole thesis moment. It has to hold up a
    wraps and a knot.
 6. ~~**The raven's branch floats unsupported.**~~ **Done.** It grows from a tree, sited clear
    of where the birds perch and scatter to.
-7. **Roads and the river are 3-point polylines** across a 40×32 mini-world footprint.
+7. ~~**Roads and the river are 3-point polylines**~~ **Done.** Both are drawn curves
+   now, via a `polyline`/`curveLine` pair in the vocabulary. Roads have two edges,
+   the river has two banks with water tone in six short reaches that follow the
+   meander, and the blank paper between the eight houses carries hatched fields with
+   drawn boundaries. This is the shot the film ends on, seen from directly above.
 
 ## The lighting run now plays as a freeze
 
@@ -119,36 +127,76 @@ reach height, and the prop action fires only once his hand has arrived.
 between all six montage platforms; the theatre disc outside its two clusters; the tavern's single
 flat wall and empty floor.
 
-**Still crude — the remaining detail work:**
+**The larger sets — done.** `buildGoblin`, `buildAdventurer`, `buildAmbush`, the signpost in
+`buildPathProps`, `buildTheatre`, `buildTavern`, `buildMontage`, `buildCliffWorld` and
+`buildGround` all carry their detail now. What each one needed:
 
-`buildGoblin`, `buildAdventurer`, `buildAmbush`, `buildPathProps` (lantern, cave door, signpost),
-`buildTheatre`, `buildTavern`, `buildMontage` (12 primitives covering six cuts), `buildCliffWorld`,
-`buildGround`. These are the larger sets rather than the hero props, and several of them are what
-the camera lingers on longest.
+- **The goblin** has a face — angled brows, ink pupils, a mouth set off-centre — plus hands at
+  the ends of the arms he spends all of C2 reaching with, feet under the gait, a tunic with a
+  belt and collar, and the tool satchel that C2's over-the-shoulder follow spends thirteen
+  seconds looking at. He travels with his own contact shadow, so he sits on the path, on a
+  montage platform and on the cliff top alike.
+- **The adventurers** are cloak and hat brim rather than a cylinder under a ball: the two shapes
+  that read at fifteen units. Six ship, so the part count stays lean.
+- **The ambush** is a camp — stone ring, logs, scorched ground, bedroll, pack, planted spear —
+  around an outcrop instead of one boulder, with a fogged treeline set back far enough to give
+  the freeze close-up a world behind it without crowding his head.
+- **The theatre disc** reads as a revolve: kerb, plank seams, the joint the halves part on. Its
+  forest half has undergrowth, stumps, boulders and a fallen trunk; its mountain half has ridges
+  and hatched rock below a snowline that is left as bare paper.
+- **The tavern** has floorboards, a timber-framed wall, a hearth with a fire in it, a shelf of
+  bottles, benches, and a table with character sheets, a referee's screen, a pencil and a candle
+  on it. The room is where the film turns — the world we have been watching is the one being
+  rolled for here — and it was a wall, a disc and three mugs.
+- **The montage** platforms have rims and shadows; the map table has legs and a map wider than
+  the road drawn on it; the monster has eyes, a maw and teeth; the sign hangs off a braced
+  bracket on a planked wall; the candles have wicks, drips and a book to light.
 
 Deliberately left flat: the ground plane. In pencil illustration the paper *is* the ground; hatching
 600×300 units of it would cost a fortune and read worse than nothing.
 
-## The next real problem: curved forms have no silhouette
+## Curved forms now have a silhouette
 
-Found by screenshotting the film, not by reading code. Round primitives — the goblin's head,
-the raven's body, the mushroom cap — are drawn only by `EdgesGeometry`, which emits an edge
-wherever two faces meet above an angle threshold. On a sphere that produces a cage of
-longitudinal facet lines, so the head reads as a striped scribble rather than a head.
+Round primitives were drawn only by `EdgesGeometry`, which emits an edge wherever two faces meet
+above an angle threshold. On a sphere that produces a cage of longitudinal facet lines, so the
+head read as a striped scribble rather than a head. Raising the threshold was strictly worse: a
+sphere's silhouette is view-dependent, not a geometric edge, so above ~30° there is nothing left
+to draw and the head disappeared entirely, leaving the ears floating.
 
-Raising the threshold to suppress those lines makes it strictly worse: a sphere's silhouette is
-view-dependent, not a geometric edge, so above ~30° there is nothing left to draw and the head
-disappears entirely, leaving the ears floating. That was tried, seen in a screenshot, and reverted.
+`sketch(geom, threshold, weight, shell)` now takes an optional back-face shell: the solid drawn a
+second time, scaled out by a constant rim thickness in world units, `side: THREE.BackSide` in line
+colour. Curved forms carrying it drop their interior facets to `faint` and finally read as drawn
+rather than tessellated. It costs one extra draw call, so it is opt-in and spent on hero forms
+only — the goblin's head and hands, the adventurers, the monster, the mountains.
 
-The real fix is a back-face outline shell: render each solid a second time, scaled slightly, with
-`side: THREE.BackSide` in line colour. That yields a true view-independent silhouette for any
-form, at which point interior facet lines can be thinned right down and curved objects finally
-read as drawn rather than tessellated. It costs one extra draw call per solid, so it wants
-measuring on a phone before it ships everywhere — likely hero forms only, with fog and weight
-tiers carrying the background.
+The same threshold trap had silently erased whole set pieces: a broad 12-sided cone's facets meet
+at about 17°, so at the default of 25 the theatre's three mountains and the miniature world's
+massif drew **no edges at all** — pale grey triangles with not one line on them. They build at
+threshold 15 with a shell now.
 
-This is the single highest-value remaining item; it affects the goblin's face, which is the
-thing the whole film is about.
+## What the screenshots changed
+
+Every fix below came from looking at rendered frames at 1440×900 and 390×844, not from reading
+code:
+
+- **He was looking 36° past the lens.** `head.rotation.y` went to -2.2 on the freeze, but his root
+  is turned to +x by the bolt, so square to the camera is -π/2. With a sphere and a nose that read
+  as "roughly toward us"; with eyes it is unmistakably looking past the viewer, in the one shot of
+  the film where he addresses them. Now -1.62.
+- **The four to-camera lines ran through his face.** Every caption is centred at 50%/50% and the
+  freeze frames his head there. `me1`–`me4` now carry a `.above` class at 24%, where there is
+  empty paper at both aspects, and keep the full statement size — `low` is for narration over the
+  work, and these are not that.
+- **Contact shadows had a fixed hatch density**, which is per unit of depth: a hand-sized shadow
+  came out as three stray marks and a table-sized one as a zebra crossing. It solves for a
+  constant stroke count instead.
+- **The table's plank seams were radial** and converged on the exact spot the die comes to rest,
+  firing a sunburst out from behind it in the macro shot. Boards on a round table are chords.
+- **Cross-hatch at high density reads as netting**, not as darkness — the eye takes a regular grid
+  for a mechanism. The window, the hearth and the montage wall's window all came down.
+- **Four lines down the path** — two edges plus two ruts, at full weight — turned a woodland track
+  into a railway that cut every wide shot in half. Two, both faint. The verge tufts moved to the
+  far side: in the foreground, three strokes read as a scribble on the lens.
 
 ## Open decisions for the client
 
@@ -173,5 +221,14 @@ thing the whole film is about.
 - **Georgia is absent on Android**, so a large share of phone traffic silently falls back to
   generic serif with different metrics — which compounds the wordmark decision below.
 - **No WebGL fallback.** If the context fails, the visitor gets a blank paper page and nothing else.
-- **The board and the ground still draw with the old hairline material**, so they read as thin CAD
-  lines next to the new strokes. They convert when those set pieces get their detail pass.
+- **Later sets are legible on the horizon of earlier chapters.** The six montage platforms at
+  z=-40 sit on the skyline of the ambush and the C2 run, and the tavern at x=80 sits in the
+  top-right corner of the theatre rotation. Both were always there; filling them with set
+  dressing is what made them read. The fixes are all blocking decisions rather than detail ones —
+  denser fog would wash out the top-down ending, and moving a set means moving the camera beats
+  keyed to it — so this wants a staging pass, not a patch.
+- **`nat1` and `nat20` are still centred**, and at those beats the die is centre-frame. Same
+  collision class as the `me*` captions, not yet checked against a screenshot at the exact hold.
+- **The board still draws with a hairline grid**, deliberately: it needs per-object transparent
+  materials it can fade from zero, and the film's last image is a printed board, which is
+  machine-ruled by nature. The shared `lineMaterial` is gone from the codebase.

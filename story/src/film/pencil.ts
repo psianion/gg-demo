@@ -50,16 +50,32 @@ export function setPencilResolution(width: number, height: number) {
   for (const m of Object.values(materials)) m.resolution.set(width, height);
 }
 
-// Hairline material, for the few places that draw with THREE.Line / LineLoop rather
-// than a stroke — the ground path, window and door frames, the board grid. Those
-// convert to drawn strokes scene by scene during the detail pass.
-export const lineMaterial = new THREE.LineBasicMaterial({ color: LINE });
-
 export const fillMaterial = new THREE.MeshBasicMaterial({
   color: PAPER,
   polygonOffset: true,
   polygonOffsetFactor: 1,
   polygonOffsetUnits: 1,
+});
+
+// A mark pressed hard enough to fill: pupils, an open mouth, the shadow inside a
+// hearth. Everything else in the film is line and tone, so this stays rare — a solid
+// black shape is the loudest thing on a pencil page.
+export const inkMaterial = new THREE.MeshBasicMaterial({ color: LINE, fog: true });
+
+// The silhouette shell. `EdgesGeometry` only emits an edge where two faces meet above
+// a threshold, which on a curved form gives a cage of longitudinal facet lines and no
+// outline at all — the goblin's head read as a striped scribble rather than a head.
+// Raising the threshold is strictly worse: a sphere's silhouette is view-dependent,
+// not a geometric edge, so past ~30° there is nothing left to draw and the head
+// vanishes, leaving the ears floating.
+//
+// Drawing the solid a second time, slightly larger and inside-out, gives a true
+// contour from any angle. It costs one extra draw call per solid, so it is opt-in and
+// spent only on the forms the camera actually reads.
+const shellMaterial = new THREE.MeshBasicMaterial({
+  color: LINE,
+  side: THREE.BackSide,
+  fog: true,
 });
 
 // Deterministic, so the drawing is identical on every load. A re-randomising wobble
@@ -128,16 +144,31 @@ function drawn(positions: number[], w: Weight): LineSegments2 {
 
 // One solid: paper-fill mesh that occludes what's behind it, plus drawn edges that
 // describe the form. Same call shape as before, so every existing set piece still builds.
-export function sketch(geom: THREE.BufferGeometry, threshold = 25, w: Weight = 'form'): THREE.Group {
+//
+// `shell` is the contour thickness in world units, and turning it on is what lets a
+// curved form drop its interior facet lines to 'faint' and still read — see
+// shellMaterial above. Leave it off for anything boxy: a cube's edges are its outline.
+export function sketch(
+  geom: THREE.BufferGeometry,
+  threshold = 25,
+  w: Weight = 'form',
+  shell = 0,
+): THREE.Group {
   const group = new THREE.Group();
-  // Note: raising this threshold to quiet the facet scribble on curved forms makes
-  // spheres vanish outright — a sphere's silhouette is view-dependent, not a geometric
-  // edge, so EdgesGeometry has nothing left to draw. Curved forms need a real outline
-  // (a back-face shell) before their interior lines can be thinned out.
   const edges = new THREE.EdgesGeometry(geom, threshold);
   const src = edges.getAttribute('position').array as Float32Array;
   group.add(new THREE.Mesh(geom, fillMaterial), drawn(strokes(src), w));
   edges.dispose();
+
+  if (shell > 0) {
+    // scaled by radius so the rim comes out a constant thickness whatever the form's
+    // size — a flat scale factor makes small props hairline and big ones blunt
+    geom.computeBoundingSphere();
+    const r = geom.boundingSphere?.radius ?? 1;
+    const rim = new THREE.Mesh(geom, shellMaterial);
+    rim.scale.setScalar(1 + (shell * SCALE) / r);
+    group.add(rim);
+  }
   return group;
 }
 
@@ -175,11 +206,39 @@ export function crossHatch(width: number, height: number, density = 12): THREE.G
   return g;
 }
 
+// A drawn line through a run of points — roads, rivers, the path, a window frame, a
+// plank seam. These used to be `THREE.Line` hairlines, which is the same 1px CAD
+// stroke the whole film moved off: no weight, no wobble, and no way to say that a
+// river matters more than a field boundary. Corners get the same overshoot as every
+// other stroke, so the joins overlap the way a hand's do.
+export function polyline(points: THREE.Vector3[], w: Weight = 'form', close = false): LineSegments2 {
+  const src: number[] = [];
+  const n = points.length;
+  for (let i = 0; i < n - 1; i++) {
+    src.push(points[i].x, points[i].y, points[i].z, points[i + 1].x, points[i + 1].y, points[i + 1].z);
+  }
+  if (close && n > 2) {
+    src.push(points[n - 1].x, points[n - 1].y, points[n - 1].z, points[0].x, points[0].y, points[0].z);
+  }
+  return drawn(strokes(new Float32Array(src)), w);
+}
+
+// A smooth run — roads and rivers meander; a 3-point polyline reads as a survey
+// diagram. Resolution drops on phones with the rest of the stroke budget.
+export function curveLine(points: THREE.Vector3[], w: Weight = 'form', segments = 24): LineSegments2 {
+  const curve = new THREE.CatmullRomCurve3(points);
+  return polyline(curve.getPoints(reduced ? Math.ceil(segments / 2) : segments), w);
+}
+
 // Ground contact. Nothing in the film currently sits convincingly on the floor; a short
 // tonal smear under an object is what makes it stop floating.
 export function contact(width: number, depth = width * 0.4): THREE.Group {
   const g = new THREE.Group();
-  const h = hatch(width, depth, 10, 0, 'faint');
+  // Density is per unit of depth, so a fixed value gave a hand-sized shadow three
+  // strokes (stray marks) and a table-sized one fifteen (a zebra crossing). Solving
+  // for a constant stroke count instead makes every shadow in the film read the same
+  // way whatever it is under.
+  const h = hatch(width, depth, 9 / depth, 0, 'faint');
   g.add(h);
   g.rotation.x = -Math.PI / 2;
   g.position.y = 0.012;

@@ -13,15 +13,16 @@ gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
 // captions: id -> (text, italic, white-on-blackout vs dark-on-paper)
-// `low` seats a caption like a subtitle. Narration that plays over the goblin working
-// has to sit under the action; centred, it draws a line straight through it.
-const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean }[] = [
+// Neither `low` nor `above` is decoration: every caption is centred in the same spot,
+// and the film puts something in that spot. `low` seats narration under the goblin
+// working; `above` clears his face on the freeze, where he is looking at the lens.
+const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean; above?: boolean }[] = [
   { id: 'open1', text: 'Every campaign begins the same way…' },
   { id: 'open2', text: '…and one goblin always gets away.', onPaper: true },
-  { id: 'me1', text: 'That was me.', onPaper: true },
-  { id: 'me2', text: 'You thought I ran away.', onPaper: true },
-  { id: 'me3', text: 'I did.', onPaper: true },
-  { id: 'me4', text: 'Straight to work.', onPaper: true },
+  { id: 'me1', text: 'That was me.', onPaper: true, above: true },
+  { id: 'me2', text: 'You thought I ran away.', onPaper: true, above: true },
+  { id: 'me3', text: 'I did.', onPaper: true, above: true },
+  { id: 'me4', text: 'Straight to work.', onPaper: true, above: true },
   { id: 'work1', text: 'Nobody sees this part.', onPaper: true, low: true },
   { id: 'work2', text: 'The door has to be open before they find it.', onPaper: true, low: true },
   { id: 'work3', text: 'The chest has to be full before they open it.', onPaper: true, low: true },
@@ -157,11 +158,11 @@ export default function App() {
 
       <div id="overlay">
         <div id="blackout" />
-        {CAPTIONS.map(({ id, text, onPaper, low }) => (
+        {CAPTIONS.map(({ id, text, onPaper, low, above }) => (
           <div
             key={id}
             id={id}
-            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}`}
+            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}${above ? ' above' : ''}`}
             aria-hidden="true"
             ref={(el) => {
               if (el) caps[id] = el;
