@@ -81,6 +81,27 @@ the camera lingers on longest.
 Deliberately left flat: the ground plane. In pencil illustration the paper *is* the ground; hatching
 600×300 units of it would cost a fortune and read worse than nothing.
 
+## The next real problem: curved forms have no silhouette
+
+Found by screenshotting the film, not by reading code. Round primitives — the goblin's head,
+the raven's body, the mushroom cap — are drawn only by `EdgesGeometry`, which emits an edge
+wherever two faces meet above an angle threshold. On a sphere that produces a cage of
+longitudinal facet lines, so the head reads as a striped scribble rather than a head.
+
+Raising the threshold to suppress those lines makes it strictly worse: a sphere's silhouette is
+view-dependent, not a geometric edge, so above ~30° there is nothing left to draw and the head
+disappears entirely, leaving the ears floating. That was tried, seen in a screenshot, and reverted.
+
+The real fix is a back-face outline shell: render each solid a second time, scaled slightly, with
+`side: THREE.BackSide` in line colour. That yields a true view-independent silhouette for any
+form, at which point interior facet lines can be thinned right down and curved objects finally
+read as drawn rather than tessellated. It costs one extra draw call per solid, so it wants
+measuring on a phone before it ships everywhere — likely hero forms only, with fog and weight
+tiers carrying the background.
+
+This is the single highest-value remaining item; it affects the goblin's face, which is the
+thing the whole film is about.
+
 ## Open decisions for the client
 
 - **The wordmark is set in Georgia.** The endcard "GOOD GOBLIN" and every caption run on the system

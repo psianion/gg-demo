@@ -130,6 +130,10 @@ function drawn(positions: number[], w: Weight): LineSegments2 {
 // describe the form. Same call shape as before, so every existing set piece still builds.
 export function sketch(geom: THREE.BufferGeometry, threshold = 25, w: Weight = 'form'): THREE.Group {
   const group = new THREE.Group();
+  // Note: raising this threshold to quiet the facet scribble on curved forms makes
+  // spheres vanish outright — a sphere's silhouette is view-dependent, not a geometric
+  // edge, so EdgesGeometry has nothing left to draw. Curved forms need a real outline
+  // (a back-face shell) before their interior lines can be thinned out.
   const edges = new THREE.EdgesGeometry(geom, threshold);
   const src = edges.getAttribute('position').array as Float32Array;
   group.add(new THREE.Mesh(geom, fillMaterial), drawn(strokes(src), w));

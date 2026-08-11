@@ -60,13 +60,14 @@ function buildChest(x: number, y: number, z: number) {
   body.position.y = height / 2;
   container.add(body);
 
-  // iron banding — two straps around the body, and the lock plate between them
+  // iron banding — lighter than the body it sits on, or the whole chest reads as a
+  // solid black block at the distance the camera actually passes it
   for (const sx of [-0.19, 0.19]) {
-    const strap = sketch(new THREE.BoxGeometry(0.05, height + 0.01, depth + 0.012), 25, 'hero');
+    const strap = sketch(new THREE.BoxGeometry(0.04, height + 0.01, depth + 0.012));
     strap.position.set(sx, height / 2, 0);
     container.add(strap);
   }
-  const lock = sketch(new THREE.BoxGeometry(0.09, 0.1, 0.02), 25, 'hero');
+  const lock = sketch(new THREE.BoxGeometry(0.08, 0.09, 0.02));
   lock.position.set(0, height * 0.62, depth / 2);
   container.add(lock);
 
@@ -82,7 +83,7 @@ function buildChest(x: number, y: number, z: number) {
   lidMesh.position.z = depth / 2; // extends forward from the hinge
   lid.add(lidMesh);
   for (const sx of [-0.19, 0.19]) {
-    const strap = sketch(new THREE.BoxGeometry(0.05, height * 0.25 + 0.012, depth + 0.012), 25, 'hero');
+    const strap = sketch(new THREE.BoxGeometry(0.04, height * 0.25 + 0.012, depth + 0.012));
     strap.position.set(sx, 0, depth / 2);
     lid.add(strap);
   }
