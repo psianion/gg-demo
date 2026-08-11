@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PAPER, LINE, fillMaterial, lineMaterial, sketch, rays, hatch, contact, weight } from './pencil';
+import { PAPER, LINE, fillMaterial, lineMaterial, sketch, rays, hatch, crossHatch, contact, weight } from './pencil';
 
 // A ray burst wrapped in a Group so timeline can own its scale (and ambient
 // rotation reads world.t elsewhere) — every "*Rays" field is this shape.
@@ -393,8 +393,36 @@ function buildPathProps() {
   const fire2Rays = buildRayBurst(6, 0.5, 0);
   container.add(fire2Rays);
 
-  const lanternPost = sketch(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8));
-  lanternPost.position.set(10, 0.55, 0);
+  const lanternPost = new THREE.Group();
+  lanternPost.position.set(10, 0, 0);
+  const pole = sketch(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8));
+  pole.position.y = 0.55;
+  lanternPost.add(pole);
+
+  // cross-arm off the post top, with a short drop to hold the housing clear of the pole
+  const lanternArm = sketch(new THREE.CylinderGeometry(0.018, 0.018, 0.2, 6));
+  lanternArm.rotation.z = Math.PI / 2;
+  lanternArm.position.set(0.1, 1.05, 0);
+  lanternPost.add(lanternArm);
+  const lanternDrop = sketch(new THREE.CylinderGeometry(0.014, 0.014, 0.1, 6), 25, 'faint');
+  lanternDrop.position.set(0.19, 1.0, 0);
+  lanternPost.add(lanternDrop);
+
+  // housing: cap, base and corner posts only — a cage, not a box, so the ray burst
+  // at (10, 1.1, 0) still reads as light coming from inside it
+  const lanternCap = sketch(new THREE.ConeGeometry(0.09, 0.05, 4), 20, 'faint');
+  lanternCap.rotation.y = Math.PI / 4;
+  lanternCap.position.set(0.19, 1.17, 0);
+  lanternPost.add(lanternCap);
+  const lanternBase = sketch(new THREE.CylinderGeometry(0.07, 0.07, 0.02, 8), 25, 'faint');
+  lanternBase.position.set(0.19, 1.02, 0);
+  lanternPost.add(lanternBase);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const bar = sketch(new THREE.CylinderGeometry(0.006, 0.006, 0.14, 4), 15, 'faint');
+    bar.position.set(0.19 + Math.cos(a) * 0.065, 1.095, Math.sin(a) * 0.065);
+    lanternPost.add(bar);
+  }
   container.add(lanternPost);
   const lanternRays = buildRayBurst(10, 1.1, 0);
   container.add(lanternRays);
@@ -409,15 +437,95 @@ function buildPathProps() {
     rock.position.set(x, y, z);
     container.add(rock);
   });
+  // a dark opening behind the door, set into the rock cluster — the door swings
+  // open onto this, not onto more rock. Fixed to the cluster, so it does not
+  // rotate with the door.
+  const caveMouth = new THREE.Group();
+  caveMouth.position.set(13.4, 0.8, -2.2);
+  const mouthDark = crossHatch(0.9, 1.2, 16);
+  caveMouth.add(mouthDark);
+  const rimChips: [number, number, number, number][] = [
+    [-0.42, 0.35, -0.05, 0.22],
+    [0.4, 0.3, 0.05, 0.2],
+    [-0.1, 0.62, 0.02, 0.2],
+    [0.15, -0.55, -0.03, 0.22],
+  ];
+  rimChips.forEach(([x, y, z, r]) => {
+    const chip = sketch(new THREE.DodecahedronGeometry(r), 25, 'faint');
+    chip.position.set(x, y, z);
+    caveMouth.add(chip);
+  });
+  container.add(caveMouth);
+
+  const doorWidth = 1.2;
+  const doorHeight = 1.6;
+  const doorThickness = 0.08;
   const caveDoor = new THREE.Group();
   caveDoor.position.set(13.4, 0.8, -2); // hinge at the left edge
-  const doorPlane = sketch(new THREE.PlaneGeometry(1.2, 1.6));
-  doorPlane.position.x = 0.6;
-  caveDoor.add(doorPlane);
+  const doorSlab = sketch(new THREE.BoxGeometry(doorWidth, doorHeight, doorThickness), 25, 'hero');
+  doorSlab.position.x = doorWidth / 2; // offset +x from the hinge
+  caveDoor.add(doorSlab);
+
+  // plank seams — thin proud strips read as the gaps between boards
+  for (const px of [doorWidth * 0.22, doorWidth * 0.45, doorWidth * 0.68, doorWidth * 0.9]) {
+    const seam = sketch(new THREE.BoxGeometry(0.015, doorHeight * 0.94, doorThickness + 0.01), 25, 'faint');
+    seam.position.x = px;
+    caveDoor.add(seam);
+  }
+
+  // iron banding, top and bottom
+  for (const py of [doorHeight * 0.32, -doorHeight * 0.32]) {
+    const band = sketch(new THREE.BoxGeometry(doorWidth + 0.01, 0.05, doorThickness + 0.015));
+    band.position.set(doorWidth / 2, py, 0);
+    caveDoor.add(band);
+  }
+
+  // handle, near the free edge
+  const handle = sketch(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 6));
+  handle.rotation.z = Math.PI / 2;
+  handle.position.set(doorWidth - 0.15, 0, doorThickness / 2 + 0.03);
+  caveDoor.add(handle);
+
   container.add(caveDoor);
 
   const chest = buildChest(18, 0, 0);
   container.add(chest.container);
+
+  // a tree for the ravens to actually perch on — trunk offset from the branch/raven
+  // span so it doesn't run through them
+  const tree = new THREE.Group();
+  tree.position.set(21.2, 0, 0);
+  const trunkH = 1.5;
+  const trunk = sketch(new THREE.CylinderGeometry(0.08, 0.12, trunkH, 7), 25, 'form');
+  trunk.position.y = trunkH / 2;
+  trunk.rotation.z = -0.05; // nothing grows perfectly plumb
+  tree.add(trunk);
+  tree.add(contact(0.4, 0.32));
+
+  // a couple of smaller twigs off the trunk, near where the main branch grows out
+  const twigSpecs: [number, number, number, number, number][] = [
+    [0.3, 1.15, 0.06, 0.35, -0.5],
+    [-0.2, 1.32, -0.05, 0.28, 0.6],
+  ];
+  twigSpecs.forEach(([x, y, z, len, tilt]) => {
+    const twig = sketch(new THREE.CylinderGeometry(0.015, 0.02, len, 5), 25, 'faint');
+    twig.rotation.z = Math.PI / 2 + tilt;
+    twig.position.set(x, y, z);
+    tree.add(twig);
+  });
+
+  // a little foliage, kept loose so it doesn't read as a hedge
+  const foliageSpecs: [number, number, number, number][] = [
+    [0.05, 1.75, 0.05, 0.3],
+    [-0.28, 1.55, 0.1, 0.24],
+    [0.42, 1.6, -0.08, 0.22],
+  ];
+  foliageSpecs.forEach(([x, y, z, r]) => {
+    const puff = sketch(new THREE.IcosahedronGeometry(r, 0), 28, 'faint');
+    puff.position.set(x, y, z);
+    tree.add(puff);
+  });
+  container.add(tree);
 
   const branch = sketch(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 6));
   branch.rotation.z = Math.PI / 2;
@@ -525,9 +633,46 @@ function buildTheatre() {
 
   const rope = new THREE.Group();
   rope.position.set(38.5, 0, 1);
-  const ropeMesh = sketch(new THREE.CylinderGeometry(0.02, 0.02, 1.8, 6));
-  ropeMesh.position.y = 1.3; // spans y 0.4..2.2
+
+  // a hanging line with a real catenary sag, not a rigid rod — the goblin grabs
+  // the bottom of this. Spans y 0.4..2.2, same as before.
+  const ropeCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.03, 2.2, 0),
+    new THREE.Vector3(-0.02, 1.7, 0.05),
+    new THREE.Vector3(-0.06, 1.2, 0.08),
+    new THREE.Vector3(-0.03, 0.75, 0.05),
+    new THREE.Vector3(0, 0.4, 0),
+  ]);
+  const ropeMesh = sketch(new THREE.TubeGeometry(ropeCurve, 24, 0.022, 5, false), 20, 'form');
   rope.add(ropeMesh);
+
+  // strand twist — short wraps climbing the tube
+  for (let i = 0; i < 6; i++) {
+    const pt = ropeCurve.getPointAt(i / 6);
+    const wrap = sketch(new THREE.TorusGeometry(0.026, 0.006, 4, 8), 15, 'faint');
+    wrap.position.copy(pt);
+    wrap.rotation.set(Math.PI / 2, 0.5, 0);
+    rope.add(wrap);
+  }
+
+  // a knot near the bottom
+  const knot = sketch(new THREE.IcosahedronGeometry(0.045, 0), 30, 'form');
+  knot.position.copy(ropeCurve.getPointAt(0.92));
+  rope.add(knot);
+
+  // frayed end below the knot
+  const frayEnd = ropeCurve.getPointAt(1);
+  for (const [dx, dz] of [
+    [0.02, 0],
+    [-0.015, 0.015],
+    [0.005, -0.02],
+  ]) {
+    const strand = sketch(new THREE.CylinderGeometry(0.004, 0.001, 0.08, 4), 15, 'faint');
+    strand.position.set(frayEnd.x + dx, frayEnd.y - 0.04, frayEnd.z + dz);
+    strand.rotation.set(dz * 4, 0, dx * 4);
+    rope.add(strand);
+  }
+
   container.add(rope);
 
   return { container, stageDisc, rope };
