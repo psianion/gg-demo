@@ -338,37 +338,53 @@ export function buildTimeline(
   const c5Xs = [0, 8, 16, 24, 32, 40];
   c5Xs.forEach((x, i) => {
     const at = 50 + i * 1.25;
-    const dur = 0.9;
+    const dur = 0.5;
 
-    cut(at, [x - 4.3, 1.9, -35.7], [x, 0.6, -40]);
+    // Tight on one platform, and looking DOWN on it. Six units back put the neighbouring
+    // vignettes in frame and showed the montage for what it is — discs floating in a
+    // void. Below prop height it was worse: the map table showed only its underside, so
+    // the road being drawn on top, which is the entire point of the shot, was invisible.
+    cut(at, [x - 2.5, 2.4, -36.9], [x - 0.1, 1.0, -39.7]);
 
-    // goblin is mid-job in every frame: set into place at the cut
-    tl.set(goblin.root.position, { x: x - 1.5, y: 0, z: -38.5 }, at);
+    // and each cut drifts a little closer. Six locked-off frames in a row read as a
+    // slideshow; the drift is what makes it a montage.
+    cam(at + 0.04, 1.15, [x - 2.05, 2.2, -37.6], [x - 0.1, 0.95, -39.8], 'power1.out');
+
+    // He arrives on the beat instead of being posted there mid-pose. Gait running, a
+    // short step in to the job, then the hand comes down — and only then does the prop
+    // move. Standing still while the work does itself was the whole problem.
+    tl.set(goblin.root.position, { x: x - 1.35, y: 0, z: -38.6 }, at);
     tl.set(goblin.root.rotation, { y: 2.36, z: 0 }, at);
-    tl.set(goblin, { speed: 0 }, at);
-    tl.set(goblin.armR.pose.rotation, { x: -1.2 }, at);
+    tl.set(goblin.armR.pose.rotation, { x: -2.15 }, at);
+    tl.set(goblin, { speed: 1 }, at);
+    tl.to(goblin.root.position, { x: x - 0.8, z: -39.1, duration: 0.5 }, at);
+    tl.to(goblin, { speed: 0, duration: 0.12 }, at + 0.5);
+    tl.to(goblin.armR.pose.rotation, { x: -1.1, duration: 0.32 }, at + 0.5);
+
+    // the job lands as the hand does
+    const actAt = at + 0.72;
 
     switch (i) {
       case 0: // map table — road being drawn
-        tl.to(world.roadLine.scale, { x: 1, duration: dur }, at);
+        tl.to(world.roadLine.scale, { x: 1, duration: dur }, actAt);
         break;
       case 1: // monster rears up
-        tl.to(world.monster.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, at);
+        tl.to(world.monster.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, actAt);
         break;
       case 2: // sign drops onto its bracket
-        tl.to(world.tavernSign.position, { y: '-=1.2', duration: dur, ease: 'bounce.out' }, at);
+        tl.to(world.tavernSign.position, { y: '-=1.2', duration: dur, ease: 'bounce.out' }, actAt);
         break;
       case 3: // trees planted
         world.trees5.forEach((tree, ti) => {
-          tl.to(tree.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, at + ti * 0.15);
+          tl.to(tree.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, actAt + ti * 0.12);
         });
         break;
       case 4: // chest opened
-        tl.to(world.chest5Lid.rotation, { x: -1.3, duration: dur }, at);
-        tl.to(world.chest5Coins.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, at);
+        tl.to(world.chest5Lid.rotation, { x: -1.3, duration: dur }, actAt);
+        tl.to(world.chest5Coins.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, actAt);
         break;
       case 5: // candles lit
-        tl.to(world.candleRays.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, at);
+        tl.to(world.candleRays.scale, { x: 1, y: 1, z: 1, duration: dur, ease: 'back.out' }, actAt);
         break;
     }
   });
