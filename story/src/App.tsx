@@ -12,13 +12,20 @@ gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
 // captions: id -> (text, italic, white-on-blackout vs dark-on-paper)
-const CAPTIONS: { id: string; text: string; onPaper?: boolean }[] = [
+// `low` seats a caption like a subtitle. Narration that plays over the goblin working
+// has to sit under the action; centred, it draws a line straight through it.
+const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean }[] = [
   { id: 'open1', text: 'Every campaign begins the same way…' },
   { id: 'open2', text: '…and one goblin always gets away.', onPaper: true },
   { id: 'me1', text: 'That was me.', onPaper: true },
   { id: 'me2', text: 'You thought I ran away.', onPaper: true },
   { id: 'me3', text: 'I did.', onPaper: true },
   { id: 'me4', text: 'Straight to work.', onPaper: true },
+  { id: 'work1', text: 'Nobody sees this part.', onPaper: true, low: true },
+  { id: 'work2', text: 'The door has to be open before they find it.', onPaper: true, low: true },
+  { id: 'work3', text: 'The chest has to be full before they open it.', onPaper: true, low: true },
+  { id: 'work4', text: 'None of this happens by itself.', onPaper: true, low: true },
+  { id: 'work5', text: 'And when they need somewhere new to go…', onPaper: true, low: true },
   { id: 'nat1', text: 'Natural 1.', onPaper: true },
   { id: 'nat20', text: 'Natural 20.', onPaper: true },
   { id: 'welcome', text: "You're welcome.", onPaper: true },
@@ -72,11 +79,11 @@ export default function App() {
 
       <div id="overlay">
         <div id="blackout" />
-        {CAPTIONS.map(({ id, text, onPaper }) => (
+        {CAPTIONS.map(({ id, text, onPaper, low }) => (
           <div
             key={id}
             id={id}
-            className={`caption${onPaper ? ' on-paper' : ''}`}
+            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}`}
             aria-hidden="true"
             ref={(el) => {
               if (el) caps[id] = el;

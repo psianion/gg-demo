@@ -88,16 +88,32 @@ export function buildTimeline(
   cap('me3', 14.4, 1.0);
   cap('me4', 15.6, 1.4);
 
-  // ---- t16.5-17: head back, world thaws ---------------------------------
+  // ---- t16.5-17: head back, but the world stays frozen --------------------
+  // The lighting run is the goblin's hidden work, and the art direction is explicit
+  // that this happens behind the curtain: the world holds still while he works and
+  // snaps back only when he's finished (t30). A fire he lights mid-freeze sits there
+  // lit and perfectly motionless until time resumes — that stillness is the point.
   tl.to(goblin.head.rotation, { y: 0, duration: 0.5 }, 16.5);
-  tl.to(world, { timeScale: 1, duration: 0.5 }, 16.5);
   tl.to(goblin, { speed: 1, duration: 0.5 }, 16.5);
 
   // ---- t17-30: C2 run — 7 props, one per piecewise segment ---------------
   const c2Start = 17;
   const c2End = 30;
-  const c2Xs = [6, 10, 14, 18, 22, 26, 30];
-  const c2Window = (c2End - c2Start) / c2Xs.length;
+
+  // Where he stands, and what he actually puts a hand on. He used to stop on the path
+  // at the prop's own x and reach straight ahead, which left him grasping at air for
+  // the cave door (2 units off the path), the mushrooms (1.2 off) and the branch
+  // (1.6 up, and he is 0.9 tall) — so the props appeared to move by themselves.
+  const c2Props: { stand: [number, number]; hand: Vec3; reach: number }[] = [
+    { stand: [5.3, 0.5], hand: [6, 0.35, 0], reach: -1.35 }, // down to the fire
+    { stand: [9.35, 0.42], hand: [10, 1.1, 0], reach: -2.75 }, // up to the lantern
+    { stand: [13.05, -1.2], hand: [13.4, 0.85, -2], reach: -2.0 }, // off-path to the door
+    { stand: [17.3, 0.55], hand: [18, 0.4, 0], reach: -1.5 }, // lift the chest lid
+    { stand: [21.5, 0.6], hand: [22, 1.62, 0], reach: -2.95 }, // shoo the branch
+    { stand: [25.7, -0.55], hand: [26, 0.14, -1.2], reach: -1.25 }, // down to the mushrooms
+    { stand: [29.4, 0.5], hand: [30, 1.0, 0], reach: -2.4 }, // straighten the sign
+  ];
+  const c2Window = (c2End - c2Start) / c2Props.length;
 
   const c2PropAction = (i: number, at: number, dur: number) => {
     switch (i) {
@@ -147,28 +163,56 @@ export function buildTimeline(
     }
   };
 
-  c2Xs.forEach((x, i) => {
+  c2Props.forEach(({ stand, hand, reach }, i) => {
+    const [sx, sz] = stand;
+    const [hx, hy, hz] = hand;
     const segAt = c2Start + i * c2Window;
-    const runDur = 0.9;
-    const reachAt = segAt + runDur;
-    const reachDur = 0.3;
+    const runDur = 0.85;
+    const turnAt = segAt + runDur;
+    const turnDur = 0.2;
+    const reachAt = turnAt + turnDur;
+    const reachDur = 0.25;
     const actionAt = reachAt + reachDur;
-    const actionDur = 0.5;
+    const actionDur = 0.35;
     const backAt = actionAt + actionDur;
-    const backDur = 0.15;
+    const backDur = 0.22;
 
-    tl.to(goblin.root.position, { x, duration: runDur }, segAt);
-    tl.to(camera.position, { x: x - 3.2, y: 1.6, z: 2.8, duration: c2Window }, segAt);
-    tl.to(world.look, { x: x + 2.2, y: 0.6, z: 0.5, duration: c2Window }, segAt);
+    // walk to a spot beside the prop rather than into it
+    tl.to(goblin.root.position, { x: sx, z: sz, duration: runDur }, segAt);
+    tl.to(camera.position, { x: sx - 3.2, y: 1.6, z: 2.8, duration: c2Window }, segAt);
+    tl.to(world.look, { x: hx + 1.2, y: 0.7, z: hz * 0.6, duration: c2Window }, segAt);
 
-    tl.to(goblin, { speed: 0, duration: reachDur }, reachAt);
-    tl.to(goblin.armR.pose.rotation, { x: -2.0, duration: reachDur }, reachAt);
+    // turn to face what he's about to touch — the rig faces +x at rest, so this is
+    // the heading from where he stands to where his hand goes
+    tl.to(goblin, { speed: 0, duration: turnDur }, turnAt);
+    tl.to(goblin.root.rotation, { y: Math.atan2(-(hz - sz), hx - sx), duration: turnDur }, turnAt);
 
+    // reach height is per-prop: high for the lantern and the branch overhead, low for
+    // the fire and the mushrooms at his feet
+    tl.to(goblin.armR.pose.rotation, { x: reach, duration: reachDur }, reachAt);
+    tl.to(goblin.head.rotation, { x: (hy - 0.76) * 0.35, duration: reachDur }, reachAt);
+
+    // the prop moves only once his hand has arrived
     c2PropAction(i, actionAt, actionDur);
 
     tl.to(goblin.armR.pose.rotation, { x: 0, duration: backDur }, backAt);
+    tl.to(goblin.head.rotation, { x: 0, duration: backDur }, backAt);
+    tl.to(goblin.root.rotation, { y: 0, duration: backDur }, backAt);
     tl.to(goblin, { speed: 1, duration: backDur }, backAt);
   });
+
+  // The run used to play out in silence — 23 seconds between "Straight to work." and
+  // "Natural 1.", across the whole of his hidden work. These carry his voice through it.
+  cap('work1', 17.8, 1.9); // over the campfire
+  cap('work2', 21.0, 2.0); // over the cave door
+  cap('work3', 23.3, 1.9); // over the chest
+  cap('work4', 28.3, 1.6); // over the signpost
+
+  // the last prop leaves him off the path; put him back on it before the dash
+  tl.to(goblin.root.position, { z: 0, duration: 0.3 }, c2End - 0.3);
+
+  // ---- t30: the snap — time resumes and the world he prepared comes alive --
+  tl.to(world, { timeScale: 1, duration: 0.12 }, 30);
 
   // ---- t30-31.5: dash to the rope, camera settles wide -------------------
   tl.to(goblin.root.position, { x: 38.5, duration: 1.5 }, 30);
@@ -179,6 +223,8 @@ export function buildTimeline(
   tl.to(goblin.armL.pose.rotation, { x: -2.4, duration: 0.4 }, 31.5);
   tl.to(goblin.armR.pose.rotation, { x: -2.4, duration: 0.4 }, 31.5);
   tl.to(goblin.root.rotation, { z: 0.15, duration: 0.4 }, 31.5);
+
+  cap('work5', 32.6, 2.0); // over the theatre-set rotation
 
   tl.to(world.stageDisc.rotation, { y: `+=${Math.PI}`, duration: 2.5, ease: 'power2.inOut' }, 32.0);
   tl.to(

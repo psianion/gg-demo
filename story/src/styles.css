@@ -80,6 +80,14 @@ canvas {
   color: var(--line);
 }
 
+/* narration that runs while the goblin is working — seated low so it reads under the
+   action instead of across it, and a size down, because it is a voice rather than a
+   statement to the camera */
+.caption.low {
+  top: 79%;
+  font-size: clamp(1.15rem, 2.2vw, 1.7rem);
+}
+
 #endcard {
   /* the d20 lands dead centre and the board is centred behind it; a wordmark at 50%
      runs straight through the die. Sitting it low reads as a title card under the
