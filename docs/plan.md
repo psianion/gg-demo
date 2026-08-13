@@ -30,7 +30,7 @@ Rejected: Pixi-only 2.5D (signature 3D shots become hand-faked projections), pre
 3. **Goblin puppet refinement** — richer action set on the locked rig. Deferred: expressiveness waits until it can be judged against real art. The rig's blocker is recorded below. ⬅ **current**
 4. **Art pass** — painted layers replace pencil primitives, scene by scene, in story order; the graphite post-pass ships here (pencil look becomes the Behind-the-Curtain state).
 5. **Ending morph + polish** — d20 → board transition, micro-interaction polish, performance, reduced-motion, audio mix.
-6. **Copy + release gate** — final wording, deployed browser walk, zero console errors.
+6. **Copy + release gate** — final wording ✅ **done early** (copy/type/CTA pass per `copy-spec.md`); the release gate itself (deployed browser walk, zero console errors) remains and runs last.
 
 ## Status (as of this import)
 
@@ -40,6 +40,7 @@ Milestone 1+2 complete. The entire film plays as black pencil line-work on paper
 - Both freeze clocks verified working (world clock stops, goblin clock doesn't).
 - Build is clean (tsc + vite); zero console errors; all nine beat-sheet checkpoints verified against the spec (camera, goblin pose, captions, freeze state).
 - Previz review done (human walk-through): scroll feel and pacing accepted as-is; one camera change locked — the C2 tracking shot is now a three-quarter-back over-the-shoulder follow instead of a flat side-track (spec + timeline updated together). Pacing and camera are locked.
+- Copy/type/CTA pass implemented per `copy-spec.md`: full caption set rewritten on the timeline, type system shipped (Metamorphous for captions/UI, Cinzel for the CTA only, via @fontsource), endcard rebuilt as direction C ("lettered on the board", no box) with the scroll-scrubbed entrance choreography (t65–66) and the Discord CTA (`DISCORD_URL` still `#`, owner: Nayan).
 
 Numbers in the beat sheet are previz targets, not sacred. Pacing changes go into `story/src/film/timeline.ts` (one beat-sheet-shaped file); set/prop changes into `story/src/film/world.ts`.
 

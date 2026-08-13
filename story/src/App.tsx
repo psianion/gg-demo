@@ -12,25 +12,33 @@ gsap.registerPlugin(ScrollTrigger);
 // without this the film jumps to a different beat as the address bar hides
 ScrollTrigger.config({ ignoreMobileResize: true });
 
+// Closed beta lives in Discord — no waitlist, no backend. Swap this for the real
+// invite before launch.
+const DISCORD_URL = '#';
+
+// Until it is a real destination the CTA stays on this page: a placeholder href with
+// target="_blank" opens a second copy of the film, which reads as the button being
+// broken rather than the invite not existing yet.
+const CTA_IS_LIVE = DISCORD_URL !== '#';
+
 // captions: id -> (text, italic, white-on-blackout vs dark-on-paper)
-// Neither `low` nor `above` is decoration: every caption is centred in the same spot,
-// and the film puts something in that spot. `low` seats narration under the goblin
-// working; `above` clears his face on the freeze, where he is looking at the lens.
-const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean; above?: boolean }[] = [
+// Every caption sits in the same lower-third band now, so there is no more `above`
+// variant for the freeze lines. `low` is only a size/voice choice: it seats narration
+// a touch smaller, for lines said under the work rather than to camera.
+const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean }[] = [
   { id: 'open1', text: 'Every campaign begins the same way…' },
   { id: 'open2', text: '…and one goblin always gets away.', onPaper: true },
-  { id: 'me1', text: 'That was me.', onPaper: true, above: true },
-  { id: 'me2', text: 'You thought I ran away.', onPaper: true, above: true },
-  { id: 'me3', text: 'I did.', onPaper: true, above: true },
-  { id: 'me4', text: 'Straight to work.', onPaper: true, above: true },
-  { id: 'work1', text: 'Nobody sees this part.', onPaper: true, low: true },
-  { id: 'work2', text: 'The door has to be open before they find it.', onPaper: true, low: true },
-  { id: 'work3', text: 'The chest has to be full before they open it.', onPaper: true, low: true },
-  { id: 'work4', text: 'None of this happens by itself.', onPaper: true, low: true },
-  { id: 'work5', text: 'And when they need somewhere new to go…', onPaper: true, low: true },
-  { id: 'nat1', text: 'Natural 1.', onPaper: true },
-  { id: 'nat20', text: 'Natural 20.', onPaper: true },
+  { id: 'me1', text: 'That was me.', onPaper: true },
+  { id: 'me2', text: 'You thought I ran away.', onPaper: true },
+  { id: 'me3', text: 'I did.', onPaper: true },
+  { id: 'me4', text: 'Straight to work.', onPaper: true },
+  { id: 'light1', text: 'Someone has to light the world.', onPaper: true, low: true },
+  { id: 'set1', text: 'Your DM dreams it. I move the scenery.', onPaper: true, low: true },
+  // nat1 / nat20 are cut — the die shows its own faces at that distance, and a caption
+  // naming the roll it's already displaying was redundant with the shot.
   { id: 'welcome', text: "You're welcome.", onPaper: true },
+  { id: 'pitch1', text: "I've built worlds for your DM for years.", onPaper: true },
+  { id: 'pitch2', text: 'Now I work for every table.', onPaper: true },
 ];
 
 const prefersReducedMotion = () =>
@@ -45,7 +53,9 @@ const scrollMax = () => document.body.scrollHeight - window.innerHeight;
 type PlayState = 'idle' | 'playing' | 'ended';
 
 export default function App() {
-  const caps = useRef<Record<string, HTMLElement>>({}).current;
+  // Element | not just HTMLElement — the scroll rail below is a pair of SVG <path>
+  // nodes, and GSAP tweens those the same way it tweens any DOM node.
+  const caps = useRef<Record<string, Element>>({}).current;
   const lenis = useRef<Lenis | null>(null);
   const [play, setPlay] = useState<PlayState>('idle');
 
@@ -158,11 +168,11 @@ export default function App() {
 
       <div id="overlay">
         <div id="blackout" />
-        {CAPTIONS.map(({ id, text, onPaper, low, above }) => (
+        {CAPTIONS.map(({ id, text, onPaper, low }) => (
           <div
             key={id}
             id={id}
-            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}${above ? ' above' : ''}`}
+            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}`}
             aria-hidden="true"
             ref={(el) => {
               if (el) caps[id] = el;
@@ -172,17 +182,64 @@ export default function App() {
           </div>
         ))}
 
-        {/* The endcard is the wordmark, not a line of type — but it still lives in the
-            same caps map, so the timeline fades it in at t65.5 exactly as before. */}
+        {/* The endcard is lettered straight onto the board now — no card, no box, no
+            drawn border. Each line of type carries its own paper knockout (a layered
+            text-shadow halo, see .halo in styles.css) so the grid doesn't read through
+            the letterforms, the same way the wordmark's stroke halo already knocks
+            itself out where it crosses the goblin. It holds the one real destination on
+            the overlay — so unlike the captions above it, it is not aria-hidden: the
+            wordmark and copy are supplementary, but the Discord link is a genuine link
+            and needs to reach assistive tech. */}
         <div
           id="endcard"
-          className="caption on-paper"
-          aria-hidden="true"
           ref={(el) => {
             if (el) caps.endcard = el;
           }}
         >
-          <Wordmark />
+          <div
+            id="endcard-wordmark"
+            ref={(el) => {
+              if (el) caps['endcard-wordmark'] = el;
+            }}
+          >
+            <Wordmark />
+          </div>
+
+          <p
+            id="endcard-tagline"
+            className="halo"
+            ref={(el) => {
+              if (el) caps['endcard-tagline'] = el;
+            }}
+          >
+            The Dungeon Master&rsquo;s backstage.
+          </p>
+          <p
+            id="endcard-subline"
+            className="halo"
+            ref={(el) => {
+              if (el) caps['endcard-subline'] = el;
+            }}
+          >
+            Build the maps. Run the table. The goblin does the rest.
+          </p>
+          <a
+            id="endcard-cta"
+            href={DISCORD_URL}
+            {...(CTA_IS_LIVE ? { target: '_blank', rel: 'noreferrer' } : {})}
+            ref={(el) => {
+              if (el) caps['endcard-cta'] = el;
+            }}
+          >
+            <span
+              className="cta-label"
+              ref={(el) => {
+                if (el) caps['endcard-cta-label'] = el;
+              }}
+            >
+              Join the Discord
+            </span>
+          </a>
         </div>
 
         {/* Inks itself in as you scroll — the film's own progress, drawn rather than

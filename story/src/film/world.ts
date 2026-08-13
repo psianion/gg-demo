@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { dieFaces } from './dieGeometry';
+import { dieFaces } from './dieGeometry.ts';
 import {
   PAPER,
   LINE,
@@ -14,7 +14,7 @@ import {
   numeral,
   polyline,
   curveLine,
-} from './pencil';
+} from './pencil.ts';
 
 // A ray burst wrapped in a Group so timeline can own its scale (and ambient
 // rotation reads world.t elsewhere) — every "*Rays" field is this shape.

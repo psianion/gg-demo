@@ -14,7 +14,7 @@ const AMBIENT =
     ? 0.3
     : 1;
 
-export default function Film({ caps }: { caps: Record<string, HTMLElement> }) {
+export default function Film({ caps }: { caps: Record<string, Element> }) {
   const world = useMemo(buildWorld, []);
   const { scene, camera, size } = useThree();
 

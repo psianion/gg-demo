@@ -23,7 +23,9 @@ type Vec3 = [number, number, number];
 export function buildTimeline(
   world: World,
   camera: THREE.Camera,
-  caps: Record<string, HTMLElement>,
+  // Element, not HTMLElement — the scroll rail is a pair of SVG <path> nodes, and
+  // GSAP tweens those the same way as any DOM node.
+  caps: Record<string, Element>,
 ): gsap.core.Timeline {
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
@@ -208,11 +210,10 @@ export function buildTimeline(
   });
 
   // The run used to play out in silence — 23 seconds between "Straight to work." and
-  // "Natural 1.", across the whole of his hidden work. These carry his voice through it.
-  cap('work1', 17.8, 1.9); // over the campfire
-  cap('work2', 21.0, 2.0); // over the cave door
-  cap('work3', 23.3, 1.9); // over the chest
-  cap('work4', 28.3, 1.6); // over the signpost
+  // "Natural 1.", across the whole of his hidden work. One line carries his voice
+  // through it: mid-run, clear of the campfire/lantern beats on either side, held
+  // long enough to read against the running gait.
+  cap('light1', 19, 4); // over the lantern / cave-door stretch of the run
 
   // the last prop leaves him off the path; put him back on it before the dash
   tl.to(goblin.root.position, { z: 0, duration: 0.3 }, c2End - 0.3);
@@ -230,7 +231,7 @@ export function buildTimeline(
   tl.to(goblin.armR.pose.rotation, { x: -2.4, duration: 0.4 }, 31.5);
   tl.to(goblin.root.rotation, { z: 0.15, duration: 0.4 }, 31.5);
 
-  cap('work5', 32.6, 2.0); // over the theatre-set rotation
+  cap('set1', 32.6, 2.0); // over the theatre-set rotation
 
   tl.to(world.stageDisc.rotation, { y: `+=${Math.PI}`, duration: 2.5, ease: 'power2.inOut' }, 32.0);
   tl.to(
@@ -289,7 +290,8 @@ export function buildTimeline(
   // the patch of table right behind it, which is where the finger comes from.
   cam(38.3, 1.5, [80.42, 2.42, 1.5], [80, 1.28, 0], 'power2.inOut');
 
-  cap('nat1', 40.2, 1.4);
+  // nat1 / nat20 no longer get captions here — the die is close enough in this shot
+  // to read its own faces, and naming the roll on top of showing it was redundant.
 
   // ---- t40.6: tick, FREEZE -----------------------------------------------------
   // The goblin is never seen at this table. He is nine tenths of a unit tall and the
@@ -330,7 +332,6 @@ export function buildTimeline(
   tl.to(world.nudgeFinger.position, { y: 1.0, z: -0.58, duration: 0.9, ease: 'power2.in' }, 44.5);
   tl.set(world.nudgeFinger.scale, { x: 0, y: 0, z: 0 }, 45.4);
 
-  cap('nat20', 46.8, 1.3);
   tl.to(world, { timeScale: 1, duration: 0.3 }, 47);
 
   // ---- t46.5-49: ease back out before the montage cuts --------------------------
@@ -338,7 +339,14 @@ export function buildTimeline(
   // over from a normal-scale view of the table instead.
   cam(46.5, 2.5, [80.9, 2.55, 3.2], [80, 1.15, 0], 'power2.inOut');
 
-  cap('welcome', 48.4, 1.6);
+  // welcome now lands right off the flip: the die is done tipping to 20 by 44.25 and
+  // holds through the finger's exit, but time itself doesn't move again until the
+  // timeScale tween above starts at 47 and finishes at 47.3 — so 47.3 is the earliest
+  // point where both are true (die on 20, world unfrozen). Landing it there instead of
+  // the old 48.4 puts the line on the beat it's reacting to instead of after it. Hold
+  // trimmed from 1.6 to 1.3 so the fade-out (47.3 + 1.3 + 0.4 = 49.0) still clears
+  // before the montage's first hard cut at t50, same as before.
+  cap('welcome', 47.3, 1.3);
 
   // ---- t50-57.5: C5 montage — six hard-cut vignettes ------------------------------
   // One shared camera could not frame six different jobs. The sign drops at y 2.8 while
@@ -450,6 +458,8 @@ export function buildTimeline(
   tl.set(goblin.root.rotation, { y: Math.PI / 2 }, 57.5);
   cut(57.5, [117.5, 7.4, 3.2], [123, 6.6, 0]);
 
+  cap('pitch1', 58, 2.2); // cliff establish, before the world underneath him flattens
+
   // ---- t58.5-62: camera rises to dead top-down -------------------------------------
   cam(58.5, 3.5, [128, 26, 8], [146, 2, 0], 'power2.inOut');
   cam(62, 2.5, [145, 40, 0.01], [145, 0, 0], 'power2.inOut');
@@ -457,6 +467,8 @@ export function buildTimeline(
   // ---- t60-62: the miniature world flattens during the rise ------------------------
   const miniScales = world.miniWorld.map((g) => g.scale);
   tl.to(miniScales, { y: 0.02, duration: 1.5, stagger: 0.05, ease: 'power2.in' }, 60);
+
+  cap('pitch2', 62.6, 1.0); // the throw — clears well before the board fades in at 64.5
 
   // ---- t62.5-64.5: the throw — die2 arcs into the top-down camera -------------------
   tl.to(world.die2.scale, { x: 1, y: 1, z: 1, duration: 0.3 }, 62.5);
@@ -476,15 +488,99 @@ export function buildTimeline(
   tl.to(boardMaterials, { opacity: 1, duration: 0.6 }, 64.5);
   tl.to(world.die2.position, { y: '-=0.15', duration: 0.2, yoyo: true, repeat: 1 }, 64.5);
 
-  // pulled earlier and shortened from (64.7, 1.2): every caption is centred in the same
-  // spot, so any overlap with the endcard at 65.5 stacked two lines of type on the
-  // film's last image. This now clears the screen exactly as the wordmark begins.
-  cap('nat20', 64.4, 0.7);
+  // ---- t65.0-66: endcard — lettered onto the board, no box to draw first ------------
+  // Not a card fading up: the board is already there (its own fade runs 64.5-65.1), so
+  // the endcard's job is just to letter itself onto it. Wordmark first, then tagline and
+  // subline write on with an overlapping stagger, then the CTA arrives last as one
+  // object — the thing you're asked to do only shows up once there's something to read
+  // first. Confident deceleration throughout (power2.out), the same ease family the rest
+  // of the film already uses for its settles.
+  const reducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ---- t65.5-66: endcard, stays up -----------------------------------------------------
-  if (caps.endcard) {
-    tl.to(caps.endcard, { opacity: 1, duration: 0.5 }, 65.5);
+  const wordmark = caps['endcard-wordmark'];
+  const tagline = caps['endcard-tagline'];
+  const subline = caps['endcard-subline'];
+  const cta = caps['endcard-cta'];
+  const ctaLabel = caps['endcard-cta-label'];
+
+  const entranceAt = 65.0;
+  const easeIn = 'power2.out';
+
+  if (wordmark) {
+    tl.fromTo(wordmark, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: easeIn }, entranceAt);
   }
+
+  // Tagline and subline write on left-to-right via clip-path, the pencil's own left-to-
+  // right stroke direction; reduced motion swaps the wipe for a plain opacity fade at the
+  // same time and duration. The whole sequence below is timed to finish with margin
+  // before t66 — the timeline's scrub has a 0.8s catch-up smoothing, so anything that
+  // finished exactly at the wire would still look mid-draw for a beat after a visitor
+  // hits the bottom of the page.
+  const taglineAt = entranceAt + 0.23;
+  const taglineDur = 0.26;
+  if (tagline) {
+    if (reducedMotion) {
+      tl.fromTo(
+        tagline,
+        { opacity: 0 },
+        { opacity: 1, duration: taglineDur, ease: easeIn },
+        taglineAt,
+      );
+    } else {
+      tl.fromTo(
+        tagline,
+        { clipPath: 'inset(0 100% 0 0)' },
+        { clipPath: 'inset(0 0% 0 0)', duration: taglineDur, ease: easeIn },
+        taglineAt,
+      );
+    }
+  }
+
+  // starts 60% into the tagline's own wipe — the two read as one continuous beat, not
+  // two separate ones
+  const sublineAt = taglineAt + taglineDur * 0.6;
+  const sublineDur = 0.24;
+  if (subline) {
+    if (reducedMotion) {
+      tl.fromTo(
+        subline,
+        { opacity: 0 },
+        { opacity: 1, duration: sublineDur, ease: easeIn },
+        sublineAt,
+      );
+    } else {
+      tl.fromTo(
+        subline,
+        { clipPath: 'inset(0 100% 0 0)' },
+        { clipPath: 'inset(0 0% 0 0)', duration: sublineDur, ease: easeIn },
+        sublineAt,
+      );
+    }
+  }
+
+  // CTA: the button (real border + its offset second pass together) fades/scales in as
+  // its own beat, then the label inks in a moment after — the last thing to arrive is
+  // the thing you're asked to do.
+  const ctaAt = sublineAt + 0.13;
+  if (cta) {
+    tl.fromTo(
+      cta,
+      { opacity: 0, scale: reducedMotion ? 1 : 0.96 },
+      { opacity: 1, scale: 1, duration: 0.18, ease: easeIn },
+      ctaAt,
+    );
+  }
+  if (ctaLabel) {
+    tl.fromTo(
+      ctaLabel,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.1, ease: easeIn },
+      ctaAt + 0.1,
+    );
+  }
+  // full sequence settles by ~t65.72 — comfortably inside the 66-long beat sheet
 
   return tl;
 }

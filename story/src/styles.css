@@ -58,19 +58,31 @@ canvas {
 
 .caption {
   position: absolute;
-  top: 50%;
+  /* lower-third band: clear of the freeze push-in (used to run centred type through
+     his eyes and mouth) and clear of the scroll hint, which is gone from the screen
+     by the time any caption reaches this band (see #hint) */
+  top: 78%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90vw;
+  /* 88vw rather than 90vw: at 390px that's the difference between an 19.5px side
+     margin and a 22px one — the release requirement is >=20px */
+  width: 88vw;
   max-width: 900px;
   text-align: center;
-  font-family: Georgia, serif;
-  font-style: italic;
-  font-size: clamp(1.4rem, 3.2vw, 2.4rem);
-  letter-spacing: 0.04em;
-  /* captions wrap to two lines on a phone; the browser default leading is too tight
-     for italic serif at that size */
-  line-height: 1.32;
+  font-family: 'Metamorphous', serif;
+  /* Metamorphous has no italic face — the caption voice runs upright everywhere now,
+     and this is a hard floor: an italic here would come back as a synthesised
+     oblique, which is fake type on the one thing the design is precious about. */
+  font-style: normal;
+  /* Metamorphous draws noticeably wider and heavier per character than Garamond did,
+     so the clamp comes down a step from the old (1.4rem, 3.2vw, 2.4rem) — otherwise
+     the longest lines ("Your DM dreams it..." / "I've built worlds...") ran to three
+     lines on a phone instead of the two the band has room for. */
+  font-size: clamp(1.15rem, 2.8vw, 2.1rem);
+  letter-spacing: 0.02em;
+  /* captions wrap to two lines on a phone; Metamorphous needs more air between them
+     than the italic serif did */
+  line-height: 1.38;
   text-wrap: balance;
   opacity: 0;
   color: var(--paper);
@@ -80,41 +92,187 @@ canvas {
   color: var(--line);
 }
 
-/* narration that runs while the goblin is working — seated low so it reads under the
-   action instead of across it, and a size down, because it is a voice rather than a
-   statement to the camera */
+/* narration that runs while the goblin is working — a size down, because it is a
+   voice rather than a statement to the camera. Same band as every other caption. */
 .caption.low {
-  top: 79%;
-  font-size: clamp(1.15rem, 2.2vw, 1.7rem);
+  font-size: clamp(0.95rem, 1.9vw, 1.45rem);
 }
 
-/* The four lines he says straight to the lens. They play on the freeze push-in, which
-   frames his head dead centre — so centred type ran through his eyes and mouth. Above
-   him is empty paper at every aspect, and it keeps the full statement size: these are
-   spoken to the viewer, not muttered over the work. */
-.caption.above {
-  top: 24%;
-}
-
-/* The endcard is the drawn lockup (src/Wordmark.tsx), so none of the type rules a
-   line of text needed apply any more — the mark is sized as an object instead. */
+/* Direction C: no box anywhere. The endcard used to be an opaque paper card with a
+   drawn double-rule border; that whole object is gone. What's left is lettered
+   straight onto the board — wordmark, tagline, subline, CTA stacked and centred over
+   the finished map, the one caption-like element NOT in the lower-third band. There
+   is no card ground to occlude the grid, so every line of type below carries its own
+   knockout instead (see .halo) — a rectangle is the one shape a pencil never draws
+   confidently on the first pass, and this direction never asks it to. */
 #endcard {
-  /* the d20 lands dead centre and the board is centred behind it; a mark at 50% runs
-     straight through the die. Sitting it low reads as a title card under the final
-     image instead of on top of it. The lockup is two lines tall where the old text
-     was one, so it sits a touch higher than 72% to keep its foot clear of the
-     home indicator on a phone. */
-  top: 71%;
-  /* 30vw keeps it in proportion to the frame on a desktop; the floor stops it
-     shrinking to nothing on a phone, where 78vw is the real constraint */
-  width: clamp(240px, 30vw, 440px);
-  max-width: 78vw;
+  position: absolute;
+  top: 47%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: min(92vw, 720px);
 }
 
-#endcard svg {
+/* Per-glyph paper knockout: eight stacked, unblurred-offset shadows in the paper
+   colour (four at 6px blur, four at 12px) so the board's grid lines don't read
+   through the letterforms even though there is no card behind them. One shadow
+   fades too thin at the edge of a stroke; stacking several of the same blur builds
+   the opacity back up to a clean halo, the same trick the wordmark's stroke
+   paint-order halo already relies on. */
+.halo {
+  text-shadow:
+    0 0 6px var(--paper), 0 0 6px var(--paper), 0 0 6px var(--paper), 0 0 6px var(--paper),
+    0 0 12px var(--paper), 0 0 12px var(--paper), 0 0 12px var(--paper), 0 0 12px var(--paper);
+}
+
+#endcard-wordmark {
+  position: relative;
+  width: min(44vw, 450px);
+  margin: 0 auto;
+  opacity: 0;
+}
+
+#endcard-wordmark svg {
   display: block;
   width: 100%;
   height: auto;
+}
+
+#endcard-tagline {
+  margin: 1.4rem 0 0;
+  font-family: 'Metamorphous', serif;
+  font-style: normal;
+  font-size: clamp(1.2rem, 2.1vw, 1.55rem);
+  letter-spacing: 0.02em;
+  color: #222222;
+  opacity: 0;
+}
+
+#endcard-subline {
+  margin: 0.45rem 0 0;
+  /* balance rather than a ch cap: at the desktop stack width this line fits in one
+     row; balance caps it to two even lines once the phone breakpoint forces a wrap */
+  text-wrap: balance;
+  font-family: 'Metamorphous', serif;
+  font-style: normal;
+  font-size: clamp(0.88rem, 1.4vw, 1rem);
+  line-height: 1.4;
+  color: #444444;
+  opacity: 0;
+}
+
+/* Cinzel is the brand voice — inscriptional capitals for the one thing on the
+   overlay you can actually click. Drawn border rather than a filled button, to
+   match the pencil world; the hover just swaps which side carries the ink. */
+#endcard-cta {
+  pointer-events: auto;
+  position: relative;
+  /* the stack's largest gap — subline to CTA — so the action stands apart from the
+     two lines of type that only set it up */
+  margin-top: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* bought outright rather than left to fall out of the padding, same logic as the
+     old 44px floor, just re-checked against a thumb target */
+  min-height: 48px;
+  padding: 0 1.75em;
+  border: 2px solid var(--line);
+  /* opaque, not the transparent/hover-fill-only button this replaces — a drawn-world
+     object sitting on the board, not a line floating over it */
+  background: var(--paper);
+  font-style: normal;
+  color: var(--line);
+  opacity: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cta-label {
+  opacity: 0;
+  font-family: 'Cinzel', serif;
+  /* Cinzel ships no italic, so an italic here would come back as a synthesised
+     slant — the one piece of drawn lettering on the overlay faked by the rasteriser */
+  font-style: normal;
+  font-weight: 700;
+  font-size: clamp(0.72rem, 1.4vw, 0.85rem);
+  letter-spacing: 0.16em;
+  /* letterspacing trails a gap after the final D that centring counts as ink;
+     matching the indent puts the label back on the optical centre. The formula
+     depends on the letter-spacing value, not the label's length, so it still holds
+     for the shorter "Join the Discord" text. */
+  text-indent: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A second border, offset and rotated a hair off true — the pencil going over its
+   own line twice rather than a single confident rasterised rectangle. Sits behind
+   the button's opaque fill (z-index -1), so only the sliver that pokes past the real
+   edge shows: the hand-redrawn overshoot, not a full duplicate outline. */
+#endcard-cta::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border: 2px solid var(--line);
+  opacity: 0.45;
+  transform: rotate(0.4deg);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+#endcard-cta:hover,
+#endcard-cta:focus-visible {
+  background: var(--line);
+  color: var(--paper);
+}
+
+/* Hover re-inks the second pass too — the offset line shifts further off true, the
+   way a hand redrawing a border under a cursor doesn't land in the same place twice. */
+#endcard-cta:hover::after,
+#endcard-cta:focus-visible::after {
+  transform: rotate(0.9deg);
+}
+
+/* Comp calls for min(92vw, 720px) at every width, but that leaves only ~15.6px of
+   gutter at 390px — under the release's 20px floor. Trimming to 88vw here buys back
+   the gutter (~23.4px at 390) without a visible composition change from the comp:
+   same centred stack, same rhythm, just a hair narrower on the phones it was never
+   measured against. */
+@media (max-width: 500px) {
+  #endcard {
+    top: 46%;
+    width: min(88vw, 720px);
+  }
+
+  #endcard-wordmark {
+    width: 76vw;
+  }
+
+  #endcard-tagline {
+    margin-top: 1.1rem;
+    font-size: 1.05rem;
+  }
+
+  #endcard-subline {
+    font-size: 0.85rem;
+    max-width: 30ch;
+  }
+
+  #endcard-cta {
+    margin-top: 1.4rem;
+    padding: 0 1.35em;
+  }
+
+  .cta-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-indent: 0.1em;
+  }
 }
 
 #hint {
@@ -127,8 +285,10 @@ canvas {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  font-family: Georgia, serif;
-  font-size: 0.9rem;
+  /* the page has two faces and Georgia is neither — it read as the one label nobody
+     set. Roman rather than italic: this is an instruction, not the goblin talking. */
+  font-family: 'Metamorphous', serif;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   color: var(--paper);
   opacity: 1;
@@ -164,8 +324,8 @@ canvas {
   border: 0;
   background: none;
   cursor: pointer;
-  font-family: Georgia, serif;
-  font-size: 0.9rem;
+  font-family: 'Metamorphous', serif;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   color: var(--paper);
   mix-blend-mode: difference;
