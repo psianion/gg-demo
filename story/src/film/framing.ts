@@ -14,10 +14,30 @@ const deg = (r: number) => (r * 180) / Math.PI;
 // the horizontal field every shot assumes
 const REF_H_FOV = 2 * Math.atan(Math.tan(rad(REF_FOV) / 2) * REF_ASPECT);
 
-// ponytail: fov-only compensation — portrait still reads tighter than desktop once it
-// hits the cap. Recomposing per-shot camera offsets for portrait belongs in the art
-// pass, where the framing is judged against real art rather than primitives.
 export function fitFov(aspect: number): number {
   const v = deg(2 * Math.atan(Math.tan(REF_H_FOV / 2) / aspect));
   return Math.min(Math.max(v, REF_FOV), MAX_FOV);
+}
+
+// Once the solve clamps at MAX_FOV the lens cannot open any further, and a phone was
+// left with roughly half the horizontal field every shot was composed around — at
+// 390x844 the frame is about 36 degrees wide against the authored 69. The lens can't
+// open, so it steps back instead: at the clamped fov the frame grows by tan(h/2) per
+// unit of depth, so multiplying the camera's distance from its look target by
+// tan(REF_H_FOV/2) / tan(h/2) covers exactly the authored width of world at the subject.
+// Perspective flattens a little; the composition survives, which is the trade.
+//
+// Capped, because a pull-back only works while there is still set behind the lens to
+// pull back into. C4 is the binding shot: the tavern is the one interior, and its box
+// (world.ts buildTavern) is sized so that at 2.2 the lens still sees floor at the bottom
+// of frame and wall at the top rather than the ground and sky outside the room. Phone
+// aspects need about 2.1, so the cap only ever bites on something narrower than a phone.
+// Exactly 1 at any aspect where the fov clamp never engages, so desktop is untouched by
+// construction.
+const MAX_PULLBACK = 2.2;
+
+export function fitPullback(aspect: number): number {
+  const h = 2 * Math.atan(Math.tan(rad(fitFov(aspect)) / 2) * aspect);
+  const restore = Math.tan(REF_H_FOV / 2) / Math.tan(h / 2);
+  return Math.min(Math.max(restore, 1), MAX_PULLBACK);
 }

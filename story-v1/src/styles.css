@@ -1,0 +1,499 @@
+:root {
+  --paper: #f7f5f0;
+  --line: #222222;
+  /* The CSS grain layer's base colour — the third surface the film's chapter sky lives
+     on. Film.tsx drives this every frame from scene.fog.color, lerped toward --paper by
+     the curtain value so a freeze always shows parchment underneath the grain, whichever
+     chapter it froze in. Defaults to paper before the film's first frame runs. */
+  --sky: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--sky);
+  overflow-x: hidden;
+}
+
+/* Paper tooth. The canvas renders transparent over this, so the grain sits beneath the
+   whole film for nothing — no full-screen post pass, no draw calls, no cost on a phone.
+   Fixed rather than a body background-image: the scroll track is 1800vh, and a tiling
+   background would slide under the film as you scrub. */
+/* Atmospheric depth on the one surface that had none: the sky deepens toward the
+   zenith and warms toward the horizon, both mixed from the live chapter --sky so every
+   chapter keeps its own mood and the paper chapters (vellum, board) only pick up a
+   breath of it. Fixed for the same reason as the grain above — the scroll track is
+   1800vh and a body gradient would stretch across all of it. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--sky) 82%, #313c5e),
+    var(--sky) 52%,
+    color-mix(in srgb, var(--sky) 88%, #ffe9c8)
+  );
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+
+#track {
+  position: relative;
+  width: 100%;
+  height: 1800vh;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#blackout {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 1;
+}
+
+.caption {
+  position: absolute;
+  /* lower-third band: clear of the freeze push-in (used to run centred type through
+     his eyes and mouth) and clear of the scroll hint, which is gone from the screen
+     by the time any caption reaches this band (see #hint) */
+  top: 78%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* 88vw rather than 90vw: at 390px that's the difference between an 19.5px side
+     margin and a 22px one — the release requirement is >=20px */
+  width: 88vw;
+  max-width: 900px;
+  text-align: center;
+  font-family: 'Metamorphous', serif;
+  /* Metamorphous has no italic face — the caption voice runs upright everywhere now,
+     and this is a hard floor: an italic here would come back as a synthesised
+     oblique, which is fake type on the one thing the design is precious about. */
+  font-style: normal;
+  /* Metamorphous draws noticeably wider and heavier per character than Garamond did,
+     so the clamp comes down a step from the old (1.4rem, 3.2vw, 2.4rem) — otherwise
+     the longest lines ("Your DM dreams it..." / "I've built worlds...") ran to three
+     lines on a phone instead of the two the band has room for. */
+  font-size: clamp(1.15rem, 2.8vw, 2.1rem);
+  letter-spacing: 0.02em;
+  /* captions wrap to two lines on a phone; Metamorphous needs more air between them
+     than the italic serif did */
+  line-height: 1.38;
+  text-wrap: balance;
+  opacity: 0;
+  color: var(--paper);
+  /* color-script.md §6, C1 paper halo: the fog a caption crosses always clears the
+     4.5:1 floor on its own, but the camera can drift a caption off the fog and onto a
+     darker painted fill (canopy, raven-slate) between t4-16.5. Belt-and-suspenders for
+     every caption, not just the flagged ones — three stacked passes builds the same
+     opacity-up trick the endcard's .halo already uses at a smaller radius. */
+  text-shadow:
+    0 0 0.5em rgb(247 245 240 / 0.85), 0 0 0.5em rgb(247 245 240 / 0.85),
+    0 0 0.5em rgb(247 245 240 / 0.85);
+}
+
+.caption.on-paper {
+  color: var(--line);
+}
+
+/* narration that runs while the goblin is working — a size down, because it is a
+   voice rather than a statement to the camera. Same band as every other caption. */
+.caption.low {
+  font-size: clamp(0.95rem, 1.9vw, 1.45rem);
+}
+
+/* F7: the me1-me4 freeze (t9.5-16.5) reads the goblin's tunic (3.54:1) behind the
+   shared 78% band, under the 4.5:1 caption floor. 24% clears his head — see
+   color-script.md §6, "no caption may cross the goblin". */
+.caption.high {
+  top: 24%;
+}
+
+/* Direction C: no box anywhere. The endcard used to be an opaque paper card with a
+   drawn double-rule border; that whole object is gone. What's left is lettered
+   straight onto the board — wordmark, tagline, subline, CTA stacked and centred over
+   the finished map, the one caption-like element NOT in the lower-third band. There
+   is no card ground to occlude the grid, so every line of type below carries its own
+   knockout instead (see .halo) — a rectangle is the one shape a pencil never draws
+   confidently on the first pass, and this direction never asks it to. */
+#endcard {
+  position: absolute;
+  top: 47%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: min(92vw, 720px);
+}
+
+/* Per-glyph paper knockout: eight stacked, unblurred-offset shadows in the paper
+   colour (four at 6px blur, four at 12px) so the board's grid lines don't read
+   through the letterforms even though there is no card behind them. One shadow
+   fades too thin at the edge of a stroke; stacking several of the same blur builds
+   the opacity back up to a clean halo, the same trick the wordmark's stroke
+   paint-order halo already relies on. */
+.halo {
+  text-shadow:
+    0 0 6px var(--paper), 0 0 6px var(--paper), 0 0 6px var(--paper), 0 0 6px var(--paper),
+    0 0 12px var(--paper), 0 0 12px var(--paper), 0 0 12px var(--paper), 0 0 12px var(--paper);
+}
+
+#endcard-wordmark {
+  position: relative;
+  width: min(44vw, 450px);
+  margin: 0 auto;
+  opacity: 0;
+}
+
+#endcard-wordmark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+#endcard-tagline {
+  margin: 1.4rem 0 0;
+  font-family: 'Metamorphous', serif;
+  font-style: normal;
+  font-size: clamp(1.2rem, 2.1vw, 1.55rem);
+  letter-spacing: 0.02em;
+  color: #222222;
+  opacity: 0;
+}
+
+#endcard-subline {
+  margin: 0.45rem 0 0;
+  /* balance rather than a ch cap: at the desktop stack width this line fits in one
+     row; balance caps it to two even lines once the phone breakpoint forces a wrap */
+  text-wrap: balance;
+  font-family: 'Metamorphous', serif;
+  font-style: normal;
+  font-size: clamp(0.88rem, 1.4vw, 1rem);
+  line-height: 1.4;
+  color: #444444;
+  opacity: 0;
+}
+
+/* F2: the entrance timeline's clip-path wipe on these two lines never tweens opacity,
+   so the base opacity:0 above is never lifted — the wipe completes but the text stays
+   invisible. Once the timeline is driving clip-path the line is already fully hidden by
+   the clip itself (it starts at inset(0 100% 0 0)), so it's safe to pin opacity to 1 the
+   moment clip-path shows up in the inline style and let clip-path alone do the reveal —
+   the "restructure so clip-path alone reveals them" option, done in CSS so it doesn't
+   require editing the timeline. Reduced motion never sets clip-path on these two (it
+   tweens opacity directly instead), so this rule never matches there and that fade is
+   unaffected. */
+#endcard-tagline[style*='clip-path'],
+#endcard-subline[style*='clip-path'] {
+  opacity: 1;
+}
+
+/* Cinzel is the brand voice — inscriptional capitals for the one thing on the
+   overlay you can actually click. Drawn border rather than a filled button, to
+   match the pencil world; the hover just swaps which side carries the ink. */
+#endcard-cta {
+  pointer-events: auto;
+  position: relative;
+  /* the stack's largest gap — subline to CTA — so the action stands apart from the
+     two lines of type that only set it up */
+  margin-top: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* bought outright rather than left to fall out of the padding, same logic as the
+     old 44px floor, just re-checked against a thumb target */
+  min-height: 48px;
+  padding: 0 1.75em;
+  border: 2px solid var(--line);
+  /* opaque, not the transparent/hover-fill-only button this replaces — a drawn-world
+     object sitting on the board, not a line floating over it */
+  background: var(--paper);
+  font-style: normal;
+  color: var(--line);
+  opacity: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cta-label {
+  opacity: 0;
+  font-family: 'Cinzel', serif;
+  /* Cinzel ships no italic, so an italic here would come back as a synthesised
+     slant — the one piece of drawn lettering on the overlay faked by the rasteriser */
+  font-style: normal;
+  font-weight: 700;
+  font-size: clamp(0.72rem, 1.4vw, 0.85rem);
+  letter-spacing: 0.16em;
+  /* letterspacing trails a gap after the final D that centring counts as ink;
+     matching the indent puts the label back on the optical centre. The formula
+     depends on the letter-spacing value, not the label's length, so it still holds
+     for the shorter "Join the Discord" text. */
+  text-indent: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A second border, offset and rotated a hair off true — the pencil going over its
+   own line twice rather than a single confident rasterised rectangle. Sits behind
+   the button's opaque fill (z-index -1), so only the sliver that pokes past the real
+   edge shows: the hand-redrawn overshoot, not a full duplicate outline. */
+#endcard-cta::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border: 2px solid var(--line);
+  opacity: 0.45;
+  transform: rotate(0.4deg);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+#endcard-cta:hover,
+#endcard-cta:focus-visible {
+  background: var(--line);
+  color: var(--paper);
+}
+
+/* Hover re-inks the second pass too — the offset line shifts further off true, the
+   way a hand redrawing a border under a cursor doesn't land in the same place twice. */
+#endcard-cta:hover::after,
+#endcard-cta:focus-visible::after {
+  transform: rotate(0.9deg);
+}
+
+/* Comp calls for min(92vw, 720px) at every width, but that leaves only ~15.6px of
+   gutter at 390px — under the release's 20px floor. Trimming to 88vw here buys back
+   the gutter (~23.4px at 390) without a visible composition change from the comp:
+   same centred stack, same rhythm, just a hair narrower on the phones it was never
+   measured against. */
+@media (max-width: 500px) {
+  #endcard {
+    top: 46%;
+    width: min(88vw, 720px);
+  }
+
+  #endcard-wordmark {
+    width: 76vw;
+  }
+
+  #endcard-tagline {
+    margin-top: 1.1rem;
+    font-size: 1.05rem;
+  }
+
+  #endcard-subline {
+    font-size: 0.85rem;
+    max-width: 30ch;
+  }
+
+  #endcard-cta {
+    margin-top: 1.4rem;
+    padding: 0 1.35em;
+  }
+
+  .cta-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-indent: 0.1em;
+  }
+}
+
+#hint {
+  position: absolute;
+  /* clears the home indicator / gesture bar on notched phones */
+  bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  /* the page has two faces and Georgia is neither — it read as the one label nobody
+     set. Roman rather than italic: this is an instruction, not the goblin talking. */
+  font-family: 'Metamorphous', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  opacity: 1;
+}
+
+#hint svg {
+  width: 12px;
+  height: 26px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The film opens on a blackout and spends the rest of its length on paper, so a control
+   fixed in one colour is invisible for half the runtime. Difference blending against a
+   near-white stroke inverts it: near-black on paper, near-white on the blackout, and it
+   crosses the fade between them without a transition to author. */
+#play {
+  position: fixed;
+  z-index: 11;
+  bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* the glyph is 34px, which is under the 44px a thumb needs — the padding buys the tap
+     target and the matching negative margin keeps the drawing where it was placed */
+  padding: 5px 8px;
+  margin: -5px -8px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: 'Metamorphous', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  mix-blend-mode: difference;
+  opacity: 0.75;
+  transition: opacity 0.25s ease;
+}
+
+#play:hover,
+#play:focus-visible {
+  opacity: 1;
+}
+
+#play svg {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* the ring is scenery, the glyph is the button — the weights say so */
+#play .play-ring {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+/* The rail inks itself in as the film is scrubbed. No JS: the scroll position drives
+   the stroke directly. Browsers without scroll timelines get no rail rather than a
+   dead one, which is the honest fallback for something that only means anything when
+   it moves. */
+#rail {
+  display: none;
+}
+
+#rail path {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.rail-track {
+  stroke: color-mix(in srgb, var(--line) 16%, transparent);
+}
+
+.rail-ink {
+  stroke: color-mix(in srgb, var(--line) 62%, transparent);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+@supports (animation-timeline: scroll()) {
+  #rail {
+    display: block;
+    position: absolute;
+    top: 14vh;
+    bottom: 14vh;
+    right: 1.5rem;
+    width: 4px;
+  }
+
+  .rail-ink {
+    animation: rail-ink linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes rail-ink {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Content in a canvas is invisible to assistive tech, so the narrative summary is
+   real text, present in the DOM, positioned out of sight rather than hidden. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Browser surfaces belong to the design too — these ship as defaults that match no
+   design system, and on an ink-on-paper page a blue selection is the loudest thing
+   on screen. */
+::selection {
+  background: color-mix(in srgb, var(--line) 82%, transparent);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--line);
+  outline-offset: 3px;
+}
+
+html {
+  caret-color: var(--line);
+  scrollbar-color: color-mix(in srgb, var(--line) 40%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The film is scrubbed by the visitor's own scroll, so it still plays. What goes is
+     the motion they never asked for: the rail's self-drawing and the scroll glide. */
+  .rail-ink {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

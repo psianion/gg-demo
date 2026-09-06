@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import Film from './film/Film';
+import Hero from './Hero';
 import Wordmark from './Wordmark';
+import DevHud from './DevHud';
+import { RUNTIME } from './film/motion';
+import { gearing, gearingInverse, preScrub } from './film/gearing';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -25,13 +30,16 @@ const CTA_IS_LIVE = DISCORD_URL !== '#';
 // Every caption sits in the same lower-third band now, so there is no more `above`
 // variant for the freeze lines. `low` is only a size/voice choice: it seats narration
 // a touch smaller, for lines said under the work rather than to camera.
-const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean }[] = [
+// `high` seats a caption at 24% instead of the shared 78% band — color-script.md §6:
+// the me* lines sit in the t9.5-16.5 to-camera freeze, where the lower-third band
+// crosses the goblin's tunic (3.54:1, under the 4.5:1 caption floor).
+const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean; high?: boolean }[] = [
   { id: 'open1', text: 'Every campaign begins the same way…' },
   { id: 'open2', text: '…and one goblin always gets away.', onPaper: true },
-  { id: 'me1', text: 'That was me.', onPaper: true },
-  { id: 'me2', text: 'You thought I ran away.', onPaper: true },
-  { id: 'me3', text: 'I did.', onPaper: true },
-  { id: 'me4', text: 'Straight to work.', onPaper: true },
+  { id: 'me1', text: 'That was me.', onPaper: true, high: true },
+  { id: 'me2', text: 'You thought I ran away.', onPaper: true, high: true },
+  { id: 'me3', text: 'I did.', onPaper: true, high: true },
+  { id: 'me4', text: 'Straight to work.', onPaper: true, high: true },
   { id: 'light1', text: 'Someone has to light the world.', onPaper: true, low: true },
   { id: 'set1', text: 'Your DM dreams it. I move the scenery.', onPaper: true, low: true },
   // nat1 / nat20 are cut — the die shows its own faces at that distance, and a caption
@@ -44,11 +52,19 @@ const CAPTIONS: { id: string; text: string; onPaper?: boolean; low?: boolean }[]
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// The beat sheet is authored in seconds and runs to t66, so playing the scroll track out
-// over 66s is the film at the pace it was cut for.
-const RUNTIME = 66;
-
 const scrollMax = () => document.body.scrollHeight - window.innerHeight;
+
+// Dev HUD (?hud=1): the whole parse sits behind import.meta.env.DEV, so in production
+// it constant-folds to false and the parse (and DevHud with it) tree-shakes out.
+const HUD =
+  import.meta.env.DEV &&
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('hud') === '1';
+
+// Dev-only deterministic frame route (?t=<0..66>&curtain=<0|1>&hold=1), for non-interactive
+// capture (headless Chrome has no reliable rAF/visibility on this box — T-FRAME). Same DCE
+// gate as HUD.
+const FRAME_T = import.meta.env.DEV && new URLSearchParams(window.location.search).get('t');
 
 type PlayState = 'idle' | 'playing' | 'ended';
 
@@ -68,6 +84,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // lagSmoothing(0) stays for everyone, reduced motion included (motion §15: no
+    // catch-up jumps after stalls) — a scrubbed film must never rewrite its clock
+    // after a hitch, whichever scroller is driving it.
+    gsap.ticker.lagSmoothing(0);
+
     // Smoothing is the one piece of motion the visitor didn't ask for — the film
     // itself is scrubbed by their own scroll, so it still plays under reduced motion,
     // just without the glide.
@@ -78,7 +99,6 @@ export default function App() {
     instance.on('scroll', ScrollTrigger.update);
     const tick = (time: number) => instance.raf(time * 1000);
     gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
     return () => {
       gsap.ticker.remove(tick);
       instance.destroy();
@@ -86,21 +106,36 @@ export default function App() {
     };
   }, []);
 
-  // Scroll the page at the film's own rate. Driving the scroll position directly rather
-  // than handing Lenis a long tween keeps the pace exactly linear — the timeline is
-  // scrubbed off scroll distance, so any easing in the scroll is easing in the cut.
+  // Scroll the page at the film's own rate — a true 1t/s: the step advances in film
+  // time and maps back to a scroll position through the gearing inverse, so play speed
+  // is constant in t even though the scroll↔t map is piecewise (experience §5.2). The
+  // scroll position is driven directly rather than handing Lenis a long tween: the
+  // timeline is scrubbed off scroll distance, so any easing in the scroll is easing in
+  // the cut.
   useEffect(() => {
     if (play !== 'playing') return;
 
     let raf = 0;
     let last = performance.now();
+    // The film time this loop has played to. Accumulated here rather than re-derived
+    // from window.scrollY each frame: scrollY reads back integer-rounded, and a
+    // read-modify-write through it loses the fractional remainder every frame (~8%
+    // of pace at 60fps — v1's loop had the same leak). Seeded from the scroll
+    // position on the first frame, then advanced by wall clock: play is exactly 1t/s.
+    // NaN sentinel, not -1: gearing() now opens at -HERO_T (the Cover carve), so
+    // negative t is a legitimate playhead — play from the cover crosses the handoff
+    // at film pace before the blackout lifts.
+    let t = Number.NaN;
     const step = (now: number) => {
       // a backgrounded tab hands back a dt of many seconds; without the clamp the film
-      // jumps a third of its length the moment you look at it again
+      // jumps a third of its length the moment you look at it again (the
+      // visibilitychange pause below is the real fix; this stays as belt-and-braces)
       const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
       const end = scrollMax();
-      const y = Math.min(window.scrollY + (end / RUNTIME) * dt, end);
+      if (Number.isNaN(t)) t = gearing(window.scrollY / end);
+      t = Math.min(t + dt, RUNTIME);
+      const y = Math.min(gearingInverse(t) * end, end);
       if (lenis.current) lenis.current.scrollTo(y, { immediate: true });
       else window.scrollTo(0, y);
       if (y >= end - 1) return setPlay('ended');
@@ -111,14 +146,22 @@ export default function App() {
     // Any deliberate scroll hands control back. Playback that fights the wheel is worse
     // than no playback at all.
     const yield_ = () => setPlay('idle');
+    // A hidden tab throttles rAF to ~1fps or stops it, and the film would crawl on
+    // behind the user's back (motion §2 adjudication #4): pause instead, same grammar
+    // as the manual-input yield.
+    const onVisibility = () => {
+      if (document.hidden) setPlay('idle');
+    };
     window.addEventListener('wheel', yield_, { passive: true });
     window.addEventListener('touchstart', yield_, { passive: true });
     window.addEventListener('keydown', yield_);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('wheel', yield_);
       window.removeEventListener('touchstart', yield_);
       window.removeEventListener('keydown', yield_);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [play]);
 
@@ -133,6 +176,26 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Dev HUD boundary jumps go through Lenis when it exists, same as autoplay — a raw
+  // window.scrollTo under Lenis gets partially rewound by its own smoothing frame.
+  const jump = useCallback((y: number) => {
+    if (lenis.current) lenis.current.scrollTo(y, { immediate: true });
+    else window.scrollTo(0, y);
+  }, []);
+
+  // The cover's returner note ("skip to the table") travels through the same Lenis
+  // instance: a 1.2s eased ride (experience §4's skip-note grammar), an instant jump
+  // under reduced motion or with no smoother running.
+  useEffect(() => {
+    const onJump = (e: Event) => {
+      const { y, smooth } = (e as CustomEvent<{ y: number; smooth: boolean }>).detail;
+      if (smooth && lenis.current) lenis.current.scrollTo(y, { duration: 1.2 });
+      else jump(y);
+    };
+    window.addEventListener('gg-jump', onJump);
+    return () => window.removeEventListener('gg-jump', onJump);
+  }, [jump]);
+
   const toggle = useCallback(() => {
     setPlay((p) => {
       if (p === 'playing') return 'idle';
@@ -144,11 +207,53 @@ export default function App() {
     });
   }, []);
 
+  // T-FRAME: drive the film to an exact t without scrolling, through the SAME path the
+  // scroll drive uses — timeline.ts's `apply()` is `tl.time(t); preScrub.fn?.(t)`, and
+  // the cover only tears down off that second call (Hero.tsx's `onEased`), so `tl.time()`
+  // alone leaves the wordmark/play button up. Re-applied every rAF, forever, because
+  // ScrollTrigger can still fire an `onRefresh` drive from scroll 0 and tween the
+  // playhead back out from under a one-shot set (law 9's "never fight the drive" —
+  // repinning every frame wins that race instead of disabling the drive). `hold=1` is
+  // accepted and otherwise a no-op: pinning every frame is cheap, so there is no
+  // non-holding mode to opt out of.
+  useEffect(() => {
+    if (!FRAME_T) return;
+    // DEV only, same gate as ?hud=1: measurement scripts need the same three instance
+    // the film built with (instanceof across two copies of three always fails).
+    (window as unknown as { __THREE?: unknown }).__THREE = THREE;
+    const params = new URLSearchParams(window.location.search);
+    const raw = Number(params.get('t'));
+    const target = Number.isFinite(raw) ? Math.min(RUNTIME, Math.max(0, raw)) : 0;
+    const curtainWanted = params.get('curtain') === '1' ? 1 : 0;
+    let raf = 0;
+    let stableFrames = 0;
+    const pin = () => {
+      const film = (window as unknown as { __film?: { tl: gsap.core.Timeline } }).__film;
+      const curtainHandle = (window as unknown as { __curtain?: { value: number } }).__curtain;
+      if (film && preScrub.fn) {
+        film.tl.time(target);
+        preScrub.fn(target);
+        if (curtainHandle) curtainHandle.value = curtainWanted;
+        stableFrames = Math.abs(film.tl.time() - target) < 0.02 ? stableFrames + 1 : 0;
+        if (stableFrames >= 2) {
+          document.documentElement.dataset.frameT = film.tl.time().toFixed(3);
+          document.documentElement.dataset.frameReady = '1';
+        }
+      }
+      raf = requestAnimationFrame(pin);
+    };
+    raf = requestAnimationFrame(pin);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <>
       <div id="track" />
       <Canvas
         style={{ position: 'fixed', inset: 0 }}
+        // capped at 2 (motion §15): a 3x phone renders 2.25x the pixels for detail
+        // nobody can see, and this film is fill-rate-bound in the curtain pass
+        dpr={[1, 2]}
         camera={{ fov: 42, near: 0.1, far: 600, position: [0, 2.2, 7] }}
       >
         <Film caps={caps} />
@@ -168,11 +273,11 @@ export default function App() {
 
       <div id="overlay">
         <div id="blackout" />
-        {CAPTIONS.map(({ id, text, onPaper, low }) => (
+        {CAPTIONS.map(({ id, text, onPaper, low, high }) => (
           <div
             key={id}
             id={id}
-            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}`}
+            className={`caption${onPaper ? ' on-paper' : ''}${low ? ' low' : ''}${high ? ' high' : ''}`}
             aria-hidden="true"
             ref={(el) => {
               if (el) caps[id] = el;
@@ -249,7 +354,12 @@ export default function App() {
           <path className="rail-ink" pathLength="1" d="M2 0 C3 40 1 78 2 118 C3 158 1 178 2 200" />
         </svg>
 
-        <div id="hint">
+        {/* P5: display none, not removed — the hero cover owns the scroll affordance
+            now (experience §3 superseded by the hero doc), and by the time the film's
+            t0 is on screen the visitor has already scrolled; a hint re-appearing on
+            the blackout broke the "dies on first input, never returns" rule. The
+            timeline's t0.6 fade still finds the element and no-ops. */}
+        <div id="hint" style={{ display: 'none' }}>
           <span>scroll</span>
           <svg viewBox="0 0 12 26" aria-hidden="true">
             <path d="M6 1 C7 8 5 14 6 21" />
@@ -257,6 +367,12 @@ export default function App() {
           </svg>
         </div>
       </div>
+
+      {/* THE COVER (P5): the hero island owns scroll 0–3.5% — the gearing map's t<0
+          Cover stage. Same z as #overlay but later in the DOM, so it paints over the
+          film until the handoff finishes; #play stays above it (the cover's own
+          lean-back affordance, experience §3). */}
+      <Hero film />
 
       {/* Outside #overlay on purpose. The control blends with what is behind it, and
           #overlay is a stacking context with a transparent backdrop — inside it the
@@ -293,6 +409,8 @@ export default function App() {
         </svg>
         <span>{play === 'playing' ? 'pause' : play === 'ended' ? 'replay' : 'play'}</span>
       </button>
+
+      {HUD && <DevHud jump={jump} />}
     </>
   );
 }

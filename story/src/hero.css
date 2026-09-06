@@ -1,0 +1,297 @@
+/* THE HALF-ALIVE ISLAND — hero route styles (?hero=1).
+   The page IS the material (hero §12): bone paper, near-zero chroma, diegetic —
+   margins, ticks and the grid ghost make it a drafting sheet, not a background.
+   Colour values here are the committed tokens: --paper/--line from styles.css;
+   graphite tiers mirror palette.ts (graphiteDark #4a4844 for quiet text — ~8:1 on
+   paper; whisper furniture stays decorative-redundant, never a sole carrier). */
+
+body.hero {
+  overflow: hidden; /* the standalone dev jump is a held frame; the film route scrolls */
+}
+
+/* no chapter air on the hero: the film's sky gradient flattens to plain paper */
+body.hero::after {
+  background: var(--paper);
+}
+
+/* ---- the cover stack (P5) --------------------------------------------------------- */
+
+/* The whole hero — canvas, sheet, brand, affordances — lives in one fixed layer.
+   In film mode it sits OVER the film's #overlay (same z, later in the DOM) and under
+   #play: the play affordance belongs to the cover too (experience §3). Opaque paper
+   background: the film keeps rendering its blackout underneath. Pointer-dead by
+   default — the world is not a tool; only the returners' skip note takes the click. */
+#hero-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--paper);
+  pointer-events: none;
+}
+
+/* entrance-owned elements start unwritten: the load draws them on (heroLife). The
+   settled values are inline (gsap), so a no-JS paint stays clean bare paper. */
+#hero-brand,
+#hero-hint,
+#hero-gridghost,
+.hero-tick,
+#hero-note,
+#hero-skip,
+#hero-blackout,
+#hero-ember {
+  opacity: 0;
+}
+
+/* reduced motion: the entrance is one ≤0.4s crossfade to the settled frame */
+.hero-prm-fade {
+  animation: hero-cover-fade 0.4s ease-out;
+}
+@keyframes hero-cover-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* the house lights (handoff Phase B) — same black as the film's #blackout, so the
+   cut through to the film's own blackout at the carve boundary is seamless */
+#hero-blackout {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+/* the last live pixel: the lantern's ember, above the falling lights (hero §10).
+   Hue mirrors palette.amberLantern — the amber ramp's lantern tier. */
+#hero-ember {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #e8963e;
+  box-shadow: 0 0 14px 5px rgba(232, 150, 62, 0.55);
+}
+
+/* the margin's loader voice — pencils on only past a 3s true stall (motion §13) */
+#hero-note {
+  position: absolute;
+  left: calc(clamp(18px, 2.6vw, 36px) + 6px);
+  bottom: calc(clamp(18px, 2.6vw, 36px) + 6px);
+  margin: 0;
+  font-family: var(--font-quiet);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #4a4844;
+}
+
+/* returners' fast path — a penciled margin note, the cover's one clickable object
+   besides #play (experience §3/§4); ≥44px hit area via padding */
+#hero-skip {
+  position: absolute;
+  right: calc(clamp(18px, 2.6vw, 36px) + 2px);
+  bottom: calc(clamp(18px, 2.6vw, 36px) - 4px);
+  padding: 12px 6px;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: var(--font-quiet);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #4a4844;
+}
+
+/* ---- the drafting sheet ---------------------------------------------------------- */
+
+#hero-page {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* the breathing margin (direction §6): nothing touches the viewport edge */
+#hero-margin {
+  position: absolute;
+  inset: clamp(18px, 2.6vw, 36px);
+  border: 1px solid rgba(34, 34, 34, 0.08);
+}
+
+/* edge-midpoint ticks — the sheet's registration marks, whisper opacity */
+.hero-tick {
+  position: absolute;
+  background: rgba(34, 34, 34, 0.16);
+}
+.t-n,
+.t-s {
+  left: 50%;
+  width: 1px;
+  height: 9px;
+  transform: translateX(-0.5px);
+}
+.t-e,
+.t-w {
+  top: 50%;
+  width: 9px;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+.t-n { top: clamp(14px, 2vw, 30px); }
+.t-s { bottom: clamp(14px, 2vw, 30px); }
+.t-w { left: clamp(14px, 2vw, 30px); }
+.t-e { right: clamp(14px, 2vw, 30px); }
+
+/* the battle grid escaping the island's graphite side onto the paper itself
+   (hero §4) — foreshortened to echo the ground plane, ≤4% ink, fading out */
+#hero-gridghost {
+  position: absolute;
+  left: 2%;
+  bottom: 4%;
+  width: 46vw;
+  height: 36vh;
+  background-image:
+    linear-gradient(rgba(34, 34, 34, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 34, 34, 0.05) 1px, transparent 1px);
+  background-size: 58px 40px;
+  transform: perspective(900px) rotateX(46deg);
+  transform-origin: bottom center;
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 62% 28%, rgba(0, 0, 0, 0.9), transparent 72%);
+  mask-image: radial-gradient(ellipse 70% 80% at 62% 28%, rgba(0, 0, 0, 0.9), transparent 72%);
+}
+
+/* ---- the brand block (hero §2, §6) ------------------------------------------------ */
+
+/* hero §2/§6: wordmark min(38vw, 420px) at 12vh (72vw at 9vh portrait).
+   P4c (FIX: type on canvas — ledgered supersession of §2's "centered"): at every
+   landscape breakpoint a centre-placed block sits on the island's far grass (the
+   island's top rim is at ~35–39vh at the doc's own 54vh centre; measured tagline
+   contrast fell to 1.8:1). The block now owns the UPPER-LEFT PAPER FIELD — the
+   graphite grove was pulled down-screen to clear it — so tagline and meta sit on
+   actual paper. Portrait keeps the doc's centred stack (see the media block). */
+#hero-brand {
+  position: fixed;
+  left: calc(clamp(18px, 2.6vw, 36px) + 1.2vw);
+  top: 12vh;
+  /* landscape cap 368px (not the doc's 420 — part of the same ledgered supersession):
+     at 420 the block's lower rows land on the island's far-left rim at 1440×900 and
+     the measured tagline contrast dies; at 368 every line clears the rim onto paper */
+  width: min(38vw, 368px);
+  z-index: 10;
+  pointer-events: none;
+  text-align: left;
+  color: var(--line);
+}
+
+#hero-brand svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* the one product sentence — ink on paper, ~15.9:1. Caption voice stands in for the
+   lettering hand until P6 authors it (ledgered). */
+#hero-tagline {
+  margin: 0.65rem 0 0;
+  width: fit-content; /* the box is the glyphs — an empty right half of a full-width
+     box otherwise reaches over the island and measures marks no glyph sits on */
+  font-family: 'Metamorphous', var(--font-quiet);
+  /* 1.35vw ≈ 19.4px at 1440 — inside the doc's 1.15–1.5rem window, and the nowrap
+     line stays short enough to end on paper left of the island's rim */
+  font-size: clamp(1.05rem, 1.35vw, 1.4rem);
+  line-height: 1.3;
+  /* one sentence, one line: the block is narrower than the line on purpose (the
+     wordmark sets the block width; the sentence may breathe past it) */
+  white-space: nowrap;
+  /* paper halo — the line stays legible where the block crosses the island */
+  text-shadow:
+    0 0 8px var(--paper),
+    0 0 3px var(--paper),
+    1px 1px 0 var(--paper),
+    -1px -1px 0 var(--paper),
+    1px -1px 0 var(--paper),
+    -1px 1px 0 var(--paper);
+}
+
+/* the contract-setter — Vollkorn true italic, graphiteDark ≈8:1, quiet on purpose */
+#hero-meta {
+  margin: 0.45rem 0 0;
+  width: fit-content;
+  font-family: var(--font-quiet);
+  font-style: italic;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  color: #4a4844;
+  text-shadow:
+    0 0 8px var(--paper),
+    0 0 3px var(--paper),
+    1px 1px 0 var(--paper),
+    -1px -1px 0 var(--paper);
+}
+
+/* ---- affordances ------------------------------------------------------------------ */
+
+#hero-hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(clamp(18px, 2.6vw, 36px) + 8px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  z-index: 10;
+  pointer-events: none;
+  font-family: 'Metamorphous', var(--font-quiet);
+  font-size: 0.82rem;
+  color: #4a4844;
+}
+
+#hero-hint svg {
+  width: 12px;
+  height: 26px;
+  fill: none;
+  stroke: #4a4844;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: hero-hint-drift 2.8s ease-in-out infinite;
+}
+
+@keyframes hero-hint-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+/* ---- portrait rebalance (hero §2, §7) --------------------------------------------- */
+
+@media (max-aspect-ratio: 1/1) {
+  #hero-brand {
+    top: 9vh;
+    /* hero §2 portrait: 72vw at 9vh, centred; the px cap only reins in tall tablets,
+       where a 553px lockup would bury the island — phones get exactly 72vw. The
+       island centre drops to 56vh in portrait (COMP, ledgered) so the whole block
+       clears the far rim and the halo never carves the painting. */
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(72vw, 420px);
+    text-align: center;
+  }
+  #hero-gridghost {
+    width: 74vw;
+    height: 30vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #hero-hint svg {
+    animation: none;
+  }
+}
