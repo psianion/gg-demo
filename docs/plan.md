@@ -32,6 +32,16 @@ Rejected: Pixi-only 2.5D (signature 3D shots become hand-faked projections), pre
 5. **Ending morph + polish** — d20 → board transition, micro-interaction polish, performance, reduced-motion, audio mix.
 6. **Copy + release gate** — final wording ✅ **done early** (copy/type/CTA pass per `copy-spec.md`); the release gate itself (deployed browser walk, zero console errors) remains and runs last.
 
+## Status update — 2026-08-16 (art pass + polish sprint)
+
+Milestones 3–5 are done; milestone 6's gate walked on the production bundle (scrub-driven; console/network clean; real-time play-through and a phone walk still owed a human eye).
+
+- **Curtain pipeline** (`src/film/curtain.ts`): full-screen graphite post-pass with PAPER→PAPER / LINE→LINE fixed points (asserted in `scripts/curtain.check.ts`), exception mask (goblin + nudge finger + revealed props keep color), `paint()` color API in `pencil.ts` with a color-keyed material cache, `reveal()` returning scrub-safe tweens that put a prop's own solids into the mask.
+- **Color script applied** (`docs/color-script.md` is authoritative): full token palette in `palette.ts`, every chapter painted, per-chapter sky/fog ramp (dusk→day→overcast→hearth→vellum→dawn→paper) synced to a CSS `--sky` var that lerps to paper under the curtain, C2 seven-prop reveal arc with the ravens beat easing the curtain itself to 0.6 and the signpost beat revealing tufts/treeline.
+- **Review fixes shipped** (18-finding impeccable review, all fixed or adjudicated): ground split (earth-track patch / earth / grass), chapter visibility gating (`onlyFor` tl.set helper — beware reverse-scrub set ordering and pre-render flash, both guarded), freeze release snaps at 0.12s, captions `me1–me4` at 24% + paper halo on all captions, endcard tagline/subline reveal fix, die2 exits before the wordmark, board holds a 0.5-opacity wash so the flattened mini-world reads as printed content, field fill/ink registration (one holder transform), tavern enclosed (wings at floor edges, walls 14 high — sized for the portrait pull-back), warm parchment graphite (WARMTH 0.30, widened band), t36 goblin detour around the theatre mountain, portrait pull-back in `framing.ts`/`Film.tsx` (restores authored horizontal field when the 70° clamp engages; cached-vector guard against per-frame compounding; verified at 390×844).
+- **Declined/accepted**: t51 goblin stays tight against the map sheet (stand position is IK-solved; moving it desyncs the drawing hand); t33 small-goblin accepted.
+- **Still open**: `DISCORD_URL` in App.tsx is `#` (owner: Nayan); audio does not exist (film ships silent, captions carry it); real-device phone walk; real-time (non-scrubbed) play-through needs a foregrounded window (browser throttles rAF when occluded).
+
 ## Status (as of this import)
 
 Milestone 1+2 complete. The entire film plays as black pencil line-work on paper, scrubbed by scroll:

@@ -1,6 +1,16 @@
 :root {
   --paper: #f7f5f0;
   --line: #222222;
+  /* The chapter AIR. Film.tsx drives this every frame from world.air, lerped toward
+     --paper by the curtain value so a freeze always shows the page, whichever chapter it
+     froze in. It is the TOP stop of the wash only — the background itself is paper.
+     Defaults to paper before the film's first frame runs. */
+  --sky: var(--paper);
+  /* The Quiet Serif (direction §4): endcard subline, skip note, anything longer than a
+     sentence. Face is loaded in main.tsx; surfaces adopt this token as stages migrate
+     (Metamorphous stays on the shipped captions until the hand-lettered art replaces
+     them — P6 asset-contract work). */
+  --font-quiet: 'Vollkorn', Georgia, 'Times New Roman', serif;
 }
 
 * {
@@ -11,14 +21,40 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--paper);
   overflow-x: hidden;
+}
+
+/* The page is paper — on the ROOT element only. An opaque background on <body> paints in
+   normal flow, which is ABOVE both z-index:-2 (the wash) and z-index:-1 (the grain), so
+   it hides them; the root element's background is propagated to the viewport canvas,
+   which paints below both. Measured 2026-09-06 (WS-a): with the shipped
+   `html, body { background: var(--sky) }` the top band of every frame read the chapter
+   token EXACTLY (t6.4 = 109 120 174 = skyDusk, no grain darkening) — the flat fill was
+   this body fill, and neither the gradient nor the grain was ever on screen. */
+html {
+  background: var(--paper);
 }
 
 /* Paper tooth. The canvas renders transparent over this, so the grain sits beneath the
    whole film for nothing — no full-screen post pass, no draw calls, no cost on a phone.
    Fixed rather than a body background-image: the scroll track is 1800vh, and a tiling
    background would slide under the film as you scrub. */
+/* THE WASH. The void is paper (the hero's page); the chapter AIR is a wash at the top
+   of frame that reaches the page by the horizon. Two stops only: the full chapter token
+   at the top, paper at 52% of the viewport — the horizon stop the shipped gradient
+   already carried, and the only committed number here. No third stop and no color-mix:
+   a foreign hex in this gradient is a fresh hue on the largest surface in the film.
+   Fixed for the same reason as the grain above — the scroll track is 1800vh and a body
+   gradient would stretch across all of it. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--sky) 0%, var(--paper) 52%);
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -86,6 +122,14 @@ canvas {
   text-wrap: balance;
   opacity: 0;
   color: var(--paper);
+  /* color-script.md §6, C1 paper halo: the fog a caption crosses always clears the
+     4.5:1 floor on its own, but the camera can drift a caption off the fog and onto a
+     darker painted fill (canopy, raven-slate) between t4-16.5. Belt-and-suspenders for
+     every caption, not just the flagged ones — three stacked passes builds the same
+     opacity-up trick the endcard's .halo already uses at a smaller radius. */
+  text-shadow:
+    0 0 0.5em rgb(247 245 240 / 0.85), 0 0 0.5em rgb(247 245 240 / 0.85),
+    0 0 0.5em rgb(247 245 240 / 0.85);
 }
 
 .caption.on-paper {
@@ -96,6 +140,13 @@ canvas {
    voice rather than a statement to the camera. Same band as every other caption. */
 .caption.low {
   font-size: clamp(0.95rem, 1.9vw, 1.45rem);
+}
+
+/* F7: the me1-me4 freeze (t9.5-16.5) reads the goblin's tunic (3.54:1) behind the
+   shared 78% band, under the 4.5:1 caption floor. 24% clears his head — see
+   color-script.md §6, "no caption may cross the goblin". */
+.caption.high {
+  top: 24%;
 }
 
 /* Direction C: no box anywhere. The endcard used to be an opaque paper card with a
@@ -163,6 +214,20 @@ canvas {
   line-height: 1.4;
   color: #444444;
   opacity: 0;
+}
+
+/* F2: the entrance timeline's clip-path wipe on these two lines never tweens opacity,
+   so the base opacity:0 above is never lifted — the wipe completes but the text stays
+   invisible. Once the timeline is driving clip-path the line is already fully hidden by
+   the clip itself (it starts at inset(0 100% 0 0)), so it's safe to pin opacity to 1 the
+   moment clip-path shows up in the inline style and let clip-path alone do the reveal —
+   the "restructure so clip-path alone reveals them" option, done in CSS so it doesn't
+   require editing the timeline. Reduced motion never sets clip-path on these two (it
+   tweens opacity directly instead), so this rule never matches there and that fade is
+   unaffected. */
+#endcard-tagline[style*='clip-path'],
+#endcard-subline[style*='clip-path'] {
+  opacity: 1;
 }
 
 /* Cinzel is the brand voice — inscriptional capitals for the one thing on the
