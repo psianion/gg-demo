@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Good Goblin homepage — line wireframe</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f4efe4; --paper-2:#ebe4d4; --ink:#2a2017; --ink-2:#6b5d4b; --line:#d9cfbb; --brass:#a9782f; --tok:#d98a2b;
+  --serif:"IM Fell English",Georgia,serif; --sans:"Work Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--paper:#17150f;--paper-2:#211e16;--ink:#efe7d6;--ink-2:#b2a58f;--line:#3a3427;--brass:#d8ae62;--tok:#e8a04a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 var(--sans)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header{padding:52px 0 26px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);font-weight:600}
+h1{font:400 clamp(32px,5vw,52px)/1.05 var(--serif);margin:8px 0 12px;text-wrap:balance}
+h2{font:400 clamp(24px,3vw,32px)/1.1 var(--serif);margin:0 0 6px}
+h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:14px 0 4px;font-weight:600}
+p{margin:0 0 10px} ul{margin:0 0 8px;padding-left:18px} li{margin:0 0 4px}
+.lead{max-width:70ch;font-size:17px}
+.keep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:22px}
+.keep div{background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.keep b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.keep .y b{color:#4d7a3a}.keep .n b{color:#a2463a}.keep .i b{color:var(--brass)}
+@media (prefers-color-scheme:dark){.keep .y b{color:#9cc485}.keep .n b{color:#e59384}}
+code{font-size:12.5px;background:var(--paper-2);padding:1px 5px;border-radius:4px}
+.map{padding:30px 0;border-bottom:1px solid var(--line)}
+.strip{display:grid;grid-template-columns:repeat(18,1fr);gap:3px;margin-top:12px}
+.strip a{height:40px;border-radius:5px;display:flex;align-items:flex-end;padding:5px 8px;font-size:12px;font-weight:500;color:var(--ink);background:var(--paper-2);border:1px solid var(--line);text-decoration:none;white-space:nowrap;overflow:hidden}
+.strip a:hover{border-color:var(--brass)}
+.ticks{display:grid;grid-template-columns:repeat(18,1fr);font-size:11px;color:var(--ink-2);margin-top:3px}
+section.f{padding:40px 0;border-bottom:1px solid var(--line)}
+.cols{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:30px;align-items:start}
+.range{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);font-weight:600;border:1px solid var(--brass);border-radius:999px;padding:2px 10px;margin-bottom:8px}
+figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+figure svg{display:block;width:100%;height:auto;color:var(--ink)}
+figcaption{padding:8px 12px;font-size:12px;color:var(--ink-2);border-top:1px solid var(--line);background:var(--paper-2)}
+.notes{font-size:14px}
+.idea{border-left:2px solid var(--brass);padding:6px 12px;background:var(--paper-2);border-radius:0 6px 6px 0;margin:8px 0}
+@media (max-width:820px){.cols,.keep{grid-template-columns:1fr}.strip a{font-size:0}.strip a::after{content:attr(data-n);font-size:12px}}
+/* svg strokes */
+.l{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.lt{fill:none;stroke:currentColor;stroke-width:1;opacity:.55;stroke-linecap:round}
+.g{fill:none;stroke:var(--ink-2);stroke-width:1.2;stroke-dasharray:5 5;opacity:.7}
+.a{fill:none;stroke:var(--brass);stroke-width:1.3;stroke-dasharray:4 4}
+.am{fill:none;stroke:var(--brass);stroke-width:1.5}
+.o{fill:none;stroke:var(--tok);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pf{fill:var(--paper);stroke:currentColor;stroke-width:1.7}
+.t{font:12px var(--sans);fill:var(--ink-2)}
+.ta{font:600 11px var(--sans);fill:var(--brass);letter-spacing:.04em}
+.tw{font:22px var(--serif);fill:currentColor}
+.tc{font:italic 17px var(--serif);fill:currentColor}
+.tb{font:600 11px var(--sans);fill:currentColor;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<!-- shared defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="var(--ink-2)" stroke-width=".6" opacity=".45"/></pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V7" stroke="var(--ink-2)" stroke-width="1.1"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="var(--brass)" stroke-width="1.6"/></marker>
+    <marker id="ari" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="currentColor" stroke-width="1.6"/></marker>
+    <!-- goblin glyph, origin at feet -->
+    <g id="gob"><circle cx="0" cy="-26" r="7" class="pf"/><path class="l" d="M-6 -29L-16 -34L-7 -24M6 -29L16 -34L7 -24M0 -19V-6M0 -15L-7 -9M0 -15L7 -9M0 -6L-5 0M0 -6L5 0"/></g>
+    <g id="gobsit"><circle cx="0" cy="-26" r="7" class="pf"/><path class="l" d="M-6 -29L-16 -34L-7 -24M6 -29L16 -34L7 -24M0 -19V-6M0 -15L-7 -9M0 -15L7 -9M0 -6L-5 2L-5 12M0 -6L5 2L5 12"/></g>
+    <g id="tok"><circle cx="0" cy="-24" r="7" class="o"/><path class="o" d="M0 -17V-6M0 -13L-7 -8M0 -13L7 -8M0 -6L-5 0M0 -6L5 0"/><ellipse cx="0" cy="1" rx="10" ry="3" class="o"/></g>
+    <g id="enemy"><path class="l" d="M-9 0L0 -20L9 0Z"/><path class="l" d="M-4 -12L-1 -14M4 -12L1 -14"/><ellipse cx="0" cy="1" rx="11" ry="3.5" class="l"/><circle cx="0" cy="-8" r="18" class="a"/></g>
+    <!-- flat docked island -->
+    <g id="flat"><path class="l" d="M70 300C200 280 600 282 730 298C748 308 744 326 724 332C600 350 200 350 84 336C60 330 58 310 70 300Z"/><path class="l" d="M74 334L78 372C210 392 590 392 722 374L726 330"/><path class="lt" d="M110 352C260 366 540 366 690 352M150 372L160 380M640 374L630 382"/></g>
+  </defs>
+</svg>
+
+<header><div class="wrap">
+  <div class="eyebrow">Homepage wireframe · line pass · 2026-11-06</div>
+  <h1>The island, the table, and the goblin who sets it</h1>
+  <p class="lead">A line diagram of every pinned frame in Script v2, from hero to the waitlist, plus the ordinary page after it unpins. This is a layout and motion sketch: no art, no colour except the orange player tokens from your sketches and brass for notes and camera moves.</p>
+  <div class="keep">
+    <div class="y"><b>Carry over from <code>story/</code></b>The hero island: <code>hero.ts</code>, <code>heroLife.ts</code>, <code>islandKit.ts</code>. The stroke and paint style: <code>pencil.ts</code>, <code>trilayer.ts</code>, <code>rigs.ts</code>, <code>palette.ts</code>. The scroll plumbing (Lenis + GSAP) and the fonts.</div>
+    <div class="n"><b>Drop</b>The 66 s timeline and <code>gearing.ts</code>, every S1–S8 set, the adventurer cast, the current goblin model (<code>goblin.ts</code>, <code>rig.ts</code>), and the old LOCKED docs.</div>
+    <div class="i"><b>Keep as ideas only</b>The dice gag (freeze, shrug, nudge to 20), the goblin's action vocabulary (rope, lantern, dust-off), and the "board appears with no cut" ending trick.</div>
+  </div>
+</div></header>
+
+<section class="map"><div class="wrap">
+  <h2>Scroll map</h2>
+  <p class="t" style="font-size:13px;color:var(--ink-2)">One unit = one viewport height. Pinned for 18 units, then normal page.</p>
+  <div class="strip">
+    <a href="#f1" data-n="1" style="grid-column:span 2">1 Landing</a>
+    <a href="#f2" data-n="2" style="grid-column:span 6">2 Canvas showcase</a>
+    <a href="#f3" data-n="3" style="grid-column:span 5">3 The table</a>
+    <a href="#f4" data-n="4" style="grid-column:span 3">4 Pull-back</a>
+    <a href="#f5" data-n="5" style="grid-column:span 2">5 Screen</a>
+  </div>
+  <div class="ticks"><span>0</span><span></span><span>2</span><span></span><span>4</span><span></span><span>6</span><span></span><span>8</span><span></span><span>10</span><span></span><span>12</span><span></span><span>14</span><span></span><span>16</span><span>18</span></div>
+</div></section>
+
+<!-- F0 HERO -->
+<section class="f" id="f0"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Hero wireframe: wordmark top left, floating island right of centre with signpost, lantern post, campfire and tree, the goblin sitting on its edge, a rope hanging down, rotation arrows and a scroll hint">
+  <text x="48" y="72" class="tw">GOOD GOBLIN</text>
+  <text x="48" y="96" class="t" style="font-size:13px">The Dungeon Master's backstage.</text>
+  <path class="lt" d="M48 114H230M48 126H200"/>
+  <text x="48" y="146" class="t">Build the maps. Run the table…</text>
+  <!-- island -->
+  <path class="l" d="M370 214C400 192 600 190 640 208C652 218 632 232 610 236C540 248 430 246 388 232C368 226 362 220 370 214Z"/>
+  <path class="l" d="M378 230C405 285 450 335 505 380C548 338 596 288 628 234"/>
+  <path class="lt" d="M420 262C470 272 560 270 600 258M450 300C490 306 540 304 570 296M480 340C500 344 520 342 530 338"/>
+  <!-- props -->
+  <path class="l" d="M405 222V160M405 164L440 170L434 182L405 178"/>
+  <path class="l" d="M460 226V170M452 170H468V188H452Z"/>
+  <path class="l" d="M512 222L520 204L526 214L532 200L540 222M506 224H546"/>
+  <path class="l" d="M592 214V150"/><ellipse cx="592" cy="122" rx="30" ry="36" class="l"/>
+  <!-- goblin on edge -->
+  <use href="#gobsit" x="485" y="240"/>
+  <!-- rope -->
+  <path class="g" d="M630 232C640 262 626 290 640 320C646 336 640 350 644 362"/>
+  <!-- rotation -->
+  <path class="am" marker-end="url(#ar)" d="M352 300C372 345 450 372 520 372"/>
+  <path class="am" marker-end="url(#ar)" d="M660 262C668 230 664 200 650 180"/>
+  <text x="250" y="352" class="ta">HOVER · YAW ±25° · PITCH ±8°</text>
+  <!-- cursor -->
+  <path class="l" d="M700 140L700 168L707 161L713 174L718 172L712 159L722 159Z"/>
+  <path class="a" d="M697 150C640 150 540 170 500 210"/>
+  <text x="590" y="146" class="ta">HEAD FOLLOWS CURSOR</text>
+  <text x="660" y="356" class="ta">ROPE · PAYS OFF IN 1</text>
+  <!-- scroll hint -->
+  <text x="490" y="414" class="t">scroll</text><path class="l" d="M496 424L506 432L516 424"/>
+</svg><figcaption>Beat 0 · resting state at unit 0 · mouse-driven, not scroll-driven</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 0 · unit 0</span>
+  <h2>Hero: island in the air</h2>
+  <h3>Reuse</h3><p>This is the shipped hero island. Its cursor and idle systems (<code>heroLife.ts</code>) already exist. The goblin inside it has to be swapped for the new design.</p>
+  <h3>Add</h3><p>The rope hanging off the edge, and the lantern post, which must exist here so it can be lit in Beat 2.</p>
+  <div class="idea"><b>Idea:</b> the cursor works as the lantern's light. Where you hover, the island warms slightly, which sets up the Light toggle before the visitor has seen it.</div>
+</div>
+</div></div></section>
+
+<!-- F1 LANDING -->
+<section class="f" id="f1"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Landing wireframe: the island's old position dashed at top, an arrow down to the island now docked on the bottom edge over a pencil grid, the goblin hauling a rope tied to the signpost, wordmark shrunk top left, caption top centre">
+  <rect x="0" y="0" width="800" height="450" fill="url(#grid)" opacity=".7"/>
+  <text x="24" y="34" class="t" style="font:15px var(--serif);fill:var(--ink)">GOOD GOBLIN</text>
+  <!-- ghost of hero island -->
+  <path class="g" d="M450 64C480 50 620 50 650 62C656 70 640 78 620 80C560 88 480 86 460 78C448 74 446 68 450 64Z"/>
+  <path class="g" d="M456 76C480 110 520 140 550 160C580 136 610 110 640 80"/>
+  <path class="am" marker-end="url(#ar)" d="M545 170C520 210 470 240 420 262"/>
+  <text x="560" y="210" class="ta">TILTS TO ¾ TOP-DOWN · DESCENDS</text>
+  <use href="#flat" y="20"/>
+  <!-- props on flat -->
+  <path class="l" d="M150 318V262M150 266L182 272L176 284L150 280"/>
+  <path class="l" d="M640 314V250"/><ellipse cx="640" cy="224" rx="26" ry="32" class="l"/>
+  <path class="l" d="M560 318L566 302L571 310L576 298L582 318"/>
+  <!-- rope tied off to signpost, goblin hauling -->
+  <path class="l" d="M152 290C230 296 300 306 372 310"/>
+  <use href="#gob" x="390" y="330"/>
+  <text x="330" y="420" class="ta" text-anchor="middle">GOBLIN HAULS · TIES OFF ON SIGNPOST · DUSTS HANDS</text>
+  <!-- caption -->
+  <rect x="270" y="98" width="260" height="40" rx="6" class="pf" style="stroke:var(--line)"/>
+  <text x="400" y="124" class="tc" text-anchor="middle">Every world needs a stagehand.</text>
+  <text x="24" y="440" class="ta">GRID FADES IN</text>
+</svg><figcaption>Beat 1 · units 0–2 · scrubbed both ways</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 1 · units 0 → 2</span>
+  <h2>Landing: he docks the island</h2>
+  <p>The handoff from hover rotation to scroll control is the hard part. The island has to ease from wherever the mouse left it, or it will snap.</p>
+  <div class="idea"><b>Idea:</b> the grid could be drawn in by a pencil stroke sweeping across the page, using the existing <code>pencil.ts</code> line style, rather than a plain fade. It tells the visitor that this is a map.</div>
+</div>
+</div></div></section>
+
+<!-- F2 CANVAS -->
+<section class="f" id="f2"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Canvas showcase wireframe: island docked on a grid, a rail of three icon chips on the right for light, weather and encounters, a lit lantern pool, a cloud with rain hatching, three enemy tokens with threat rings">
+  <rect x="0" y="0" width="800" height="450" fill="url(#grid)" opacity=".7"/>
+  <text x="24" y="34" class="t" style="font:15px var(--serif);fill:var(--ink)">GOOD GOBLIN</text>
+  <rect x="300" y="58" width="200" height="40" rx="6" class="pf" style="stroke:var(--line)"/>
+  <text x="400" y="84" class="tc" text-anchor="middle">You decide. He does.</text>
+  <use href="#flat" y="20"/>
+  <!-- lantern + pool -->
+  <path class="l" d="M140 320V250M132 250H148V268H132Z"/>
+  <ellipse cx="140" cy="322" rx="70" ry="14" class="a"/>
+  <path class="lt" d="M126 244L118 236M154 244L162 236M140 240V230"/>
+  <!-- cloud + rain -->
+  <path class="l" d="M300 170C290 150 318 136 334 148C340 128 376 128 382 150C402 144 414 166 398 176Z"/>
+  <path class="lt" d="M316 186L308 210M336 186L328 214M356 186L348 210M376 186L368 214M392 186L384 206"/>
+  <path class="g" d="M398 160C440 170 470 200 470 240"/><use href="#gob" x="470" y="276"/>
+  <ellipse cx="340" cy="324" rx="22" ry="5" class="lt"/>
+  <!-- enemies -->
+  <use href="#enemy" x="560" y="318"/><use href="#enemy" x="610" y="326"/><use href="#enemy" x="530" y="334"/>
+  <path class="l" d="M670 312V250"/><ellipse cx="670" cy="226" rx="24" ry="30" class="l"/>
+  <!-- rail -->
+  <rect x="736" y="140" width="44" height="44" rx="8" class="pf"/><rect x="731" y="135" width="54" height="54" rx="11" class="am"/>
+  <circle cx="758" cy="162" r="7" class="l"/><path class="l" d="M758 148V151M758 173V176M744 162H747M769 162H772"/>
+  <rect x="736" y="200" width="44" height="44" rx="8" class="pf"/>
+  <path class="l" d="M746 228C742 220 752 212 758 218C762 210 774 212 772 222C778 222 778 230 772 230H748Z"/>
+  <rect x="736" y="260" width="44" height="44" rx="8" class="pf"/>
+  <path class="l" d="M746 294L770 270M770 294L746 270M744 282L750 288M772 282L766 288"/>
+  <text x="726" y="166" class="ta" text-anchor="end">LIGHT · 2–4</text>
+  <text x="726" y="226" class="ta" text-anchor="end">WEATHER · 4–6</text>
+  <text x="726" y="286" class="ta" text-anchor="end">ENCOUNTERS · 6–8</text>
+  <text x="60" y="430" class="ta">LANTERN LIT = SITE DARK MODE · PERSISTS</text>
+  <text x="500" y="430" class="ta">GOBLIN DRAGS CLOUD ON A ROPE</text>
+</svg><figcaption>Beat 2 · units 2–8 · scroll plays all three, clicks replay and stick</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 2 · units 2 → 8</span>
+  <h2>Canvas showcase</h2>
+  <p>This is the longest beat and the most expensive to build. There are three toggles, and each changes real island state, with goblin animation covering the change.</p>
+  <h3>Cheapest version that still works</h3><p>Ship Light for real (it doubles as dark mode). Ship Weather and Encounters as scripted scroll sequences with replay buttons, then upgrade them later.</p>
+  <div class="idea"><b>Idea:</b> mark which icon has been "already used" with a small pencil tick. A visitor who scrolled past all three without clicking then gets a gentle nudge: two icons are still unticked.</div>
+</div>
+</div></div></section>
+
+<!-- F3 TABLE -->
+<section class="f" id="f3"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Table wireframe: four orange player tokens on the island, a turn pill top centre, a hatched fog-of-war area being peeled back by the goblin, and a large d20 showing 1 crossed out and 20, with a freeze note">
+  <rect x="0" y="0" width="800" height="450" fill="url(#grid)" opacity=".7"/>
+  <text x="24" y="34" class="t" style="font:15px var(--serif);fill:var(--ink)">GOOD GOBLIN</text>
+  <rect x="330" y="22" width="140" height="28" rx="14" class="pf"/><text x="400" y="41" class="tb" text-anchor="middle">▶ ROOK'S TURN</text>
+  <rect x="250" y="66" width="300" height="38" rx="6" class="pf" style="stroke:var(--line)"/>
+  <text x="400" y="91" class="tc" text-anchor="middle">Your players sit down. The table's set.</text>
+  <use href="#flat" y="20"/>
+  <use href="#tok" x="150" y="322"/><use href="#tok" x="196" y="330"/><use href="#tok" x="240" y="320"/><use href="#tok" x="282" y="332"/>
+  <path class="am" marker-end="url(#ar)" d="M300 340H380"/>
+  <!-- fog -->
+  <path d="M480 300C560 292 660 294 720 306C734 314 728 330 712 334C640 346 560 346 480 342Z" fill="url(#hatch)" stroke="var(--ink-2)" stroke-dasharray="3 4"/>
+  <path class="l" d="M480 300C470 316 476 332 480 342C460 330 456 312 480 300Z"/>
+  <use href="#gob" x="460" y="336"/>
+  <text x="560" y="372" class="ta">FOG PEELED LIKE A BEDSHEET</text>
+  <!-- d20 -->
+  <path class="l" d="M400 150L446 176V228L400 254L354 228V176Z"/><path class="lt" d="M400 150L400 190L354 228M400 190L446 228M354 176L400 190L446 176M354 228H446"/>
+  <text x="378" y="216" class="tw" style="font-size:20px">1</text><path class="l" d="M372 200L392 220" style="stroke:var(--brass)"/>
+  <text x="404" y="218" class="tw" style="font-size:20px">20</text>
+  <path class="a" d="M454 200C500 190 540 200 560 220"/>
+  <text x="566" y="214" class="ta">TICK · ALL GOES PENCIL</text>
+  <text x="566" y="228" class="ta">EXCEPT THE GOBLIN</text>
+  <text x="566" y="242" class="ta">SHRUG · NUDGE · 20</text>
+  <text x="400" y="430" class="t" text-anchor="middle">"You're welcome."  ·  camera pushes in slowly through the beat</text>
+</svg><figcaption>Beat 3 · units 8–13 · die roll fires once in real time at 11.5</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 3 · units 8 → 13</span>
+  <h2>The table</h2>
+  <p>Tokens arrive and the fog is revealed, then the dice gag. The gag is the emotional peak, so it should get the most polish.</p>
+  <div class="idea"><b>Idea:</b> let the visitor roll the die themselves (click it or press space). It always comes up 1 and the goblin always fixes it. That makes it the one interaction the visitor will remember and share, and it's cheap because the outcome is fixed.</div>
+  <div class="idea"><b>Idea:</b> the "pencil freeze" is a free effect, because the stroke style already has a pencil layer. Freezing becomes switching the paint layer off, with no new shader.</div>
+</div>
+</div></div></section>
+
+<!-- F4 PULLBACK -->
+<section class="f" id="f4"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Pull-back wireframe: a round table seen over the DM's shoulder, a laptop in the middle showing the tiny island, four players around the table, a lamp overhead, dice and snacks, and an arrow showing the camera cranes back and up">
+  <path class="l" d="M400 20V60M374 60H426L440 84H360Z"/><path class="g" d="M360 84L250 200M440 84L550 200"/>
+  <ellipse cx="400" cy="320" rx="320" ry="86" class="l"/><path class="l" d="M80 322V346C120 400 680 400 720 346V322"/>
+  <!-- players -->
+  <circle cx="170" cy="230" r="18" class="l"/><path class="l" d="M140 274C142 250 198 250 200 274"/>
+  <circle cx="290" cy="196" r="18" class="l"/><path class="l" d="M260 240C262 216 318 216 320 240"/>
+  <circle cx="510" cy="196" r="18" class="l"/><path class="l" d="M480 240C482 216 538 216 540 240"/>
+  <circle cx="630" cy="230" r="18" class="l"/><path class="l" d="M600 274C602 250 658 250 660 274"/>
+  <!-- laptop facing us / DM -->
+  <path class="l" d="M330 226H470V306H330Z"/><path class="l" d="M318 312H482L470 306H330Z"/>
+  <rect x="338" y="234" width="124" height="64" fill="url(#grid)"/>
+  <path class="l" d="M350 278C370 272 430 272 450 278C452 284 446 288 440 288C410 292 380 292 358 288C350 286 348 282 350 278Z"/>
+  <use href="#gobsit" x="400" y="282" transform="translate(400 282) scale(.35) translate(-400 -282)"/>
+  <!-- DM over-shoulder -->
+  <path class="l" d="M300 450C300 400 340 376 400 376C460 376 500 400 500 450"/><circle cx="400" cy="350" r="30" class="pf"/>
+  <!-- dice & snacks -->
+  <path class="l" d="M210 320L222 312L234 320L222 328Z"/><path class="l" d="M570 330L582 322L594 330L582 338Z"/>
+  <ellipse cx="640" cy="324" rx="26" ry="8" class="l"/><path class="lt" d="M624 320L630 318M640 316L648 318"/>
+  <!-- crane arrow -->
+  <path class="am" marker-end="url(#ar)" d="M520 270C600 250 680 170 720 90"/>
+  <text x="600" y="112" class="ta">CAMERA CRANES</text><text x="600" y="126" class="ta">BACK + UP</text>
+  <path class="a" d="M470 230C520 210 540 170 540 150"/><text x="548" y="152" class="ta">GRID GROWS A BEZEL</text>
+  <text x="30" y="40" class="tc">Runs on the DM's machine.</text>
+  <text x="30" y="62" class="t">Nothing for players to install.</text>
+</svg><figcaption>Beat 4 · units 13–16 · one continuous crane, no cut</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 4 · units 13 → 16</span>
+  <h2>Pull-back: it was on the DM's laptop</h2>
+  <p>This is the hardest technical move. The 3D island must keep rendering inside a screen that shrinks into a room, which means render-to-texture onto the laptop plane at the hand-off point.</p>
+  <h3>Keep it cheap</h3><p>Make the room 2D ink cards (people, lamp, table) layered in depth. Only the laptop screen is live 3D.</p>
+  <div class="idea"><b>Idea:</b> over the DM's shoulder is the right framing. The visitor is now the DM, which is the product's pitch in one picture.</div>
+</div>
+</div></div></section>
+
+<!-- F5 SCREEN -->
+<section class="f" id="f5"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Screen wireframe: laptop screen fills the frame with faint product UI behind; a paper card in the centre holds the wordmark, tagline, email field and Join the waitlist button, and three feature buttons; the goblin's ears and eyes peek over the card's bottom edge">
+  <rect x="40" y="20" width="720" height="400" rx="16" class="l"/><rect x="62" y="40" width="676" height="360" rx="4" class="lt"/>
+  <rect x="62" y="40" width="676" height="360" fill="url(#grid)" opacity=".6"/>
+  <path class="lt" d="M62 66H738M80 53H120M130 53H160M690 53H720"/>
+  <path class="lt" d="M90 90V380M90 110H70M90 140H70M90 170H70"/>
+  <path class="g" d="M150 330C300 300 560 300 700 330"/>
+  <!-- card -->
+  <rect x="230" y="78" width="340" height="272" rx="10" class="pf"/>
+  <text x="400" y="122" class="tw" text-anchor="middle">GOOD GOBLIN</text>
+  <text x="400" y="146" class="t" text-anchor="middle" style="font-size:13px;fill:var(--ink)">The Dungeon Master's backstage.</text>
+  <text x="400" y="164" class="t" text-anchor="middle">Opening to a few tables first.</text>
+  <rect x="262" y="184" width="176" height="36" rx="5" class="l"/><text x="274" y="207" class="t">you@email.com</text>
+  <rect x="446" y="184" width="94" height="36" rx="5" class="pf" style="stroke-width:2.4"/><text x="493" y="206" class="tb" text-anchor="middle">JOIN</text>
+  <path class="lt" d="M262 240H538"/>
+  <rect x="262" y="256" width="86" height="28" rx="14" class="l"/><text x="305" y="274" class="t" text-anchor="middle">Map editor</text>
+  <rect x="357" y="256" width="86" height="28" rx="14" class="l"/><text x="400" y="274" class="t" text-anchor="middle">Live table</text>
+  <rect x="452" y="256" width="86" height="28" rx="14" class="l"/><text x="495" y="274" class="t" text-anchor="middle">Discord bot</text>
+  <!-- peeking goblin -->
+  <path class="pf" d="M486 350C486 334 514 334 514 350Z"/><path class="l" d="M488 342L474 330L492 338M512 342L526 330L508 338"/>
+  <circle cx="495" cy="345" r="1.6" fill="currentColor"/><circle cx="505" cy="345" r="1.6" fill="currentColor"/>
+  <text x="530" y="368" class="ta">3RD + LAST LOOK AT US</text>
+  <text x="62" y="438" class="ta">SKETCHED ISLAND → REAL PRODUCT CANVAS, SAME STATE, NO CUT</text>
+  <path class="am" marker-end="url(#ar)" d="M320 300V340"/><text x="200" y="372" class="ta">FEATURE BUTTONS SCROLL BELOW ↓</text>
+</svg><figcaption>Beat 5 · units 16–18 · then the page unpins</figcaption></figure>
+<div class="notes">
+  <span class="range">Beat 5 · units 16 → 18</span>
+  <h2>The screen: where you join</h2>
+  <p>This is the only conversion point. Put the email field first and keep it plain: a confirmation line, no modal.</p>
+  <h3>Open</h3><p>"Real product canvas" needs either a live embed or a pixel-matched still. Start with a still.</p>
+  <div class="idea"><b>Idea:</b> some visitors won't scroll 18 screens. Put a small "Join the waitlist" chip in the top-right corner for the whole pinned stage, so nobody has to watch the whole film to sign up.</div>
+</div>
+</div></div></section>
+
+<!-- F6 BELOW FOLD -->
+<section class="f" id="f6"><div class="wrap"><div class="cols">
+<figure><svg viewBox="0 0 800 450" role="img" aria-label="Below-the-fold wireframe: three feature rows alternating image and text, a footer bar, and a miniature island pinned bottom right as a return button">
+  <rect x="60" y="24" width="250" height="100" rx="6" class="l"/><path class="lt" d="M60 24L310 124M310 24L60 124"/>
+  <text x="340" y="52" class="tw" style="font-size:18px">The map editor</text><path class="lt" d="M340 72H620M340 88H600M340 104H560"/>
+  <rect x="490" y="148" width="250" height="100" rx="6" class="l"/><path class="lt" d="M490 148L740 248M740 148L490 248"/>
+  <text x="60" y="176" class="tw" style="font-size:18px">The live table</text><path class="lt" d="M60 196H340M60 212H320M60 228H280"/>
+  <rect x="60" y="272" width="250" height="100" rx="6" class="l"/><path class="lt" d="M60 272L310 372M310 272L60 372"/>
+  <text x="340" y="300" class="tw" style="font-size:18px">The Discord bot</text><path class="lt" d="M340 320H620M340 336H600M340 352H560"/>
+  <path class="l" d="M0 400H800"/><path class="lt" d="M60 424H180M220 424H300M340 424H400"/>
+  <circle cx="742" cy="402" r="30" class="pf"/>
+  <path class="l" d="M724 396C732 390 752 390 760 396C760 402 752 404 742 404C732 404 724 402 724 396ZM728 400C734 412 740 420 742 422C746 418 752 410 756 400"/>
+  <text x="700" y="372" class="ta" text-anchor="end">MINI ISLAND · BACK TO TOP</text>
+</svg><figcaption>After unit 18 · ordinary page · one still from the island per feature</figcaption></figure>
+<div class="notes">
+  <span class="range">After unit 18</span>
+  <h2>Feature sections</h2>
+  <p>Each feature gets three lines, one image and nothing else. The stills are frames rendered from the island scene, so they cost no new art.</p>
+  <div class="idea"><b>Idea:</b> clicking the mini island should rewind the whole film in about 1.5 seconds and land back at the hero, not jump there. It's a small reward for anyone who scrolled all the way down.</div>
+</div>
+</div></div></section>
+
+<section style="padding:40px 0 80px"><div class="wrap">
+  <h2>Questions for you before the art pass</h2>
+  <ul>
+    <li><b>Goblin design.</b> The script needs two or three reference images from you. Every frame here uses a placeholder stick goblin with big ears.</li>
+    <li><b>Beat 2 scope.</b> Do all three toggles work for real at launch, or is Light the only real one with the other two scripted? I recommend Light only.</li>
+    <li><b>Visitor rolls the die?</b> Do you want the click-to-roll version of the dice gag?</li>
+    <li><b>Waitlist backend.</b> Where do the emails go?</li>
+  </ul>
+</div></section>
+
+</body>
+</html>
