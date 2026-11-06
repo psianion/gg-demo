@@ -1,0 +1,107 @@
+:root {
+  --paper: #f7f5f0;
+  --line: #222222;
+  --quiet: #4a4844;
+  --sky: var(--paper);
+  --font-quiet: 'Vollkorn', Georgia, 'Times New Roman', serif;
+  color-scheme: light;
+}
+:root.night {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* the page is paper on the ROOT (it propagates to the canvas, below the grain) */
+html {
+  background: var(--paper);
+  color: var(--line);
+}
+
+/* paper tooth, fixed so it never slides under the stage */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+
+/* the pinned stage: fixed, moved up only by the unpin ramp (App.tsx) */
+#stage {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: var(--vh, 100vh);
+  overflow: hidden;
+  will-change: transform;
+  z-index: 0;
+}
+/* a transformed parent makes the hero's fixed children stage-relative — intended */
+.stage-canvas {
+  position: absolute !important;
+  inset: 0;
+  touch-action: pan-y; /* vertical drags scroll the page, horizontal ones turn the island */
+}
+body.past-stage #stage {
+  visibility: hidden;
+}
+
+.brand-wrap,
+.hint-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+#hero-dom {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+#hud {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 100;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(20, 20, 20, 0.78);
+  color: #e8f0d8;
+  font: 11px/1.45 ui-monospace, Menlo, monospace;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: pre;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

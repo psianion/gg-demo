@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 24" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- a deckled paper edge: one hand-drawn run, stretch it to the card width -->
+  <path d="M1 12.4 C14 11.2 22 13.6 34 12.2 C46 10.8 54 13.8 68 12.6 C80 11.6 88 9.8 101 11.8 C114 13.8 122 12 136 11.2 C150 10.4 158 13.6 172 13 C184 12.4 194 10.6 207 11.6 C220 12.6 228 14.2 242 12.8 C256 11.4 264 10.2 278 11.8 C292 13.4 300 13.2 313 12 C326 10.8 334 11.4 348 12.8 C360 14 370 12.2 382 11.4 C390 10.8 395 11.6 399 12.2"/>
+  <path d="M60 15.6 C68 16.2 74 15.4 80 14.8 M226 15.8 C232 16.4 240 16 246 15.2" stroke-width="1"/>
+</svg>

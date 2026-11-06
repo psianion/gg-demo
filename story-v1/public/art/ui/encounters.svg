@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- crossed swords over a monster token -->
+  <path d="M9.6 9.4 L30.8 30.6 M8.4 8.2 L13.6 9.8 L12 14.6" />
+  <path d="M28 33.6 L33.8 27.8 M31.4 33 L36.6 38.4 L38.4 36.4 L33.2 31"/>
+  <path d="M38.6 9.2 L17.4 30.4 M39.8 8 L34.6 9.6 L36.2 14.4"/>
+  <path d="M20.2 33.4 L14.4 27.6 M16.8 32.8 L11.6 38.2 L9.8 36.2 L15 30.8"/>
+  <path d="M17.4 41.8 C21.6 43.6 26.8 43.6 30.8 41.6" stroke-width="1.4"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" fill="none" stroke="#222" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- player 1: curly hair, round glasses, leaning in on folded arms -->
+  <path fill="#f7f5f0" d="M20 300 C24 252 40 220 78 206 C96 200 108 198 120 198 C134 198 148 200 164 206 C202 220 216 252 220 300 Z"/>
+  <path fill="#f7f5f0" d="M84 132 C82 96 98 74 120 74 C144 74 158 96 156 132 C155 160 142 182 120 182 C98 182 85 160 84 132 Z"/>
+  <path d="M80 124 C70 110 76 92 86 88 C84 72 100 62 110 68 C114 54 134 54 138 66 C150 60 164 72 158 88 C170 94 172 112 160 124"/>
+  <path d="M88 100 C92 92 98 92 100 98 M104 86 C108 78 116 78 118 84 M124 84 C128 78 136 78 138 86 M140 96 C144 90 152 92 152 100"/>
+  <circle cx="104" cy="128" r="11"/>
+  <circle cx="137" cy="128" r="11"/>
+  <path d="M115 127 C118 124 122 124 126 127"/>
+  <path d="M104 129 h1 M137 129 h1" stroke-width="3.2"/>
+  <path d="M118 140 C116 148 118 152 122 152"/>
+  <path d="M108 162 C116 168 126 168 134 162"/>
+  <path d="M112 182 L110 198 M130 182 L132 198" stroke-width="2"/>
+  <path fill="#f7f5f0" d="M30 300 C40 274 70 262 120 262 C170 262 200 274 210 300"/>
+  <path d="M70 270 C90 278 150 278 172 270" stroke-width="1.4"/>
+</svg>
