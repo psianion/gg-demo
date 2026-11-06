@@ -116,8 +116,8 @@ export function createDirector(hero: Hero, opts: { onDieFire: () => void }): Dir
     ps.night = L.clicked ? L.night : seqNight(u);
     ps.lanternLit = lerp(1, ps.night, smooth(seg(u, 0.6, 1.5)));
     const wx = !W.clicked;
-    ps.cloud = wx ? smooth(seg(u, 4.82, 5.45)) : W.cloud;
-    ps.cloudRope = wx ? smooth(seg(u, 4.78, 4.86)) * (1 - smooth(seg(u, 5.55, 5.7))) : 0;
+    ps.cloud = wx ? smooth(seg(u, 4.62, 4.98)) * (1 - smooth(seg(u, 5.5, 5.85))) : W.cloud;
+    ps.cloudRope = wx ? smooth(seg(u, 4.6, 4.66)) * (1 - smooth(seg(u, 5.0, 5.1))) : 0;
     ps.rain = wx ? seqRain(u) : W.rain;
     ps.snow = wx ? 0 : W.snow;
     ps.squash = wx ? 0 : W.squash;
@@ -290,5 +290,5 @@ export function createDirector(hero: Hero, opts: { onDieFire: () => void }): Dir
   return { frame, effective, hands, die, engaged: () => lastU < 0.2 };
 }
 
-export const seqNight = (u: number) => smooth(seg(u, 2.95, 3.25));
-export const seqRain = (u: number) => smooth(seg(u, 5.45, 5.85));
+export const seqNight = (u: number) => smooth(seg(u, 2.95, 3.25)) * (1 - smooth(seg(u, 3.62, 3.86)));
+export const seqRain = (u: number) => smooth(seg(u, 4.95, 5.15)) * (1 - smooth(seg(u, 5.45, 5.65)));

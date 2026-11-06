@@ -63,16 +63,20 @@ const keys: Key[] = [
   K(2.86, off(SPOT.lanternBase, -0.06, -0.04), { y: 0.36, face: -2.2 }),
   K(3.14, off(SPOT.lanternBase, -0.06, -0.04), { y: 0.36, face: -2.2 }),
   K(3.3, SPOT.lanternBase, { face: -2.2 }),
-  K(3.36, SPOT.lanternBase, { face: 0.6 }),
-  K(3.92, SPOT.centre, { face: FACE_RAIL }),
+  // …then, back on the ground, he blows it out: day again by 4
+  K(3.5, off(SPOT.lanternBase, 0.15, 0.25), { face: -2.4 }),
+  K(3.86, off(SPOT.lanternBase, 0.15, 0.25), { face: -2.4 }),
+  K(4.02, SPOT.centre, { face: FACE_RAIL }),
   // weather — off the far edge, back with the cloud on a rope, park it
   K(4.05, SPOT.centre, { face: FACE_RAIL }),
-  K(4.42, SPOT.farEdge, { face: 0 }),
-  K(4.62, SPOT.offFar, { y: -0.75, face: 0 }),
-  K(4.8, SPOT.offFar, { y: -0.75, face: R }),
-  K(5.0, SPOT.farEdge, { face: 0 }),
-  K(5.42, off(SPOT.cloudPark, 0, -0.35), { face: 0 }),
-  K(5.6, off(SPOT.cloudPark, 0, -0.35), { face: 0 }),
+  K(4.3, SPOT.farEdge, { face: 0 }),
+  K(4.42, SPOT.offFar, { y: -0.75, face: 0 }),
+  K(4.55, SPOT.offFar, { y: -0.75, face: R }),
+  K(4.7, SPOT.farEdge, { face: 0 }),
+  K(4.95, off(SPOT.cloudPark, 0, -0.35), { face: 0 }),
+  // it rains; then he shoos the cloud off — clear again by 6
+  K(5.38, off(SPOT.cloudPark, 0, -0.35), { face: 0 }),
+  K(5.68, off(SPOT.cloudPark, 0, -0.35), { face: 0 }),
   K(5.93, SPOT.centre, { face: FACE_RAIL }),
   // encounters — drag the sack in, tip, line up, nudge
   K(6.05, SPOT.centre, { face: FACE_RAIL }),
@@ -93,9 +97,10 @@ const spans: Span[] = [
   { a: 2.54, b: 2.88, pose: 'climb', wig: 'climb', fade: 0.05 },
   { a: 2.84, b: 3.16, pose: 'reach', fade: 0.05 },
   { a: 3.12, b: 3.32, pose: 'hang', fade: 0.04 },
-  { a: 4.62, b: 4.82, pose: 'lift', fade: 0.05 },
-  { a: 4.95, b: 5.48, pose: 'haul', wig: 'hand', fade: 0.06 },
-  { a: 5.4, b: 5.62, pose: 'lift', fade: 0.05 },
+  { a: 3.52, b: 3.86, pose: 'blow', fade: 0.06 },
+  { a: 4.42, b: 4.57, pose: 'lift', fade: 0.04 },
+  { a: 4.65, b: 5.0, pose: 'haul', wig: 'hand', fade: 0.05 },
+  { a: 5.38, b: 5.68, pose: 'shoo', wig: 'wave', fade: 0.06 },
   { a: 6.34, b: 6.68, pose: 'haul', fade: 0.05 },
   { a: 6.64, b: 6.92, pose: 'lift', fade: 0.06 },
   { a: 7.44, b: 7.72, pose: 'kick', fade: 0.07 },
@@ -149,7 +154,7 @@ export const SCROLL_TRACK = prepare({
 
 /** a clicked chip's own scroll segment is held (he already did what you asked) */
 export const CHIP_SEGMENT = {
-  light: [2.12, 3.92] as const,
+  light: [2.12, 4.02] as const,
   weather: [4.05, 5.93] as const,
   encounters: [6.05, 7.95] as const,
 };

@@ -354,10 +354,21 @@ export function buildWorld(): World {
     return Object.assign(a, { body: a.root, restY: 0.125, showFace: () => {}, setTip: () => {} });
   });
   props.add(die.root);
-  // numerals read from the lens on −z, and the 20 waits on the hidden far side
-  die.root.rotation.y = Math.PI;
   die.reveal(1);
   die.showFace(1);
+  // tipping 1 → 20 rolls the die one face over; measure that shift once and cancel it
+  // so the die turns over where it lies instead of sliding
+  const tipShift = (() => {
+    const a = V(0, 0, 0), b = V(0, 0, 0);
+    die.setTip(0);
+    die.root.updateMatrixWorld(true);
+    die.body.getWorldPosition(a);
+    die.setTip(1);
+    die.root.updateMatrixWorld(true);
+    die.body.getWorldPosition(b);
+    die.setTip(0);
+    return b.sub(a).setY(0).sub(die.root.position);
+  })();
   const dieAxis = V(1, 0.3, 0.6).normalize();
   const dieStart = V(DIE_SPOT.x - 1.6, 0, DIE_SPOT.z - 1.3);
   const dieQ = new THREE.Quaternion();
@@ -559,7 +570,6 @@ export function buildWorld(): World {
     // sack
     const sp = settle(ps.sackPos);
     sack.root.position.set(lerp(SPOT.leftEdge.x + 0.15, SPOT.sack.x, sp), 0, lerp(SPOT.leftEdge.z, SPOT.sack.z, sp));
-    sack.root.rotation.y = lerp(0.6, -0.5, sp);
     sack.reveal(ps.sackVis);
     sack.root.visible = ps.sackVis > 0.001;
     sack.setTip(ps.sackTip);
@@ -639,8 +649,8 @@ export function buildWorld(): World {
     }
 
     // fog: laid with the table, peeled back like a bedsheet by the goblin
-    fog.reveal(smooth(seg(u, 7.95, 8.3)));
-    fog.root.visible = u > 7.94;
+    fog.reveal(smooth(seg(u, 7.95, 8.3)) * (1 - smooth(seg(u, 10.95, 11.25))));
+    fog.root.visible = u > 7.94 && u < 11.25;
     fog.setPeel(smooth(seg(u, 10.32, 10.95)));
 
     // the d20
@@ -653,7 +663,10 @@ export function buildWorld(): World {
       die.root.position.set(lerp(start.x, DIE_SPOT.x, ease), bounce + (1 - ease) * 0.6, lerp(start.z, DIE_SPOT.z, ease));
       dieQ.setFromAxisAngle(dieAxis, (1 - ease) * Math.PI * 7);
       die.body.quaternion.copy(dieQ);
-      die.setTip(smooth(seg(u, 12.17, 12.28)));
+      const tip = smooth(seg(u, 12.17, 12.28));
+      die.setTip(tip);
+      die.root.position.x -= tipShift.x * tip;
+      die.root.position.z -= tipShift.z * tip;
     }
   }
 
