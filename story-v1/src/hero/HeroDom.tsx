@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import HeroWordmark from './HeroWordmark';
-import { frameHooks } from '../stage/bus';
+import { frameHooks, story } from '../stage/bus';
 import { lerp, seg, smooth, smoother } from '../stage/ease';
 import './hero.css';
 
@@ -9,7 +9,7 @@ import './hero.css';
 // ids; scroll then shrinks the wordmark to the top-left corner (pure in u) and fades
 // the tagline, subline and hint.
 
-export default function HeroDom() {
+export default function HeroDom({ storyOn }: { storyOn: boolean }) {
   const brand = useRef<HTMLElement>(null);
   const mover = useRef<HTMLDivElement>(null);
   const sub = useRef<HTMLDivElement>(null);
@@ -89,13 +89,23 @@ export default function HeroDom() {
           </div>
         </header>
       </div>
+      {/* a return visit gets "See for yourself" where the scroll hint sits; the entrance
+          fades #hero-hint in either way */}
       <div ref={hint} className="hint-wrap">
-        <div id="hero-hint" aria-hidden="true">
-          <span>scroll</span>
-          <svg viewBox="0 0 12 26">
-            <path d="M6 1 C7 8 5 14 6 21" />
-            <path d="M2.5 17.5 L6 21.5 L9.5 17.5" />
-          </svg>
+        <div id="hero-hint" aria-hidden={storyOn}>
+          {storyOn ? (
+            <>
+              <span>scroll</span>
+              <svg viewBox="0 0 12 26">
+                <path d="M6 1 C7 8 5 14 6 21" />
+                <path d="M2.5 17.5 L6 21.5 L9.5 17.5" />
+              </svg>
+            </>
+          ) : (
+            <button type="button" id="hero-see" onClick={() => story.start()}>
+              See for yourself
+            </button>
+          )}
         </div>
       </div>
       <p id="hero-note" aria-hidden="true">

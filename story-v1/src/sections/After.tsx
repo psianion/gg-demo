@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { capture, frameHooks, nav } from '../stage/bus';
+import { capture, frameHooks, nav, story } from '../stage/bus';
 import { clock } from '../stage/clock';
 import { Glyph } from '../ui/Glyph';
+import WaitlistCard from '../ui/WaitlistCard';
 import './after.css';
 
 // After the unpin: three feature sections (one still each, rendered from the live scene
-// in the visitor's own state), a footer, and the mini island that rewinds to the top.
+// in the visitor's own state), the waitlist as a page section on a return visit (the
+// story ends on its own card), a footer, and the mini island that rewinds to the top.
 
 const FEATURES = [
   {
@@ -40,7 +42,7 @@ const FEATURES = [
   },
 ];
 
-export default function After() {
+export default function After({ storyOn }: { storyOn: boolean }) {
   const [stills, setStills] = useState<string[]>([]);
   const mini = useRef<HTMLButtonElement>(null);
 
@@ -50,12 +52,13 @@ export default function After() {
     const hook = () => {
       // the stills are rendered from the scene once, in the visitor's state — at a
       // moment of rest late in the film (readPixels stalls a frame), or at the unpin
-      const resting = Math.abs(clock.v) < 0.01 && nav.raw > 14;
-      if (!shot && capture.fn && (resting || nav.raw > 18.2)) {
+      const P = story.pinned();
+      const resting = Math.abs(clock.v) < 0.01 && clock.u > 14;
+      if (!shot && capture.fn && (resting || nav.raw > P + 0.2)) {
         shot = true;
         capture.fn().then(setStills);
       }
-      const on = nav.raw > 18.6;
+      const on = nav.raw > P + 0.6;
       if (on !== last && mini.current) {
         last = on;
         mini.current.classList.toggle('on', on);
@@ -83,6 +86,11 @@ export default function After() {
             </div>
           </section>
         ))}
+        {!storyOn && (
+          <section id="waitlist">
+            <WaitlistCard className="card static" />
+          </section>
+        )}
         <footer id="footer">
           <p className="foot-mark">GOOD GOBLIN</p>
           <p>The Dungeon Master&rsquo;s backstage. Opening to a few tables first.</p>

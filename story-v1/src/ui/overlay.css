@@ -470,3 +470,13 @@
     display: none;
   }
 }
+
+/* the same card as a page section, on a return visit (review 2) */
+.card.static {
+  position: relative;
+  left: auto;
+  top: auto;
+  margin: 0 auto;
+  visibility: visible;
+  opacity: 1;
+}

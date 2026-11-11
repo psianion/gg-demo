@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import HeroWordmark from '../hero/HeroWordmark';
 import { frameHooks, live, nav, sceneOut } from '../stage/bus';
 import { clock } from '../stage/clock';
 import { lerp, seg, settle, smooth, window01 } from '../stage/ease';
 import { actions, click, type Chip } from '../stage/state';
 import { Glyph } from './Glyph';
+import WaitlistCard from './WaitlistCard';
 import './overlay.css';
 
 // The DOM over the canvas. Everything here is shown, hidden and moved by u in ONE
@@ -37,7 +37,6 @@ const tmp = new THREE.Color();
 
 export default function Overlay() {
   const root = useRef<HTMLDivElement>(null);
-  const [joined, setJoined] = useState(false);
   const [wx, setWx] = useState<'clear' | 'rain' | 'snow'>('clear');
   const [used, setUsed] = useState<Record<Chip, boolean>>({ light: false, weather: false, encounters: false });
 
@@ -147,11 +146,6 @@ export default function Overlay() {
     setUsed((u) => ({ ...u, [id]: true }));
   };
 
-  const join = (e: FormEvent) => {
-    e.preventDefault();
-    setJoined(true);
-  };
-
   return (
     <div id="overlay" ref={root}>
       {CAPTIONS.map((c) => (
@@ -218,31 +212,7 @@ export default function Overlay() {
       </div>
       <div className="product-dim" />
 
-      <section className="card" aria-label="Join the waitlist">
-        <div className="card-mark">
-          <HeroWordmark />
-        </div>
-        <p className="card-line">The Dungeon Master&rsquo;s backstage. Opening to a few tables first.</p>
-        {joined ? (
-          <p className="card-done">You&rsquo;re on the list. He&rsquo;ll light a lantern for you.</p>
-        ) : (
-          <form className="card-form" onSubmit={join}>
-            <label className="sr-only" htmlFor="email">Email</label>
-            <input id="email" type="email" required placeholder="you@email.com" autoComplete="email" />
-            <button type="submit">Join</button>
-          </form>
-        )}
-        <div className="card-links">
-          <button type="button" onClick={() => nav.go('#f-map')}>The map editor</button>
-          <button type="button" onClick={() => nav.go('#f-table')}>The live table</button>
-          <button type="button" onClick={() => nav.go('#f-bot')}>The Discord bot</button>
-        </div>
-        <div className="peek" aria-hidden="true">
-          <div className="peek-glyph">
-            <Glyph name="goblin-peek" />
-          </div>
-        </div>
-      </section>
+      <WaitlistCard peek />
     </div>
   );
 }

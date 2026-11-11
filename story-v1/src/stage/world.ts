@@ -217,6 +217,8 @@ export interface World {
   roomCards: THREE.Mesh[];
   /** textures that arrived after load — the stage uploads them before they're needed */
   pendingTextures: THREE.Texture[];
+  /** every texture fetch started at build — the load gate waits on these */
+  loading: Promise<unknown>[];
   roomFitPoints: THREE.Vector3[];
   /** draw on everything that the late art loads add */
   updateIsland(u: number, ps: PropState, wt: number, cam: THREE.Camera, hands: { r: THREE.Vector3; l: THREE.Vector3 }, entranceDone: boolean, toggles: { mesh: THREE.Mesh; x: number }[]): void;
@@ -230,10 +232,16 @@ export function buildWorld(): World {
   island.add(hero.root);
   const props = new THREE.Group();
   hero.root.add(props);
+  /** every texture fetch this build starts — the load gate waits on these */
+  const loading: Promise<unknown>[] = [];
 
   // -- page grid + island cells
-  const grid = art<Art>('buildGrid', [17, 12, CELL], () => boxStandIn(17, 0.01, 12, 'faint'));
+  // deep enough that, from the level dock camera, it recedes to the horizon behind the
+  // island instead of ending behind it (review 1); shifted back so little is wasted
+  // behind the lens
+  const grid = art<Art>('buildGrid', [40, 34, CELL], () => boxStandIn(40, 0.01, 34, 'faint'));
   grid.root.position.y = -0.98;
+  grid.root.position.z = 6;
   paint(grid.root, { line: 0xb3aea4 }); // the page grid is a whisper, not a ruling
   props.add(grid.root);
   const cells = islandCells();
@@ -443,14 +451,16 @@ export function buildWorld(): World {
       mat.map = inkFigure(i === 0);
       mat.needsUpdate = true;
     };
-    svgTexture(`${import.meta.env.BASE_URL}art/${d.src}`, 900)
-      .then(({ tex, aspect }) => {
-        mesh.scale.x = aspect / 0.72;
-        mat.map = tex;
-        mat.needsUpdate = true;
-        pendingTextures.push(tex);
-      })
-      .catch(fallback);
+    loading.push(
+      svgTexture(`${import.meta.env.BASE_URL}art/${d.src}`, 900)
+        .then(({ tex, aspect }) => {
+          mesh.scale.x = aspect / 0.72;
+          mat.map = tex;
+          mat.needsUpdate = true;
+          pendingTextures.push(tex);
+        })
+        .catch(fallback),
+    );
     room.add(mesh);
     return mesh;
   });
@@ -705,6 +715,7 @@ export function buildWorld(): World {
 
   return {
     hero, island, room, laptop, roomCards, pendingTextures, roomFitPoints, updateIsland, updateRoom, taperMount,
+    loading,
   };
 }
 

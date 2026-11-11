@@ -70,22 +70,20 @@ function frameIsland(
 ): Pose {
   const p: Pose = { look: new THREE.Vector3(), az, el, d: 10 };
   const right = new THREE.Vector3();
-  const up = new THREE.Vector3();
   for (let i = 0; i < 10; i++) {
     let b = rimBox(p, aspect);
     const k = Math.max((b.x1 - b.x0) / want.w, (b.y1 - b.y0) / want.h);
     p.d *= k;
     b = rimBox(p, aspect);
     right.setFromMatrixColumn(tmpCam.matrixWorld, 0);
-    up.setFromMatrixColumn(tmpCam.matrixWorld, 1);
     const viewH = 2 * p.d * Math.tan((HERO_FOV * DEG) / 2);
     const ex = (b.x0 + b.x1) / 2 - want.cx;
     const ey = want.bottom !== undefined ? b.y1 - want.bottom : (b.y0 + b.y1) / 2 - (want.cy ?? 0.5);
-    // move the look along the camera plane, projected onto the ground so look.y stays 0
+    // slide sideways in the camera plane; place vertically by raising/lowering the look
+    // point (the camera then looks a little above or below the island). A world-y step
+    // reads linearly at every elevation; a ground step blew up below ~20° (review 1).
     p.look.addScaledVector(right, ex * viewH * aspect);
-    const upG = up.clone().setY(0).normalize();
-    const upScale = 1 / Math.max(0.2, Math.sin(el)); // a ground step reads foreshortened
-    p.look.addScaledVector(upG, -ey * viewH * upScale);
+    p.look.y -= (ey * viewH) / Math.cos(el);
   }
   return p;
 }
@@ -111,11 +109,16 @@ export function solveFramings(width: number, height: number): Framings {
   const hf = heroFraming(width, height);
   const hero = poseFrom(hf.position, hf.look);
 
-  const DOCK_EL = 52 * DEG;
-  // Beat 1–2: ¾ top-down, island in the lower two thirds, near rim on the bottom edge
+  // Beat 1–2: a level camera, eye height (review 1). It looks a little above the island,
+  // so the island is a thin ellipse (≈ 0.16 tall:wide, seen from ≈ 13°) hugging the
+  // bottom edge, the goblin, signpost and trees stand tall against empty paper, and the
+  // ground grid recedes to a horizon just above mid-frame.
+  const DOCK_EL = 2 * DEG;
   const dock = portrait
-    ? frameIsland(aspect, 0, DOCK_EL, { w: 1.04, h: 0.5, cx: 0.5, bottom: 0.86 })
-    : frameIsland(aspect, 0, DOCK_EL, { w: 0.8, h: 0.64, cx: 0.47, bottom: 0.985 });
+    ? frameIsland(aspect, 0, DOCK_EL, { w: 1.04, h: 0.5, cx: 0.5, bottom: 0.9 })
+    : frameIsland(aspect, 0, DOCK_EL, { w: 0.92, h: 0.64, cx: 0.5, bottom: 1.02 });
+  // Beat 5: the product-UI frame still wants the map readable, so ¾ top-down stays
+  const SCREEN_EL = 52 * DEG;
 
   // Beat 3 push: by the gag the die (r ≈ 0.16) fills about a quarter of the frame
   const push: Pose = {
@@ -131,7 +134,7 @@ export function solveFramings(width: number, height: number): Framings {
     aspect >= SA
       ? { w: SA / aspect, h: 1, x: (1 - SA / aspect) / 2, y: 0 }
       : { w: 1, h: aspect / SA, x: 0, y: (1 - aspect / SA) / 2 };
-  const screen = frameIsland(aspect, 0, DOCK_EL, {
+  const screen = frameIsland(aspect, 0, SCREEN_EL, {
     w: rect.w * 0.8,
     h: rect.h * 0.7,
     cx: 0.5,

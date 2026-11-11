@@ -167,6 +167,29 @@ function StageScene() {
     for (const o of shown) o.visible = false;
   }, [size.width, size.height, viewport.dpr, cam, rtCam, world]);
 
+  // the load gate (review 2): fonts in, every texture resolved, then three drawn frames
+  // after the warm-up above — App holds the scroll until `gg-ready`
+  useEffect(() => {
+    let off = false;
+    let done = false;
+    const h = () => {
+      if (done || stats.frames < need) return;
+      done = true;
+      window.dispatchEvent(new Event('gg-ready'));
+    };
+    let need = Infinity;
+    Promise.all([document.fonts?.ready ?? Promise.resolve(), ...world.loading]).then(() => {
+      if (off) return;
+      need = stats.frames + 3;
+      frameHooks.push(h);
+    });
+    return () => {
+      off = true;
+      const i = frameHooks.indexOf(h);
+      if (i >= 0) frameHooks.splice(i, 1);
+    };
+  }, [world]);
+
   // the after-page stills: three framings of the live island, in the visitor's state
   useEffect(() => {
     capture.fn = async () => {

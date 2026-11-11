@@ -170,3 +170,91 @@ mounts it at `?art=1`.
 | `public/art/ui/mini-island.svg` | — | — | return button |
 
 The artist asks `builder` (SendMessage) for anything that depends on scene scale, and tells `builder` as each file lands.
+
+## 12. Review 1 (2026-11-07) — Beat 1 island angle
+
+**Finding.** When the island is tucked at the bottom of the screen (u ≈ 2 onward) it is seen from ¾ top-down
+(52°): a fat ellipse mid-frame, the grid a flat sheet under it. Wanted: a low, near-eye-level view. The island
+reads as a thin ellipse hugging the bottom edge, the goblin, signpost and trees stand upright and tall in
+front of empty paper, and the grid on the ground recedes to a horizon in perspective (sketches: low view with
+and without the grid).
+
+**Change (camera.ts only).**
+1. `dock` elevation 52° → 2°: a level camera at eye height. The sketch's ellipse is ≈ 0.13 as tall as it is
+   wide; the island is 2.6 × 1.8, so the island must be seen from ≈ 12°. A level camera that looks a little
+   *above* the island (look point ≈ 1.3 up) sees it from 13° and drops it to the bottom edge — the framing
+   solver sets that look height. Azimuth stays 0 (square on, like the sketch).
+2. `dock` target box: rim width 0.8 → 0.92 of the viewport, near rim just past the bottom edge (1.02), so the
+   ellipse spans the frame and sits on the edge as drawn. Portrait keeps its own box, same elevation.
+3. Solver fix: `frameIsland` placed the island vertically by walking the look point along the ground, scaled by
+   1/sin(el) — fine at 52°, divergent below ~20° (the first step was ~6 world units and the island ended up
+   behind the camera). It now raises/lowers the look point instead, which is linear at every elevation. The
+   52° `screen` framing converges to the same box as before (look.y ≈ 0.04).
+4. Beat 5 `screen` framing keeps 52° (its own constant) — the product-UI frame still wants the map readable.
+5. The grid is already a ground plane at y = −0.98, so at a level camera it foreshortens into the horizon grid
+   by itself — but at 17 × 12 its far edge hid behind the island. `world.ts` now builds it 40 × 34, shifted
+   6 back, so it recedes to a hard far edge at ≈ 0.58 of the frame behind the island, like the gridded sketch.
+   The draw-on sweep is unchanged (its origin corner is now behind the lens, so on screen it reads as drawing
+   in from the far right).
+
+**Verified 2026-11-07** at 1440 × 900, u = 1, 2, 6, 9: island box ≈ 0.79–1.02 tall, ellipse ratio 0.16, goblin,
+signpost and trees upright, `tsc --noEmit` clean. Beat 2 and the start of the Beat 3 push read fine from the
+low angle; the threat rings and fog patch are flatter but legible.
+
+**Inherits the change (not re-authored here, flag for review 2).** The dock is held u 2–8, so Beat 2 (chips:
+light, weather, encounters) is seen from the same low angle; threat rings and the sack will read flatter.
+The Beat 3 push (dock → 40°) now cranes up instead of down. The after-section stills are shot from the dock.
+
+## 13. Review 2 (2026-11-07) — the chips beat's length, return visits, and a load gate
+
+Agreed in brainstorm 2026-11-07. Three changes, all in `story-v1/`.
+
+### A. The chips beat scrolls like every other beat
+The canvas beat (u 2–8: Light → Weather → Encounters) is 6 viewports of scroll; the others are 2–5. It keeps
+its sequence on scroll and the chips keep working on click, but it plays over **2.5 viewports**.
+
+- Scroll ↔ u is no longer 1 viewport per unit. `clock.ts` owns a piecewise-linear map between scroll
+  position `s` (viewports) and `u`: keys (u, s) = (0, 0), (2, 2), (8, 4.5), (18, 14.5). `uOf(s)` and `sOf(u)`.
+  `S_MAX` = 14.5 replaces `U_MAX` wherever something is measured in scroll, i.e. the track height, the
+  ScrollTrigger length, the unpin ramp, the stills/mini-island thresholds and `nav.go` targets (which stay in u
+  and convert). Everything the stage does stays a pure function of u — only the pixel density of one stretch
+  changed, so nothing in director/camera/world/overlay is touched.
+- Not changed: the table beat (8–13) stays 5 viewports; it holds the real-time die roll. Flag for review 3 if it
+  also reads long.
+
+### B. First visit tells the story; later visits go to the apps
+- **Memory:** `localStorage['gg.story.seen'] = <ISO date>`, written the first time the damped u reaches 17.5
+  (the waitlist card is settled on screen). Leaving halfway does not mark it. The hero's own `gg.seen`
+  (entrance at 0.6×) is untouched. Dev override `?story=1|0`, like `?u=`.
+- **Story mode (not seen):** as today — hero, 18-unit story ending on the waitlist card, then the app sections
+  and footer. The `#track` is `S_MAX + 1.25` viewports.
+- **Static mode (seen):** the stage is pinned for 0 units: the same unpin ramp starts at scroll 0, so the hero
+  rides off the top on the first scroll, then the three app sections, then a **static waitlist section** (the
+  same card, laid out as a page section), then the footer. No ScrollTrigger exists; u stays 0, the hero lives
+  (hover, idle acts). The overlay's captions, rail, chrome and in-story card are all u-gated and so never show.
+- **"See for yourself":** in static mode the hero's "scroll" hint is replaced by this button, same place. Click:
+  if the page has scrolled at all, Lenis eases back to 0 (≤ 0.5 s), then the page switches to story mode in
+  place: the track grows, the ScrollTrigger is created, the hint returns. At scroll 0 both modes agree (lift 0,
+  u 0), so there is no jump. The visitor scrolls the story themselves.
+- `WaitlistCard` is extracted from `Overlay.tsx` into `ui/WaitlistCard.tsx` and used by both the overlay (as
+  the floating `.card`) and `After.tsx` (as `section#waitlist`, only in static mode).
+
+### C. Load gate on the hero (story mode only)
+The story must not be scrollable before everything it draws is resident. Until ready: `html.gg-loading`
+(overflow hidden, hint hidden) and `lenis.stop()`. Ready = fonts loaded **and** every SVG texture the world
+loads has resolved (`world.loading`, a promise per `svgTexture`) **and** three frames have been drawn after
+the shader warm-up on mount. Hard cap 8 s, then unlock regardless. The stage dispatches `gg-ready`; App
+unlocks and refreshes ScrollTrigger. The hero's entrance is not waited for (scrolling mid-entrance already
+skips it cleanly).
+
+### Verified 2026-11-07 (1440 × 900, dev server)
+- `?story=1`: track 15.75 viewports; 3.25 viewports of scroll = u 5 (weather, cloud and rain on, rail up).
+  Gate held the scroll from 86 ms to 636 ms after navigation, then opened on `gg-ready`.
+- `?story=0`: track 1.25 viewports, hint reads "See for yourself", rail/wait-chip hidden, u stays 0; hero rides
+  off into the map editor; the page ends waitlist card → footer.
+- "See for yourself" from 0.4 viewports down: eased to 0, track grew to 15.75, hint back to "scroll", the static
+  waitlist section gone, stage transform empty (no jump); 2 viewports of scroll then = u 2, the docked island.
+- `?u=17.9` wrote `gg.story.seen`; a plain load after that opened in static mode.
+- `tsc --noEmit` clean.
+- Known nit for the copy/visual pass: in static mode the three app stills are shot from the hero at rest, so the
+  island is half pencil, half paint (the story's stills are shot late in the film, fully painted).

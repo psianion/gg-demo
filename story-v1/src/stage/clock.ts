@@ -8,6 +8,26 @@ import { clamp } from './ease';
 export const U_MAX = 18;
 const OMEGA = 9; // rad/s — settles in ~0.45 s on top of Lenis's own lerp
 
+// scroll ↔ u (review 2). The page is not 1 viewport per unit everywhere: the chips
+// beat (u 2–8) plays over 2.5 viewports like every other beat. Everything downstream
+// stays a pure function of u; only the pixel density of that stretch changed.
+const KEYS: [number, number][] = [[0, 0], [2, 2], [8, 4.5], [U_MAX, 14.5]]; // [u, s]
+/** the story's length in viewports of scroll */
+export const S_MAX = KEYS[KEYS.length - 1][1];
+function remap(x: number, from: 0 | 1): number {
+  const to = (1 - from) as 0 | 1;
+  for (let i = 1; i < KEYS.length; i++) {
+    const a = KEYS[i - 1], b = KEYS[i];
+    if (x <= b[from]) return a[to] + ((x - a[from]) / (b[from] - a[from])) * (b[to] - a[to]);
+  }
+  const l = KEYS[KEYS.length - 1];
+  return l[to] + (x - l[from]); // past the end, 1:1
+}
+/** u for a scroll position in viewports */
+export const uOf = (s: number) => remap(s, 1);
+/** scroll position in viewports for a u */
+export const sOf = (u: number) => remap(u, 0);
+
 export const clock = {
   target: 0,
   u: 0,

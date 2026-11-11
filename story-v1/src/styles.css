@@ -105,3 +105,11 @@ body.past-stage #stage {
     scroll-behavior: auto !important;
   }
 }
+
+/* the load gate: no scroll, no hint, until the stage says gg-ready (review 2) */
+html.gg-loading {
+  overflow: hidden;
+}
+html.gg-loading #hero-hint {
+  visibility: hidden;
+}
