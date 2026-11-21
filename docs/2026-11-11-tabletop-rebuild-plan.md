@@ -309,6 +309,20 @@ becomes too fast, keep the speed slower at the end".
 - **Not done.** Not watched at real speed by me: the automation tab was held to one frame a second by the browser
   (finished island included). Checked held frames, the type check, and the cost (41 ms to build, nothing per frame).
 
+**Goblin and island motion, 2026-11-21.** The low-poly look is locked; these bring the rest of the hero up to it.
+- **Goblin.** `blender/goblin_lp.py` rebuilds him in the island's look on the miniature's skeleton, so the six clips
+  fit: about 5,400 flat faces, a big head with a hooked nose, tusks and yellow eyes, long cupped ears that curl up
+  to a point, a pot belly, long arms, clawed hands and three-toed feet. He wears a rogue's hood (point on top, brim
+  down over the brow) with a torn mantle, an open leather vest, patched breeches, a belt with pouch and rope, and
+  wraps. Ears, lids, pouch and rope have their own bones. `GG_STEPS=kit` bakes the clips and writes
+  `out/kit/goblin__lp.glb`, which the site now loads; `goblin__mini.glb` stays as the alternate.
+- **Motion on the page.** `src/island/life.ts` moves the merged island in the vertex shader after each piece has
+  popped: trees, pines, bushes, grass and flowers sway in gusts that cross the island, the banner swings and
+  ripples, each cloud drifts on its own heading and pace, the fire's tongues lick and its lamps flicker.
+  `src/island/fire.ts` adds faceted embers, bursts of sparks and a little smoke. All of it holds still under reduced
+  motion.
+- **Not checked.** The clips other than the idle are unwatched in motion; phone sizes; real-screen frame rate.
+
 ### Step 3 — Beat 1, docking
 - Camera path for u 0–2 keyed in Blender and exported. This starts the single continuous path that every later
   beat extends.

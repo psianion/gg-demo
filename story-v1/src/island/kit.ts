@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { lifeOf } from './life';
 
 // THE KIT. The camp island as Blender exports it: one GLB per piece, a manifest saying what each slot
 // is, a layout saying where each one stands. build() assembles it; nothing here knows what a tree is.
@@ -84,6 +85,11 @@ function batch(root: THREE.Group, moving: Set<THREE.Object3D>): THREE.Group {
       anchor[i + 3] = piece.userData.slot === 'island' ? 0 : 1;
     }
     flat.setAttribute('anchor', new THREE.BufferAttribute(anchor, 4));
+    // and what it is to the wind, the fire and the clouds (life.ts), so the shader can move it
+    const vec = lifeOf(piece, mesh, flat);
+    const life = new Float32Array(anchor.length);
+    for (let i = 0; i < life.length; i += 4) life.set(vec, i);
+    flat.setAttribute('life', new THREE.BufferAttribute(life, 4));
     const shape = Object.entries(flat.attributes).map(([name, a]) => `${name}:${a.array.constructor.name}:${a.itemSize}`);
     const key = `${material.uuid}|${shape.sort().join(',')}`;
     if (!groups.has(key)) groups.set(key, { material, parts: [] });
@@ -142,7 +148,7 @@ export async function build(mixers: THREE.AnimationMixer[], plan?: Plan): Promis
       mixers.push(mixer);
     }),
   );
-  const rig = await file('goblin__mini.glb');
+  const rig = await file('goblin__lp.glb');
   const goblin = clone(rig.scene);
   place(goblin, [-0.9, 0, 0], 48);
   goblin.userData.slot = 'goblin';

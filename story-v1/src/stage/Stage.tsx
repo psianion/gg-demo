@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV, ISLAND_RX } from '../hero/film/stages/hero.ts';
 import { build as buildKit, readPlan, type Plan } from '../island/kit';
 import { createBlockout, clocks, DRAWN, type Blockout } from '../island/blockout';
+import { stepLife } from '../island/life';
+import { createFire, type Fire } from '../island/fire';
 import { createHeroLife, type HeroLife } from '../hero/film/stages/heroLife.ts';
 import { rig } from '../hero/film/stages/trilayer.ts';
 import { prmAmbient } from '../hero/film/stages/rigs.ts';
@@ -39,6 +41,8 @@ interface KitHero {
   // the wash of sky round the island: how far in it is (0 to 1, with the paint), its middle and reach on screen
   sky: { uSky: THREE.IUniform<number>; uCentre: THREE.IUniform<THREE.Vector2>; uReach: THREE.IUniform<THREE.Vector2> };
   fog: THREE.Fog;
+  // the campfire's embers, smoke and flicker (fire.ts), once the models are in
+  fire: Fire | null;
 }
 interface Dolly { fps: number; az: number[]; el: number[]; d: number[] }
 
@@ -130,7 +134,7 @@ function kitHeroScene(plan: Plan, move: Dolly, since: number): KitHero {
   turn.scale.setScalar(KIT_SCALE);
   turn.add(float);
   scene.add(key, key.target, fill, turn);
-  return { scene, float, root, mixers: [], draw, since, loaded: false, ready: false, paintAt: null, move, sky, fog };
+  return { scene, float, root, mixers: [], draw, since, loaded: false, ready: false, paintAt: null, move, sky, fog, fire: null };
 }
 
 interface RoomPose { dir: THREE.Vector3; d: number; look: THREE.Vector3 }
@@ -191,6 +195,7 @@ function StageScene() {
           if (!on) return;
           k.root.add(built.root);
           k.draw.attach(built.root);
+          k.fire = createFire(built.root, k.draw.popped);
           k.mixers = mixers;
           k.loaded = true;
         });
@@ -547,6 +552,10 @@ function StageScene() {
         const painted = reduced
           ? k.draw.at(Infinity, k.loaded ? Infinity : -1)
           : k.draw.at(L.t - k.since, k.paintAt === null ? -1 : L.t - k.paintAt);
+        // what lives on it once painted (life.ts, fire.ts): wind in the trees, drifting clouds, the fire. After
+        // the entrance has set the lamps, since the fire's flicker rides on them
+        stepLife(dt, m);
+        k.fire?.update(dt * m, m);
         k.sky.uSky.value = painted * painted * (3 - 2 * painted) * (1 - smooth(seg(u, 0.015, KIT_HERO_UNTIL)));
         // the wash follows the island on the screen, and reaches as far as the island is wide there
         const reach = (5.2 * KIT_SCALE) / (cam.position.length() * Math.tan((cam.fov * DEG) / 2));

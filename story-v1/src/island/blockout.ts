@@ -4,6 +4,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { sketch, STROKE_LAYER } from '../hero/film/pencil.ts';
 import type { Plan } from './kit';
+import { LIFE, LIFE_FRAG, LIFE_FRAG_PARS, LIFE_PARS, lifeVertex } from './life';
 
 // THE BLOCKOUT. The hero's entrance, and the page's loading screen: the island arrives as a pencil blockout
 // (a cone for the pine, balls on a stick for a tree, a box for a crate, a faceted slab for the island itself),
@@ -99,15 +100,19 @@ const GROUND = /* glsl */ `
 
 type Uniforms = Record<'uFront' | 'uDrawn', THREE.IUniform>;
 
-/** A kit material learns the entrance: its pieces pop, its ground is painted across. */
+const LIFE_VERTEX = lifeVertex(POP);
+
+/** A kit material learns the entrance: its pieces pop, its ground is painted across. Once popped, a piece comes
+ *  alive (life.ts): that runs after the pop, here and in the shadow alike. */
 function reveal(material: THREE.Material, U: Uniforms) {
   material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, U);
+    Object.assign(shader.uniforms, U, LIFE);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', `#include <common>\nattribute vec4 anchor;\nvarying vec3 vRvP;\nvarying float vRvGround;\n${COORD}`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvRvP = position;\nvRvGround = 1.0 - anchor.w;\n${POP_GLSL}`);
+      .replace('#include <common>', `#include <common>\nattribute vec4 anchor;\nvarying vec3 vRvP;\nvarying float vRvGround;\n${COORD}${LIFE_PARS}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvRvP = position;\nvRvGround = 1.0 - anchor.w;\n${POP_GLSL}${LIFE_VERTEX}`);
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\nvarying vec3 vRvP;\nvarying float vRvGround;\n${COORD}${EDGE_GLSL}`)
+      .replace('#include <common>', `#include <common>\nvarying vec3 vRvP;\nvarying float vRvGround;\n${COORD}${EDGE_GLSL}${LIFE_FRAG_PARS}`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n${LIFE_FRAG}`)
       .replace('#include <fog_fragment>', `#include <fog_fragment>\n${GROUND}`);
   };
   material.customProgramCacheKey = () => 'reveal';
@@ -246,6 +251,8 @@ export interface Blockout {
   attach(root: THREE.Group): void;
   /** `draw` seconds on the pencil's clock, `paint` on the paint's (Infinity: over). Returns how far the paint has got, 0 to 1. */
   at(draw: number, paint: number): number;
+  /** how far a piece standing at (x, z), in the kit's space, has popped: 0 before the paint reaches it, 1 once in */
+  popped(x: number, z: number): number;
 }
 
 /** `size` is the scale the kit is shown at, so the pencil's hand comes out the size it was drawn for. */
@@ -405,10 +412,10 @@ export function createBlockout(plan: Plan, size: number): Blockout {
       // pieces pop, the ground is painted, and what has not popped casts no shadow
       const depth = new THREE.MeshDepthMaterial();
       depth.onBeforeCompile = (shader) => {
-        Object.assign(shader.uniforms, U);
+        Object.assign(shader.uniforms, U, LIFE);
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', `#include <common>\nattribute vec4 anchor;\n${COORD}`)
-          .replace('#include <begin_vertex>', `#include <begin_vertex>\n${POP_GLSL}`);
+          .replace('#include <common>', `#include <common>\nattribute vec4 anchor;\n${COORD}${LIFE_PARS}`)
+          .replace('#include <begin_vertex>', `#include <begin_vertex>\n${POP_GLSL}${LIFE_VERTEX}`);
       };
       root.traverse((o) => {
         const mesh = o as THREE.Mesh;
@@ -464,5 +471,6 @@ export function createBlockout(plan: Plan, size: number): Blockout {
       }
       return painted;
     },
+    popped: (x, z) => ease((coord(x, z) - U.uFront.value) / POP),
   };
 }

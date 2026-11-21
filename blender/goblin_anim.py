@@ -509,14 +509,20 @@ def bake(rig, body, name):
     return act
 
 
-def make(clip_names=None):
-    """The goblin with its extra bones and hero clips. Returns (handle, rig, {name: action})."""
-    top, rig, stock = gm.goblin("T-Pose", 0)
+def make(clip_names=None, fig=None):
+    """The goblin with its extra bones and hero clips. Returns (handle, rig, {name: action}).
+    `fig` is the module that builds him: the painted miniature unless told otherwise."""
+    fig = fig or gm
+    LOOSE.clear()
+    top, rig, stock = fig.goblin("T-Pose", 0)
     for pb in rig.pose.bones:
         pb.matrix_basis = Matrix.Identity(4)
     rig.data.pose_position = "REST"
     bpy.context.view_layer.update()
-    extras(rig)
+    if hasattr(fig, "extras"):
+        fig.extras(rig, LOOSE)
+    else:
+        extras(rig)
     rig.data.pose_position = "POSE"
     body = Body(rig)
     made = {name: bake(rig, body, name) for name in (clip_names or CLIPS)}
@@ -576,16 +582,19 @@ def _plain_materials(objs):
                 o.data.color_attributes.render_color_index = list(o.data.color_attributes).index(attr)
 
 
-def build():
-    scene = kit.reset()
+def build(fig=None, live=False):
+    """Writes the library file and the kit's .glb for a goblin. `live`: in an open session, which must not be reset."""
+    fig = fig or gm
+    name = getattr(fig, "MODULE", "goblin__mini")
+    scene = bpy.context.scene if live else kit.reset()
     scene.render.fps = FPS
-    top, rig, made = make()
+    top, rig, made = make(fig=fig)
     bpy.context.view_layer.update()
     figure = [o for o in bpy.data.objects if o.type == "MESH" and o.parent is not None]
     lo, hi = kit.world_bounds(figure)
-    scale = 1.1 / (hi.z - lo.z)
+    scale = 1.1 / (fig.figure_top(figure) if hasattr(fig, "figure_top") else hi.z - lo.z)
     top.scale = (scale,) * 3
-    top.name = "goblin__mini"
+    top.name = name
     col = bpy.data.collections.new("goblin")
     scene.collection.children.link(col)
     for o in list(scene.collection.objects):
@@ -595,39 +604,44 @@ def build():
     rig.animation_data.action = None
     os.makedirs(gm.LIB, exist_ok=True)
     os.makedirs(KIT, exist_ok=True)
-    lib = os.path.join(gm.LIB, "goblin_mini.blend")
+    lib = os.path.join(gm.LIB, name.replace("__", "_") + ".blend")
     bpy.ops.wm.save_as_mainfile(filepath=lib, copy=True)
     print(f"WROTE {lib} scale={scale:.4f} actions={len(bpy.data.actions)} bones={len(rig.data.bones)}")
 
-    # the game file: one track per hero clip, base-coat materials
-    _plain_materials(figure)
-    for name, act in made.items():
+    # the game file: one track per hero clip, base-coat materials (a faceted goblin's colours are already on its faces)
+    faceted = getattr(fig, "FACETED", False)
+    if not faceted:
+        _plain_materials(figure)
+    for clip, act in made.items():
         track = rig.animation_data.nla_tracks.new()
-        track.name = name
-        strip = track.strips.new(name, 0, act)
+        track.name = clip
+        strip = track.strips.new(clip, 0, act)
         if hasattr(strip, "action_slot") and hasattr(act, "slots") and len(act.slots):
             strip.action_slot = act.slots[0]
     for a in list(bpy.data.actions):
         if a.name not in made:
             bpy.data.actions.remove(a)
-    glb = os.path.join(KIT, "goblin__mini.glb")
+    glb = os.path.join(KIT, name + ".glb")
     want = dict(filepath=glb, export_format="GLB", export_apply=True, export_animations=True, export_animation_mode="NLA_TRACKS", export_force_sampling=True,
                 export_skins=True, export_yup=True, export_vertex_color="MATERIAL", export_frame_range=False, export_cameras=False, export_lights=False)
     known = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
     bpy.ops.export_scene.gltf(**{k: v for k, v in want.items() if k in known})
     print(f"WROTE {glb} bytes={os.path.getsize(glb)}")
     manifest = {
-        "module": "goblin__mini", "file": "goblin__mini.glb", "units": "metres", "height": 1.1, "origin": "between the feet, on the ground", "faces": "-Y in Blender, +Z in glTF",
+        "module": name, "file": name + ".glb", "units": "metres", "height": 1.1, "origin": "between the feet, on the ground", "faces": "-Y in Blender, +Z in glTF",
         "fps": FPS,
         "clips": [{"name": n, "first": 0, "last": CLIPS[n][1], "seconds": round(CLIPS[n][1] / FPS, 2), "loop": CLIPS[n][2], "use": CLIPS[n][3]} for n in CLIPS],
         "secondary_bones": sorted(LOOSE) + ["lid.l", "lid.r"],
         "swappable_parts": sorted({o.name.split(".")[0] for o in figure}),
-        "fallback_clips": "76 pack clips (Idle, Walking_A, Interact, Sit_Chair_Idle and so on) are kept in out/lib/goblin_mini.blend only",
-        "paint": "base coat only in the .glb; the wash and drybrush are a render-time shader in Blender and still have to be baked to textures",
+        "fallback_clips": "76 pack clips (Idle, Walking_A, Interact, Sit_Chair_Idle and so on) are kept in the out/lib .blend only",
+        "paint": "one flat colour a face, in vertex colour" if faceted else
+                 "base coat only in the .glb; the wash and drybrush are a render-time shader in Blender and still have to be baked to textures",
     }
-    with open(os.path.join(KIT, "goblin_manifest.json"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(KIT, "goblin_manifest.json" if name == "goblin__mini" else name + "_manifest.json"), "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=2)
     print("WROTE manifest")
+    if live:
+        return
 
     # read it back the way the site will
     kit.reset()
