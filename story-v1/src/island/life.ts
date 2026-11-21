@@ -13,8 +13,9 @@ import * as THREE from 'three';
 //   4 a cloth:  the height it hangs from, how far it hangs, the way its face looks (radians about Y)
 // seed (0 to 1) keeps neighbours out of step.
 
-/** shared by every kit material: the island's own clock, and how alive it is (0 under reduced motion) */
-export const LIFE = { uTime: { value: 0 }, uLife: { value: 1 } };
+/** shared by every kit material: the island's own clock, and how alive it is (0 under reduced motion); and how far
+ *  the docking has lifted the clouds away (dock.ts, metres), which is scroll and holds under reduced motion too */
+export const LIFE = { uTime: { value: 0 }, uLife: { value: 1 }, uAway: { value: 0 } };
 
 /** The island's clock runs only while it is on screen; `on` is 0 under reduced motion. */
 export function stepLife(dt: number, on: number) {
@@ -102,6 +103,7 @@ export const LIFE_PARS = /* glsl */ `
   attribute vec4 life;
   uniform float uTime;
   uniform float uLife;
+  uniform float uAway;
   varying float vLfGlow;
   const vec2 LF_WIND = vec2(${WIND.x.toFixed(2)}, ${WIND.z.toFixed(2)});
   float lfGust(vec2 p, float t) {
@@ -178,6 +180,12 @@ export const lifeVertex = (pop: number) => /* glsl */ `
       float swing = d * d * (0.13 * g * dot(side, LF_WIND) + 0.07 * sin(t * 1.9 - d * 1.2 + lfPh) + 0.03 * sin(t * 3.1 - d * 2.0 + lfPh * 1.7));
       transformed.xz += (face * push + side * swing) * lfOn;
       transformed.y += 0.5 * swing * swing / max(d * life.z, 0.05) * lfOn;
+    }
+    if (lfKind == 2.0 && uAway > 0.0) {
+      // docking: the clouds lift away up and out from the island, once their piece has popped
+      vec2 lfOut = normalize(anchor.xz + vec2(1e-4));
+      float lfPopped = smoothstep(0.0, 1.0, clamp((rvCoord(anchor.xyz) - uFront) / ${pop.toFixed(2)}, 0.0, 1.0));
+      transformed += vec3(lfOut.x * 0.6, 1.0, lfOut.y * 0.6) * uAway * lfPopped;
     }
   }
 `;

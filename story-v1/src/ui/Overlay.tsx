@@ -13,7 +13,7 @@ import './overlay.css';
 
 interface Cap { a: number; b: number; text: string; small?: boolean }
 const CAPTIONS: Cap[] = [
-  { a: 1.05, b: 2.05, text: 'Every world needs a stagehand.' },
+  { a: 0.9, b: 2.05, text: 'Every world needs a stagehand.' }, // whole by 1.2, as the goblin hauls
   { a: 2.3, b: 4.0, text: 'You decide. He does.' },
   { a: 8.3, b: 10.1, text: 'Your players sit down. The table’s already set.' },
   { a: 12.35, b: 12.98, text: 'You’re welcome.', small: true },

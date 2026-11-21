@@ -245,7 +245,8 @@ def walk(t):
     return c
 
 
-ROPE_FROM, ROPE_ALONG = Vector((0.02, -0.26, 1.22)), Vector((0.12, -1.0, 0.22)).normalized()
+# his hands slide along this line: forward and down, the way the rope runs from them over the island's edge (Beat 1)
+ROPE_FROM, ROPE_ALONG = Vector((0.02, -0.26, 1.22)), Vector((0.0, -1.0, -0.42)).normalized()
 
 
 def haul_rope(t):
@@ -343,6 +344,100 @@ def cheer(t):
     return c
 
 
+# ---------------------------------------------------------------- Beat 1: docking (blender/dock.py says where and when)
+HANG_L, HANG_R = Vector((0.34, -0.10, 0.84)), Vector((-0.34, -0.10, 0.84))     # arms hanging, as a target in his own space
+
+
+def mixc(a, b, k):
+    """Two sets of controls, k of the way from a to b. Both must name the same controls."""
+    out = {}
+    for key, x in a.items():
+        y = b[key]
+        out[key] = mixc(x, y, k) if isinstance(x, dict) else (y if k > 0.5 else x) if isinstance(x, str) else lerp(x, y, k)
+    return out
+
+
+def hands_free(c):
+    """The controls with both arms as targets in his own space, hanging, and every foot control spelled out."""
+    for s, side, hang in (("l", 1, HANG_L), ("r", -1, HANG_R)):
+        c[f"arm_{s}"] = {"off": hang.copy(), "pole": Vector((side * 0.8, 0.6, -0.2)), "space": "world", "twist": 0.0, "hand": (0, 0, 0)}
+        foot = c[f"foot_{s}"]
+        c[f"foot_{s}"] = {"off": foot["off"], "pitch": foot.get("pitch", 0.0), "yaw": foot.get("yaw", 0.0), "toe": foot.get("toe", 0.0),
+                          "pole": tuple(foot.get("pole", (side * 0.18, -1, 0.05)))}
+    return c
+
+
+def take_rope(t):
+    """Squats to the rope lying at his feet, takes it in both hands and straightens up into the haul."""
+    low = hands_free(stand())
+    low["hip"] = Vector((0, 0.08, -0.30))
+    low["hip_rot"], low["spine"], low["chest"], low["head"] = (12, 0, 0), (10, 0, 0), (18, 0, 0), (8, 0, 0)
+    for s, side in (("l", 1), ("r", -1)):
+        low[f"arm_{s}"]["off"] = Vector((side * 0.07, -0.56, 0.16))
+        low[f"arm_{s}"]["pole"] = Vector((side * 0.8, 0.3, -0.6))
+        low[f"arm_{s}"]["twist"] = -40.0
+        low[f"foot_{s}"]["off"] = Vector((side * 0.05, 0, 0))
+        low[f"foot_{s}"]["yaw"] = 18.0
+        low[f"foot_{s}"]["pole"] = (side * 0.5, -1, 0.05)
+    haul = haul_rope(0.0)
+    for s in "lr":
+        haul[f"foot_{s}"].setdefault("toe", 0.0)
+    start = hands_free(stand())
+    c = mixc(start, low, smooth(t / 0.55)) if t < 0.68 else mixc(low, haul, smooth((t - 0.68) / 0.57))
+    grab = bell(t, 0.62, 0.08)
+    c["head"] = (c["head"][0] + 10 * bell(t, 0.2, 0.2) + 6 * grab, c["head"][1], c["head"][2])
+    for s in "lr":
+        c[f"arm_{s}"]["hand"] = (12 * grab, 0, 0)
+    c["blink"] = bell(t, 0.66, 0.08)
+    return c
+
+
+TIE = Vector((0, -0.64, 1.02))      # where the rope goes round the post, in his own space, as he faces it
+
+
+def tie_off(t):
+    """Facing the post: takes the rope round it twice, hauls the turns tight with a lean back, lets go."""
+    c = hands_free(stand())
+    reach = K(t, [(0, 0), (0.3, 1), (1.4, 1), (1.55, 0.6), (1.75, 0.6), (2.0, 0)])
+    tug = settle(t, 1.42, 0.35) * (1 - K(t, [(1.7, 0), (1.95, 1)]))
+    c["hip"] = Vector((0, -0.04 * reach + 0.10 * tug, -0.04 * reach - 0.05 * tug))
+    c["hip_rot"] = (2 + 6 * reach - 10 * tug, 0, 0)
+    c["chest"] = (4 + 12 * reach - 14 * tug, 0, 0)
+    c["head"] = (-6 + 22 * reach - 8 * tug, 0, 0)
+    a = TAU * 2 * smooth((t - 0.3) / 1.1)                                   # two turns round the post
+    round_ = TIE + Vector((-0.2 * math.sin(a), 0.2 * math.cos(a), -0.06 * a / TAU))
+    held = TIE + Vector((0.18, 0.24, -0.08))
+    pulled = (Vector((0.16, -0.22, 0.98)), Vector((-0.16, -0.22, 0.98)))
+    for s, side, hang, live in (("l", 1, HANG_L, held), ("r", -1, HANG_R, round_)):
+        to = live.lerp(pulled[0 if side > 0 else 1], min(1.0, tug))
+        c[f"arm_{s}"]["off"] = hang.lerp(to, reach)
+        c[f"arm_{s}"]["pole"] = Vector((side * 0.9, 0.4, -0.5))
+        c[f"arm_{s}"]["twist"] = -50 * reach
+    for s, side in (("l", 1), ("r", -1)):
+        c[f"foot_{s}"]["off"] = Vector((side * 0.04, 0.06 * tug * (1 if side > 0 else -1), 0))
+    c["blink"] = max(bell(t, 0.25, 0.08), bell(t, 1.45, 0.1))
+    return c
+
+
+def dust_hands(t):
+    """Brushes one palm across the other, twice each way, with a pleased little nod, and lets his arms drop."""
+    c = hands_free(stand())
+    up = K(t, [(0, 0), (0.18, 1), (0.95, 1), (1.2, 0)])
+    rub = math.sin(TAU * 2.2 * max(0.0, t - 0.18)) * K(t, [(0.15, 0), (0.25, 1), (0.85, 1), (0.95, 0)])
+    pleased = bell(t, 1.02, 0.18)
+    c["hip"] = Vector((0, 0, -0.02 + 0.015 * pleased))
+    c["chest"] = (4 + 5 * up - 6 * pleased, 0, 3 * rub)
+    c["head"] = (-6 + 16 * up - 14 * pleased, 0, 0)
+    for s, side, hang in (("l", 1, HANG_L), ("r", -1, HANG_R)):
+        palm = Vector((side * 0.05 + (0.07 * rub if side < 0 else -0.03 * rub), -0.30, 0.96 + (0.02 * rub * side)))
+        c[f"arm_{s}"]["off"] = hang.lerp(palm, up)
+        c[f"arm_{s}"]["pole"] = Vector((side * 0.9, 0.5, -0.4))
+        c[f"arm_{s}"]["twist"] = -70 * up
+        c[f"arm_{s}"]["hand"] = (0, 0, side * 25 * up)
+    c["blink"] = bell(t, 1.0, 0.1)
+    return c
+
+
 CLIPS = {      # name: (function, frames, loops, what it is for, kicks to loose parts as {frame: {bone: velocity}})
     "idle_alive": (idle_alive, 96, True, "Standing by: breathing, shifting weight, a look round, an ear flick, blinks.",
                    {49: {"ear.r.1": Vector((0.3, 0.9, 1.6))}, 80: {"ear.l.1": Vector((-0.3, 0.8, 1.4))}, 50: {"ear.r.2": Vector((0.2, 1.2, 2.0))}}),
@@ -351,6 +446,9 @@ CLIPS = {      # name: (function, frames, loops, what it is for, kicks to loose 
     "haul_rope": (haul_rope, 48, True, "Leaning back, hand over hand on a rope, heels dug in. Beat 1: hauling the island in.", {}),
     "pick_up": (pick_up, 54, False, "Looks, squats, reaches with one hand, lifts with the legs, holds the find up to look at it.", {}),
     "cheer": (cheer, 48, False, "Crouch, hop with both arms thrown up, land with a squash, one more pump, settle.", {}),
+    "take_rope": (take_rope, 30, False, "Squats to the rope at his feet, takes it and straightens into the haul. Beat 1.", {}),
+    "tie_off": (tie_off, 48, False, "Takes the rope twice round a post in front of him, hauls it tight, lets go. Beat 1.", {}),
+    "dust_hands": (dust_hands, 30, False, "Brushes his palms together, a pleased nod, arms drop. Beat 1.", {}),
 }
 
 
@@ -608,21 +706,16 @@ def build(fig=None, live=False):
     bpy.ops.wm.save_as_mainfile(filepath=lib, copy=True)
     print(f"WROTE {lib} scale={scale:.4f} actions={len(bpy.data.actions)} bones={len(rig.data.bones)}")
 
-    # the game file: one track per hero clip, base-coat materials (a faceted goblin's colours are already on its faces)
+    # the game file: one animation per hero clip, from the actions themselves (exported as NLA tracks, every clip came
+    # out as the rest pose), base-coat materials (a faceted goblin's colours are already on its faces)
     faceted = getattr(fig, "FACETED", False)
     if not faceted:
         _plain_materials(figure)
-    for clip, act in made.items():
-        track = rig.animation_data.nla_tracks.new()
-        track.name = clip
-        strip = track.strips.new(clip, 0, act)
-        if hasattr(strip, "action_slot") and hasattr(act, "slots") and len(act.slots):
-            strip.action_slot = act.slots[0]
     for a in list(bpy.data.actions):
         if a.name not in made:
             bpy.data.actions.remove(a)
     glb = os.path.join(KIT, name + ".glb")
-    want = dict(filepath=glb, export_format="GLB", export_apply=True, export_animations=True, export_animation_mode="NLA_TRACKS", export_force_sampling=True,
+    want = dict(filepath=glb, export_format="GLB", export_apply=True, export_animations=True, export_animation_mode="ACTIONS", export_force_sampling=True,
                 export_skins=True, export_yup=True, export_vertex_color="MATERIAL", export_frame_range=False, export_cameras=False, export_lights=False)
     known = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
     bpy.ops.export_scene.gltf(**{k: v for k, v in want.items() if k in known})

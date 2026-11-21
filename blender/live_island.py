@@ -60,7 +60,8 @@ def run():
         kit.setup_cycles(scene, samples=SAMPLES, width=SIZE[0], height=SIZE[1])
         os.environ.setdefault("GG_STAGE", "sky")
         os.environ.setdefault("GG_VIEW", "hero")
-        placed = assemble.assemble(scene, manifest, layout, skip=("d20",) if os.environ["GG_STAGE"] == "sky" else ())
+        skip = {"sky": ("d20",), "table": ("cloud",)}.get(os.environ["GG_STAGE"], ())      # no dice in the sky, no clouds over the table
+        placed = assemble.assemble(scene, manifest, layout, skip=skip)
         assemble.dress(scene, layout)
         space = bpy.context.area.spaces.active           # leave the viewport looking through the camera, lit
         space.shading.type = "RENDERED"

@@ -10,10 +10,12 @@ A visitor should feel they are at a real game night with a living world on the t
 **One world, two distances.** The same models, paint and light are used everywhere. Camera distance decides how
 they read:
 
-- **Far = tabletop.** A hand-painted miniature set. Figures stand on bases, focus is shallow like a macro photo,
-  the light is the room's lamp.
-- **Close = in-world.** As the camera pushes in, bases sink away, figures breathe and move, sky and distant land
-  fade in around the island, focus widens.
+- **Far = tabletop.** A low-poly set on a wooden table, lit by the room's lamp, focus shallow like a macro photo.
+- **Close = in-world.** As the camera pushes in, figures breathe and move, the island's own sky comes in round it,
+  focus widens.
+- **Before the table = afloat** (decided 2026-11-21). The page opens on the island hanging in open sky. Docking
+  (Beat 1) is where the two meet: the goblin hauls it in, the sky thins away, and the table, its battle grid and
+  the lamp's light arrive under it. Both the sky and the table are built; neither replaces the other.
 
 Game overlays (nameplates, threat rings, turn pill, damage numbers) are one DOM design used in both.
 
@@ -28,20 +30,26 @@ Game overlays (nameplates, threat rings, turn pill, damage numbers) are one DOM 
 | Goblin | New goblin. The Backstabber FBX in `assets/` is not used. |
 | Outside assets | Free CC0 model packs (KayKit, Quaternius, Kenney) and Poly Haven textures and lighting environments. Nothing paid. |
 | Animation | Keyed by script in Blender to start. Revisit if motion reads stiff. |
-| Blender | Driven headless by Python scripts (Blender 5.2), not a live session. |
+| Blender | Python scripts (Blender 5.2). Since 2026-11-21 they are run in the open Blender session through its bridge (`blender/live.mjs`), by request; the older ones still run headless. |
 | New packages | `postprocessing` (depth of field, glow) and `@gltf-transform/cli` (model and texture compression). |
+| Table and sky | Both (2026-11-21). The island floats in its sky for the hero and docks in Beat 1; close up, the sky returns round it. Until Beat 4 it docks onto the map sheet only, which fills the backdrop: no wood, candles or pencil. The wooden table is the room's, and is first seen in the pull-back, under the laptop. |
+| Rope | The goblin ties it off on the signpost (2026-11-21), as the script has it. The bollard built with the table set is not used in beats 1 to 3. |
+| Figure bases | None (2026-11-21). Figures stand on the ground they are on. |
+| Dice gag | The freeze is the loading animation's line drawing, not grey miniatures (2026-11-21): the world goes back to pencil, the goblin stays in colour, and the paint sweeps back when he tips the die. |
 | Review | One beat at a time. Each beat is shown and judged before the next starts. Anything can be kept or dropped at its review. |
 
 ## 3. Style rules (what keeps it one style)
 
 1. One palette, defined once and used by every texture.
-2. One paint treatment: flat hand-painted colour with a soft edge highlight and a dark wash in the recesses, as on
-   a painted miniature. CC0 models are repainted to this; none keep their pack's look.
+2. One treatment, locked on 2026-11-21: bold low-poly. Every surface is flat facets with one colour a face, from
+   one palette (`LOWPOLY` in `blender/world_assets.py`), baked into vertex colour. No textures, no wash, no
+   outlines. The benchmark images are in `blender/out/refs/target/`. (Before the lock this rule was a painted
+   miniature's base coat, wash and edge highlight.)
 3. One key light direction in every beat. Day and night are two bakes of the same set.
-4. One base design for every figure (dark round base, thin brass rim).
+4. No figure bases (dropped 2026-11-21). A figure's feet are on the island, the table or the map.
 5. One overlay design for nameplates, rings and pills.
-6. The dice gag freeze is in the same language: the world turns to unpainted grey miniatures, the goblin stays
-   painted.
+6. The dice gag freeze is in the entrance's language (`story-v1/src/island/blockout.ts`): the world drops back to
+   its pencil line drawing, the goblin stays in colour, and the paint crosses again when he tips the die.
 
 ## 4. Pipeline
 
@@ -155,7 +163,7 @@ sections are left as written until a draft has a yes. `camp.py` now builds draft
 as images. `goblin.py` is the realistic draft 3 goblin. `look_proof.py`, `island.py`, `paint.py`, `tabletop.py`,
 `goblin_sheet.py` and `figures.py` belong to drafts 1 and 2.
 
-**Asset hero drafts, 2026-11-11, waiting for a verdict.** After draft 4 the direction was set in three answers:
+**Asset hero drafts, 2026-11-11, accepted** ("All good enough except the Island Wedge"). After draft 4 the direction was set in three answers:
 keep draft 1's animation rig but redo the goblin's art as "a dnd animated/painted goblin and less like a cartoon";
 keep draft 4's camp layout and map sheet but rebuild the world from low-poly pieces in the minis' family; and hold
 light, painted surface detail, colour depth and posing work "until asset hero drafts are finalised".
@@ -169,6 +177,90 @@ light, painted surface detail, colour depth and posing work "until asset hero dr
   hero tree, rocks and grass. Flat colour by design while the hold is on, so it sits below the goblin's finish
   (reviewer: 2 of 5 as a set with him).
 - **No more human-base goblins.** Both MakeHuman goblins (`goblin.py`, `goblin_game.py`) are dead ends.
+
+**Step 0 in the locked look, 2026-11-21, waiting for a verdict.** The look was settled later than this step, on
+the hero itself (see "Art benchmark" under step 2). These are step 0's two frames in that look, with the low-poly
+goblin: `blender/out/look/step0_far.png` (the island whole, hanging in its sky) and
+`blender/out/look/step0_world.png` (head height by the fire).
+`node live.mjs run live_island.py GG_STEPS="stand render" GG_NAME=step0_world GG_STAGE=sky GG_VIEW=world` makes
+the second; `GG_VIEW=hero` the first.
+
+What was open, and how it was settled on 2026-11-21:
+- **Far was not a tabletop.** Settled: build both the table and the sky (section 1, "Before the table"). The table
+  set is the work below.
+- **A party member.** The four are built (`blender/party_lp.py`, `out/look/party_lp.png`): a tiefling warlock, a
+  half-orc fighter, a dark elf monk and a human bard, on the goblin's method. Verdict: "They look fine". Stills
+  only so far: no clips tried, not exported.
+- **Style rules 4 and 6.** Settled: no bases; the dice freeze is the line drawing (section 3).
+- **A fetch script for the kits.** Agreed; it is the work below.
+
+#### Table and sky, and the fetch script: the work that closes step 0
+
+Blender only, in the open session through `blender/live.mjs`. No site code: how the page gets from sky to table is
+Beat 1, and waits on a verdict on these frames.
+
+1. **The table set** (new kit pieces in `world_assets.py`, faceted like everything else):
+   - a round wooden table top, big enough that the island is a model on it (the island about a third of its width),
+     planked, with a worn edge;
+   - a battle-map sheet on it under the island: paper, a ruled five-foot grid, a border, torn or curled edges
+     (draft 3's and 4's sheet in `camp.py` was liked; this is that sheet in the locked look);
+   - what a table at game night has on it, a few pieces only: dice (the kit's d20), a pencil, a candle or two;
+   - a mooring for the island: a peg or cleat on the table and the rope the goblin hauls on, so docking has
+     something to end at.
+2. **The docked stage** (`GG_STAGE=table` in `assemble.py`): the island hanging low over the sheet, casting its
+   shadow on it, clouds gone; warm lamp light from above as the key, in the same direction every other stage uses,
+   the room dark beyond the table. The sky stage stays as it is. The table's pieces are placed by this stage, not
+   added to the island's own instances in `layout.json`: the site builds everything in that list, and the hero must
+   not gain a table before Beat 1. The camp's small table already owns the slot name `table`, so the new pieces
+   take other names (`tabletop`, `map_sheet`, `mooring` and so on).
+3. **Frames** in `blender/out/look/`: `step0_table.png` (tabletop distance: the whole table top with the island on
+   it), `step0_table_near.png` (three-quarter, the island filling the frame with the sheet and the mooring in
+   view), and `step0_dock.png` (the moment between: the island still high, sky above, table below, so the two
+   can be judged in one frame).
+4. **The fetch script** (`blender/fetch_kits.mjs`): restores every pack under `blender/vendor/` that the current
+   build scripts read, from where it came from, pinned to what is there now (commit for the cloned packs, URL for
+   the zips). A `--check` mode proves every source still answers without downloading the packs. Packs whose
+   licence forbids redistribution are fetched, never committed. `fetch_polyhaven.mjs` stays as it is.
+
+Done when: the three frames exist and read as the same island and look as `step0_far.png`; a strict second look
+at them finds no smooth-shaded, textured or untinted surface; `node blender/fetch_kits.mjs --check` passes; one
+small pack fetched into an empty folder matches what is in `vendor/`; the kit's manifest and layout still build
+the sky stage unchanged.
+
+**Built 2026-11-21, waiting for a verdict.** `blender/out/look/step0_table.png`, `step0_table_near.png` and
+`step0_dock.png`, each with a small JPEG beside it.
+- **Table set** (`world_assets.py`, five new slots, exported to `out/kit/`, not in `layout.json`): `tabletop` (a
+  round top 32 m across in the island's metres, fourteen planks with the grain in long facets, dark gaps, a worn pale
+  chamfer with knocks), `map_sheet` (12 by 10 five-foot squares inside a double border, every line a strip of faces,
+  ink faded where the nib ran dry, torn and handled edges, two corners curling up), `pencil`, `candle` (lit, with its
+  own light) and `mooring` (a bollard bolted to the table, rope wound and coiled, a `line` part one metre long and a
+  `stake` part; the manifest's `stake_tie` says where on the stake the line ties). The dice are the layout's two
+  d20s, now faceted like everything else (they were the one unfaceted piece).
+- **Stages** (`assemble.py`): `GG_STAGE=table` hangs the island over the sheet with no clouds, the key a warm spot
+  lamp along `KEY_DIR` whose pool ends at the table's rim, the room near black. The stage drives the stake into the
+  island's turf near the front rim and turns and stretches the line to it. `GG_STAGE=dock` is the sky stage
+  untouched with the table set 16 m further down (`DOCK_LIFT`). New views `table`, `near` and `dock`.
+
+```
+node live.mjs run live_island.py GG_STEPS="stand render" GG_NAME=step0_table GG_STAGE=table GG_VIEW=table
+node live.mjs run live_island.py GG_STEPS="stand render" GG_NAME=step0_table_near GG_STAGE=table GG_VIEW=near
+node live.mjs run live_island.py GG_STEPS="stand render" GG_NAME=step0_dock GG_STAGE=dock GG_VIEW=dock
+node blender/fetch_kits.mjs --check
+```
+
+Checked: every mesh in the stood table and dock scenes (goblin included) is flat-shaded on the facet material with
+its `Col` colours, or a flame, with no image textures. After a full `GG_STEPS=kit` rebuild, `layout.json` is
+byte-identical, every GLB other than the d20 is byte-identical, the manifest gains the five slots and nothing else
+changes but the faceted d20's footprint, and a sky
+hero render matches `step0_far.png` pixel for pixel (`out/look/step0_far_check.png`). `fetch_kits.mjs --check`
+passes. The Dungeon pack fetched into an empty folder is byte-identical to `vendor/` (848 files). The KayKit packs
+are cloned at their pinned commits, not taken as GitHub archives, because their `.gitattributes` leave most files
+out of an archive. Not checked: a real download of the 104 MB Stylized Nature zip (its unzip code was checked
+against a GitHub archive), and the other two KayKit clones. Not covered by `fetch_kits.mjs`: Skeletons, Poly Pizza,
+MakeHuman, and the Fantasy Props, Medieval Village and animation packs, which only older drafts read, or nothing
+does. Poly Haven is
+left to `fetch_polyhaven.mjs`, but the plain stage's `wood_table_worn_*.jpg` sit in the `polyhaven/` root, where
+that script does not put them.
 
 What step 0 found:
 - **Kits and the open human base cover the world and the goblin for free.** The kit zips and the scanned
@@ -324,10 +416,91 @@ becomes too fast, keep the speed slower at the end".
 - **Not checked.** The clips other than the idle are unwatched in motion; phone sizes; real-screen frame rate.
 
 ### Step 3 — Beat 1, docking
-- Camera path for u 0–2 keyed in Blender and exported. This starts the single continuous path that every later
-  beat extends.
-- Goblin: rope haul, tie-off, dust hands, walk to centre. Rope as a baked simulation.
-- The table surface and battle grid arrive under the island.
+
+Plan agreed 2026-11-21. Script: `docs/2026-11-06-script-v2.md`, "Beat 1 · units 0–2". The kit island, which today
+is only on screen for the first 0.06 of a unit, stays through unit 2; the old film takes over there, so the hard
+cut moves from the first scroll to the end of this beat.
+
+**What the visitor sees** (u is scroll in units of one viewport; everything is a function of u alone, so it plays
+the same backward):
+
+| u | The goblin | The island and the camera | Round it |
+|---|---|---|---|
+| 0 | idling by the fire | the hero as it is now, afloat | sky, clouds |
+| 0–0.3 | walks to the near edge, takes up the rope that hangs there | the camera starts down and in | |
+| 0.3–1.4 | hauls, hand over hand, heels dug in | comes down to the sheet; the camera comes down with it and closes in | the sky thins, the clouds lift away and out of frame; from about 0.5 the map sheet's grid is drawn in pencil across the whole backdrop |
+| 1.2 | | | caption: **Every world needs a stagehand.** |
+| 1.4–1.8 | ties the rope off on the signpost, dusts his hands | settles: seen from low and nearly level, the island as wide as the viewport, its near rim along the foot of it | the sheet takes its colour, as the island did in the entrance |
+| 1.8–2 | walks to the middle of the camp | still | the sheet whole: paper, grid, border |
+
+**The camera comes down, it does not rise** (corrected 2026-11-21; the script's "three-quarter top-down" is not
+what is wanted). It ends where the old film's Beat 2 begins: low, close to eye level on the island, the island
+zoomed in to the full width of the viewport, the sheet a flat plane running back to a level horizon behind it.
+
+**Decided:** sheet only, no wood (see section 2); the rope ends on the signpost; the sheet arrives in the entrance's
+language, pencil first and then colour.
+
+**Blender** (open session, `blender/live.mjs`):
+- The rope as kit pieces that can be scrubbed: hanging off the near edge at u 0, taut down and out of frame while
+  he hauls, made fast round the signpost at the end.
+- Goblin clips on `goblin_lp`, keyed like his six (`goblin_anim.py`): take the rope, haul (he has this), tie off,
+  dust hands, and the two walks. Re-export `goblin__lp.glb`.
+- The camera for u 0 to 2, keyed and written out relative to the hero's resting view, the way
+  `hero_dolly.py` writes the opening move. This is the start of the one continuous path later beats extend.
+- A sheet-only stage (the `map_sheet` piece grown to fill the backdrop, no table top, candles, pencil or bollard)
+  and target frames at u 0.5, 1.2 and 2 for the match check.
+
+**Site** (`story-v1`):
+- `Stage.tsx`: the kit scene and its camera run to u 2; clips are stepped with `mixer.setTime(f(u))`, never
+  played; the sky wash and the clouds leave with u; the wind, fire and embers carry on.
+- The sheet's grid drawn then coloured, in `src/island/`, by the same means as the entrance where that fits.
+- The caption at 1.2 through whatever the old film uses for captions.
+
+**Not in this beat:** the wordmark (still out of the hero), the mouse turning the island and the goblin's head
+following the cursor (Beat 0 items the script asks for), anything of Beat 2.
+
+**Done when:** stills at u 0, 0.5, 1, 1.2, 1.6 and 2 on the way down are the same as at those values on the way
+back up; the stills at 0.5, 1.2 and 2 sit beside their Blender target frames and are not weaker; u 0 and the
+entrance are unchanged (`/?draw=0.7`, `/?draw=1`); nothing of the wooden table shows before unit 2; the same
+stills hold at phone size (390×844); under reduced motion the beat still scrubs but nothing idles; the type check
+and the console are clean; the frame cost is measured.
+
+**Built 2026-11-21, waiting for a verdict.** One function of u in `blender/dock.py` (`beat`) says where everything
+is; it is written to `public/models/kit/dock.json` (100 samples a unit) and the target frames are rendered from it.
+- **Camera.** Keyed in Blender on the `hero_dolly.py` rig between the hero at rest and the old film's own dock framing
+  of the kit island (`frameDock` in `stage/camera.ts`: 2° up, square to the island, rim 0.92 of the width, near rim
+  at the foot; 1.04 and 0.9 on a phone). It is written as how far along it is (angles, log distance, look point), and
+  the page solves both ends for its window, so it lands on the film's framing whatever the size. Still to 0.3, down
+  and in through the haul, settled by 1.8; it never rises. The island stays level throughout.
+- **Sheet.** `map_sheet` variant `wide` (38 × 32 squares, 1.07 MB), level under the island 1 m below its turf, so the
+  camp sits on the grid and its rock goes under the paper. It comes up from 16 m below from 0.4 to 1.4, is drawn in
+  pencil 0.5–1.4 (`island/dock.ts`: the entrance's hand and sweep coordinate) and painted 1.4–1.8 (the entrance's
+  ragged edge, pencil under the colour). Toward the horizon it fades into the page between 18 and 33 m back, so no
+  far edge is seen.
+- **Rope.** `rope__a.glb`, one tube with two morph targets over its hang (haul, tied): hangs off the near edge at u
+  0 (shown once the paint reaches the edge), runs through his hands and over the edge while he hauls, two and a half
+  turns round the signpost's post at the end. Built in `world_assets.py` (`DOCK`, `rope_paths`).
+- **Goblin.** New clips in `goblin_anim.py`: `take_rope`, `tie_off`, `dust_hands`; `haul_rope` now pulls forward and
+  down, the way the rope runs. His route (fire, near edge, post, middle of the camp) is in `dock.json` with each
+  clip's weight and time; the two walks are the walk cycle stepped by distance walked, so his feet stay planted. The
+  page steps every clip (time scale 0, time set from u); the idle keeps its own clock and fades out by 0.05.
+- **Found and fixed:** every clip in `goblin__lp.glb` was exported as the rest pose (NLA-track export); he now
+  exports per action, so on the page he idles for the first time. That is the one change at u 0.
+- **Also:** clouds lift up and out (`uAway` in `life.ts`), out of frame by about 1; the sky wash and haze go by 1.1;
+  the bob settles by 1.4; wind, fire and embers run throughout. Caption starts at 0.9, whole by 1.2. A page that
+  comes back mid-beat skips the entrance. Under reduced motion the canvas dips only at the cut at 2.
+- Commands: `node live.mjs run goblin_lp.py GG_STEPS=kit ...`, then `node live.mjs run dock.py GG_STEPS="kit path"
+  GG_U=0` and `GG_STEPS="stand render" GG_U=0.5|1.2|2`; copy `goblin__lp.glb`, `goblin__lp_manifest.json`,
+  `rope__a.glb`, `map_sheet__wide.glb` and `dock.json` into `public/models/kit/` (the public `manifest.json` is
+  unchanged). `out/kit` was backed up to `out/kit_before_beat1/`.
+- **Checked** (stills and targets in `blender/out/dock_check/`): down and back up at 0, 0.5, 1, 1.2, 1.6, 2 give the
+  same camera, goblin, bones, rope, sheet and sky (only the hero's breath, a clock, differs below 0.9); targets at 0.5,
+  1.2, 2 against the page at 1920 × 911: same framing and pose, the page a little flatter in light as the hero is;
+  `?draw=0.7` and `?draw=1` as before, plus the rope under the near rim and the goblin now idling; no table; phone
+  stills in a 390 × 844 frame (the window was not resized); reduced motion: every u still, pose changes with u; type
+  check clean; console clean apart from the old `THREE.Clock` notice; cost at 1920 × 911 on the build machine: 161
+  to 164 draw calls, 115 k to 159 k triangles, 0.7 ms a render, `dock.at` under 0.01 ms.
+- **Not checked:** real-speed playback (the automated tab runs at about a frame a second), a slow laptop, a real phone.
 
 ### Step 4 — Beat 2, the canvas chips
 - **Light:** day and night bakes blended; lantern and campfire light the terrain at night. Still the site's dark
@@ -340,7 +513,8 @@ becomes too fast, keep the speed slower at the end".
 ### Step 5 — Beat 3, the table (tabletop → in-world)
 - Party of four arrives as miniatures; the camera pushes in; bases sink, figures come alive, sky fades in.
 - Fog of war peeled back as a baked cloth simulation.
-- The d20: baked rigid-body roll landing on 1; freeze to unpainted grey; goblin tips it to 20; paint floods back.
+- The d20: baked rigid-body roll landing on 1; the world drops back to its line drawing (the entrance's blockout,
+  run backward) while the goblin stays in colour; he tips it to 20; the paint crosses again.
 - Each party member and monster: idle plus one action.
 - To decide at this review (script additions, not yet agreed): the critical hit lands on a monster with a damage
   number; one monster steps toward the party on arrival; night shrinks what the party can see.

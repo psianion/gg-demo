@@ -1196,7 +1196,7 @@ def path_stones():
         pack(HEX_NATURE, name, s, (x, y, -0.03 if name.endswith("A") else -0.28), (0, 0, yaw))
 
 
-@module("d20", faceted=False)                              # a die from the table, not a piece of the island: it keeps its resin
+@module("d20")                                             # a die from the table, not a piece of the island, in the same facets
 def die():
     size = 0.85
     bm = bmesh.new()
@@ -1506,6 +1506,327 @@ def island_lowpoly():
 @module("island", "b", default=False)
 def island_strata():
     island("b")
+
+
+# ---------------------------------------------------------------- the table the island docks on
+# Placed by the table stage (assemble.py), never listed in the camp's layout: the site builds everything in the
+# layout, and the hero has no table before docking. The camp's own small table already has the slot `table`.
+# Drawn in metres and from their own random streams: the island's pieces share `rng`, and drawing from it here would
+# move them.
+TABLE_RADIUS = 16.0          # metres: the island is about a third of the table across
+
+
+def turned(name, segs, profile, mat, **kw):
+    """lathe() with its rings of (radius, z) in metres."""
+    return lathe(name, segs, [(r * UNIT, z * UNIT) for r, z in profile], mat, **kw)
+
+
+def hoop(name, centre, axis, across, tube, mat, n=10, sides=5):
+    """A closed ring of rope round an axis, in metres: `across` is its radius, `tube` the strand's."""
+    axis = Vector(axis).normalized()
+    a = axis.cross(Vector((0, 0, 1)) if abs(axis.z) < 0.9 else Vector((1, 0, 0))).normalized()
+    b = axis.cross(a)
+    bm = bmesh.new()
+    rows = []
+    for i in range(n):
+        out = a * math.cos(i / n * math.tau) + b * math.sin(i / n * math.tau)
+        rows.append([bm.verts.new((Vector(centre) + out * across + (out * math.cos(k / sides * math.tau) + axis * math.sin(k / sides * math.tau)) * tube) * UNIT)
+                     for k in range(sides)])
+    for i in range(n):
+        j = (i + 1) % n
+        for k in range(sides):
+            bm.faces.new((rows[i][k], rows[i][(k + 1) % sides], rows[j][(k + 1) % sides], rows[j][k]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    return camp.mesh_object(name, bm, mat)
+
+
+@module("tabletop")
+def round_table():
+    """A round top of planks. Grain runs along each plank in long facets, the gaps between show dark, and the rim is
+    worn to a rough pale chamfer with a few knocks in it. Its origin is the middle of the top, where the sheet lies."""
+    U, R, thick, gap, planks, r = UNIT, TABLE_RADIUS, 1.1, 0.09, 14, random.Random(11)
+    wide = 2 * R / planks
+
+    def reach(y):
+        return math.sqrt(max(R * R - y * y, 0.0))
+    for p in range(planks):
+        y0, y1 = max(-R + p * wide + gap / 2, 0.05 - R), min(-R + (p + 1) * wide - gap / 2, R - 0.05)
+        rows = max(3, math.ceil(abs(reach(y1) - reach(y0)))) + 1           # more rows where the rim curves fast
+        ys = [y0 + (y1 - y0) * j / (rows - 1) for j in range(rows)]
+        cols = max(3, round(2 * max(reach(y) for y in ys) / 1.8))
+        sink, tilt = r.uniform(-0.035, 0.015), r.uniform(-0.015, 0.015)
+        bm = bmesh.new()
+        grid = []
+        for y in ys:
+            e, row = reach(y), []
+            for i in range(cols + 3):                                       # rim, chamfer, the top across, chamfer, rim
+                if i in (0, cols + 2):                                      # knocked down and in, more where it took a blow
+                    knock = r.uniform(0.12, 0.22) if r.random() < 0.12 else 0.0
+                    x = math.copysign(e - r.uniform(0.0, 0.06) - knock * 0.6, i - 1)
+                    z = -(0.24 + 0.10 * noise.noise(Vector((y * 0.35, i * 1.3, 2.0))) + knock)
+                else:
+                    x = -(e - 0.30) + 2 * (e - 0.30) * (i - 1) / cols
+                    z = 0.022 * noise.noise(Vector((x * 0.35, y * 0.35, p * 0.9)))
+                row.append(bm.verts.new((x * U, y * U, (z + sink + tilt * x / R) * U)))
+            grid.append(row)
+        n = cols + 3
+        for j in range(rows - 1):
+            for i in range(n - 1):
+                bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+        rim = grid[0] + [grid[j][-1] for j in range(1, rows)] + grid[-1][-2::-1] + [grid[j][0] for j in range(rows - 2, 0, -1)]
+        foot = [bm.verts.new((v.co.x, v.co.y, -thick * U)) for v in rim]
+        for k in range(len(rim)):
+            m = (k + 1) % len(rim)
+            bm.faces.new((rim[k], rim[m], foot[m], foot[k]))
+        bm.faces.new(foot[::-1])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        tone = r.uniform(0.28, 0.62)
+
+        def grain(c, n, tone=tone, p=p):
+            if n.z < 0.4:                                                   # the plank's sides, seen down the gaps
+                return C["wood_lo"]
+            col = ramp(tone + 0.20 * noise.noise(Vector((c.x / U * 0.09, c.y / U * 2.4, p * 1.7))), C["wood_lo"], C["wood"], C["wood_hi"])
+            return ramp(0.45, col, C["heart"]) if n.z < 0.95 else col          # the worn rim
+        tint(camp.mesh_object(f"plank_{p}", bm, None), grain)
+    turned("table_base", 24, [(R * 0.93, -thick - 0.7), (R * 0.93, -thick)], flat("wood_lo"))
+
+
+@module("map_sheet")
+def map_sheet():
+    """The battle map the island docks over (draft 4's sheet, in facets): ruled five-foot squares inside a double border,
+    the ink faded where the nib ran dry, handled darker toward the torn edges, two corners curling up. The lines are
+    faces of their own, so the grid is in the mesh, not in a texture. Origin: the middle of the sheet."""
+    sheet((12, 10), 0.5)
+
+
+@module("map_sheet", "wide", default=False)
+def map_sheet_wide():
+    """The same sheet grown to fill the page behind the docked island in beats 1 to 3, with no table under it. Between
+    the lines the paper is one face a square, so it stays light at this size. Placed at DOCK["sheet_at"]."""
+    sheet(SHEET_WIDE, 1.0, mottle=0.35)              # calmer: at this size the squares' colours would read as a checkerboard
+
+
+SHEET_CELL, SHEET_RULE, SHEET_MARGIN, SHEET_BORDERS = 1.524, 0.05, 1.0, ((0.80, 0.055), (0.62, 0.025))     # inset from the edge, half width
+SHEET_WIDE = (38, 32)          # wide enough that its sides stay out of the low dock view; it fades into the page (DOCK["fade"])
+
+
+def sheet(squares, piece, mottle=0.7):
+    """A map sheet of `squares` five-foot squares; `piece` is the widest a face may be, in squares, so the paper can warp,
+    and `mottle` how far the paper's colour wanders from square to square."""
+    U, cell, rule, margin, r = UNIT, SHEET_CELL, SHEET_RULE, SHEET_MARGIN, random.Random(12)
+    W, H = (n * cell + 2 * margin for n in squares)
+    borders = SHEET_BORDERS
+    lines = [[k * cell for k in range(-n // 2, n // 2 + 1)] for n in squares]
+
+    def cuts(half, ruled):
+        """Where the mesh breaks across one side: both edges of every line and border, and the margin."""
+        at = {-half, half, 0.3 - half, half - 0.3}
+        at |= {v + s * rule / 2 for v in ruled for s in (-1, 1)}
+        at |= {s * (half - inset) + d for inset, w in borders for s in (-1, 1) for d in (-w, w)}
+        at = sorted(at)
+        out = [at[0]]
+        for a, b in zip(at, at[1:]):                                        # no piece wider than `piece` squares, so the paper can warp
+            k = max(1, math.ceil((b - a) / (cell * piece) - 1e-6))
+            out += [a + (b - a) * i / k for i in range(1, k + 1)]
+        return out
+    xs, ys = cuts(W / 2, lines[0]), cuts(H / 2, lines[1])
+    curls = ((-W / 2, -H / 2), (W / 2, H / 2))
+    bm = bmesh.new()
+    grid = []
+    for j, y in enumerate(ys):
+        row = []
+        for i, x in enumerate(xs):
+            px, py = x, y
+            if i in (0, len(xs) - 1):                                       # tear the outline
+                px -= math.copysign(0.06 + 0.12 * (0.5 + 0.5 * noise.noise(Vector((x * 0.6, y * 0.6, 1.0)))) + r.uniform(0.0, 0.08), x)
+            if j in (0, len(ys) - 1):
+                py -= math.copysign(0.06 + 0.12 * (0.5 + 0.5 * noise.noise(Vector((x * 0.6, y * 0.6, 1.0)))) + r.uniform(0.0, 0.08), y)
+            rim = min(W / 2 - abs(px), H / 2 - abs(py))
+            lift = max(0.65 * camp.fade(3.6, 0.0, math.hypot(px - cx, py - cy)) ** 2 for cx, cy in curls)
+            lift += 0.05 * camp.fade(1.0, 0.0, rim) + 0.02 * noise.noise(Vector((px * 0.3, py * 0.3, 7.0)))
+            row.append(bm.verts.new((px * U, py * U, lift * U)))
+        grid.append(row)
+    for j in range(len(ys) - 1):
+        for i in range(len(xs) - 1):
+            bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+
+    def ink(x, y):
+        """What the face at (x, y) is: "border", "grid", or bare paper (None)."""
+        ax, ay = abs(x), abs(y)
+        for inset, w in borders:
+            ex, ey = W / 2 - inset, H / 2 - inset
+            if (abs(ax - ex) < w and ay < ey + w) or (abs(ay - ey) < w and ax < ex + w):
+                return "border"
+        if ax < lines[0][-1] + rule / 2 and ay < lines[1][-1] + rule / 2 and min(abs(v - l) for v, ruled in ((x, lines[0]), (y, lines[1])) for l in ruled) < rule / 2:
+            return "grid"
+        return None
+
+    def paper(c, n):
+        x, y = c.x / U, c.y / U
+        kind = ink(x, y)
+        if kind == "border":
+            return C["ink"]
+        if kind == "grid":                                                  # where the nib ran dry the line is only half there
+            return ramp(0.55 if noise.noise(Vector((x * 0.7, y * 0.7, 3.0))) < -0.25 else 0.15, C["ink"], C["cream"])
+        col = ramp(0.55 + mottle * noise.noise(Vector((x * 0.16, y * 0.16, 6.0))), C["heart"], C["cream"], C["bone"])
+        return ramp(0.55 * camp.fade(0.9, 0.0, min(W / 2 - abs(x), H / 2 - abs(y))), col, C["path"])
+    tint(camp.mesh_object("sheet", bm, None), paper)
+
+
+@module("pencil")
+def pencil():
+    """A hexagonal pencil lying on a flat side: yellow paint, bare wood where it was sharpened, a graphite point, a brass
+    ferrule and a red eraser. Origin: under its middle."""
+    long, lie = 7.05, 0.13 * math.cos(math.pi / 6)
+    for name, profile, key in (("eraser", [(0.12, 0.0), (0.125, 0.45)], "cap"), ("ferrule", [(0.135, 0.45), (0.135, 0.95)], "brass"),
+                               ("pencil_paint", [(0.13, 0.95), (0.13, 6.0)], "yolk"), ("pencil_wood", [(0.13, 6.0), (0.035, 6.85)], "heart"),
+                               ("pencil_lead", [(0.035, 6.85), (0.0, long)], "ink")):
+        o = turned(name, 6, profile, flat(key), phase=math.pi / 6)          # a flat side, not an edge, toward local +X
+        o.rotation_euler = (0, math.pi / 2, 0)                              # lying along +X, that side down
+        o.location = (-long / 2 * UNIT, 0, lie * UNIT)
+
+
+@module("candle")
+def candle():
+    """A thick candle in an iron dish, burned down unevenly, with wax run down one side. The flame lights the table round
+    it, as the campfire lights the camp."""
+    wax = flat("cream")
+    turned("dish", 8, [(0.85, 0.0), (1.05, 0.10), (1.0, 0.20), (0.62, 0.14)], flat("iron", 0.5))
+    turned("wax_pool", 8, [(0.62, 0.14), (0.55, 0.19)], wax)
+    turned("candle_wax", 8, [(0.44, 0.14), (0.43, 2.4), (0.41, 3.1), (0.36, 3.28), (0.22, 3.34)], wax, jitter=0.05)
+    for a, z, long in ((0.6, 2.05, 1.0), (2.9, 2.6, 0.55)):                 # runs of wax down the side
+        turned("drip", 5, [(0.02, 0.0), (0.09, 0.14), (0.075, long * 0.8), (0.03, long)], wax).location = (math.cos(a) * 0.42 * UNIT, math.sin(a) * 0.42 * UNIT, z * UNIT)
+    turned("wick", 4, [(0.035, 3.30), (0.03, 3.5), (0.01, 3.6)], flat("ink"))
+    flame((0, 0, 3.52 * UNIT), 0.70 * UNIT, 0.15 * UNIT, 1.3, light_material("candle_flame", (1.0, 0.60, 0.20), 3.2))
+    camp.point("candle_lamp", (0, 0, 3.9 * UNIT), 220.0, (1.0, 0.58, 0.22), 0.15)
+
+
+@module("mooring")
+def mooring():
+    """Where docking ends: a wooden bollard bolted to the table, rope wound round it and coiled at its foot, the line up
+    to the island and the stake it is tied to there. `line` is a metre of rope up its own Z from the bollard; the stage
+    turns and stretches it to reach the knot on `stake`, stake_tie metres above where the stake goes into the turf."""
+    rope, tie, at = flat("heart"), 0.55, Vector((3.0, 0.0, 0.0))           # at: where the stake is built; the stage moves it
+    box("bollard_plate", (1.7 * UNIT, 1.7 * UNIT, 0.16 * UNIT), (0, 0, 0.08 * UNIT), flat("iron", 0.5), bevel=0.03 * UNIT)
+    for dx, dy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        turned("bolt", 6, [(0.09, 0.16), (0.07, 0.22)], flat("steel", 0.5)).location = (dx * 0.62 * UNIT, dy * 0.62 * UNIT, 0)
+    turned("bollard", 8, [(0.46, 0.16), (0.42, 1.25), (0.50, 1.42), (0.52, 1.62), (0.38, 1.78)], flat("wood"), cap_mat=flat("heart"), jitter=0.04)
+    camp.beam("bollard_horns", (-0.9 * UNIT, 0, 1.12 * UNIT), (0.9 * UNIT, 0, 1.12 * UNIT), 0.22 * UNIT, flat("wood_lo"), taper=1.0, wobble=0.0)
+    for k, z in enumerate((0.55, 0.72, 0.89)):                              # wound round the post
+        hoop("wrap", (0, 0, z), (0.05 * (k - 1), 0.12, 1), 0.47, 0.075, rope)
+    for k, (across, z) in enumerate(((0.95, 0.08), (0.85, 0.22), (0.72, 0.35))):     # the slack, coiled on the table
+        hoop("coil", (2.0 + 0.05 * k, 0.55, z), (0.04, -0.03, 1), across, 0.075, rope)
+    line = turned("rope", 5, [(0.08, 0.0), (0.08, 1.0)], rope)
+    line.location = (0, 0, 0.75 * UNIT)
+    stake = turned("stake_wood", 5, [(0.0, -0.3), (0.14, 0.0), (0.13, 0.75), (0.09, 0.82)], flat("wood"))
+    stake.location = at * UNIT
+    knot = hoop("knot", at + Vector((0, 0, tie)), (0, 0.15, 1), 0.17, 0.08, rope)
+    return dict(parts=[("line", (0, 0, 0.75 * UNIT), [line], None), ("stake", tuple(at * UNIT), [stake, knot], None)], extra=dict(stake_tie=tie))
+
+
+# ---------------------------------------------------------------- the dock (Beat 1)
+# Where the goblin docks the island, in the island's metres. He hauls at `haul`, facing the near edge (-Y), ties off
+# round the signpost's post from `tie` metres in front of it, and ends in the middle of the camp. blender/dock.py keys
+# the beat from these; the rope below is built to them.
+# The sheet ends level with the island, just under its turf, so the camp sits on the grid like a map on a table and
+# the rock beneath goes under the paper; while he hauls, the rope runs down out of sight (haul_depth). Seen from the
+# low dock view the sheet runs back toward the horizon and fades into the page between the two `fade` distances
+# (metres along +Y), so no far edge of it is ever seen.
+DOCK = dict(start=(-0.9, 0.0), haul=(0.55, -3.25), post=(-2.4, -0.3), tie=0.32, middle=(-0.6, -2.2), sheet_at=(0.0, 10.0), sheet_z=-1.0, fade=(18.0, 33.0),
+            haul_depth=6.0)
+GOBLIN_SCALE = 0.5021        # goblin__lp's own scale: his clips are keyed in the rig's units, this many metres to one
+ROPE_R, ROPE_POINTS, ROPE_SIDES = 0.03, 72, 5
+
+
+def lip(x, toward=-1.0):
+    """Where the island's edge is straight out along -Y (toward=-1) from (x, ...), and the turf height there."""
+    y = 0.0
+    while math.hypot(x, y) < camp.edge(math.atan2(y, x)) - 0.12:
+        y += 0.02 * toward
+    return Vector((x, y, ground(x, y) + 0.06))
+
+
+def rope_paths():
+    """The rope's three shapes as centrelines, ROPE_POINTS points each from its loose end to the end hanging below the
+    island: lying at the near edge and hanging off it (hang), up through his hands and taut over the edge (haul), and
+    made fast round the post, taut to the edge (tied)."""
+    import goblin_anim
+    hx, hy = DOCK["haul"]
+    edge = lip(hx)
+    out = Vector((0, -0.14, 0))                                 # clear of the lip as it goes over
+    on = lambda x, y, up=0.05: Vector((x, y, ground(x, y) + up))       # noqa: E731
+
+    def down(depth, sway=0.0):
+        return [edge + out * min(1.0, k / 2) + Vector((sway * math.sin(k / 6 * math.pi), 0, -depth * k / 6)) for k in range(1, 7)]
+    hang = [on(0.80, -3.02), on(0.62, -3.22), on(0.45, -3.45), on(0.48, -3.75), on(0.62, -4.10), on(0.58, -4.45), edge] + down(2.4, 0.12)
+    feet = Vector((hx, hy, ground(hx, hy) - ground(*DOCK["start"])))         # he keeps the height off the turf he has by the fire
+    grip = [feet + (goblin_anim.ROPE_FROM + goblin_anim.ROPE_ALONG * s) * GOBLIN_SCALE for s in (-0.15, 0.1, 0.35, 0.6)]
+    haul = [on(0.95, -2.45), on(0.78, -2.72), on(0.66, -2.95), feet + Vector((0.04, 0.1, 0.42))] + grip + [edge] + down(DOCK["haul_depth"])
+    px, py = DOCK["post"]
+    foot = ground(px, py)
+    # two and a half turns down the post, leaving it on the side that faces the edge, so the line runs off it clean
+    leaves = math.atan2(edge.y - py, edge.x - px) - math.pi / 2
+    turns = [leaves - math.tau * 2.5 * (1 - k / 25) for k in range(26)]
+    wrap = [Vector((px + 0.14 * math.cos(a), py + 0.14 * math.sin(a), foot + 0.62 - 0.07 * (a - turns[0]) / math.tau)) for a in turns]
+    out_of = Vector((math.cos(turns[0]), math.sin(turns[0]), 0))
+    tied = [wrap[0] + out_of * 0.16 + Vector((0, 0, -0.1)), wrap[0] + out_of * 0.07 + Vector((0, 0, -0.03))] + wrap
+    leave = tied[-1]
+    for k in range(1, 9):                                      # taut from the post to the edge, never into the turf
+        p = leave.lerp(edge, k / 9)
+        tied.append(Vector((p.x, p.y, max(p.z, ground(p.x, p.y) + 0.05))))
+    tied += [edge] + down(-DOCK["sheet_z"] + edge.z)
+    return {name: resample(pts, ROPE_POINTS) for name, pts in (("hang", hang), ("haul", haul), ("tied", tied))}
+
+
+def resample(pts, n):
+    """n points evenly along a polyline."""
+    lengths = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        lengths.append(lengths[-1] + (b - a).length)
+    out, j = [], 0
+    for i in range(n):
+        s = lengths[-1] * i / (n - 1)
+        while j < len(pts) - 2 and lengths[j + 1] < s:
+            j += 1
+        k = (s - lengths[j]) / max(lengths[j + 1] - lengths[j], 1e-9)
+        out.append(pts[j].lerp(pts[j + 1], min(1.0, k)))
+    return out
+
+
+def tube(line, radius, sides):
+    """Rings of points round a centreline, turned along it without twisting."""
+    rings, normal = [], None
+    for i, p in enumerate(line):
+        along = (line[min(i + 1, len(line) - 1)] - line[max(i - 1, 0)]).normalized()
+        if normal is None:
+            normal = along.cross(Vector((0, 0, 1)) if abs(along.z) < 0.9 else Vector((1, 0, 0))).normalized()
+        normal = (normal - along * normal.dot(along)).normalized()
+        side = along.cross(normal)
+        rings.append([p + (normal * math.cos(k / sides * math.tau) + side * math.sin(k / sides * math.tau)) * radius for k in range(sides)])
+    return rings
+
+
+@module("rope")
+def rope():
+    """The rope he docks the island with (Beat 1), in the island's own space: one tube whose shape keys are its three
+    shapes (rope_paths). The page steps it with u: haul and tied are weights over the hang it is built in."""
+    paths = rope_paths()
+    shapes = {name: tube(line, ROPE_R, ROPE_SIDES) for name, line in paths.items()}
+    bm = bmesh.new()
+    rings = [[bm.verts.new(p * UNIT) for p in ring] for ring in shapes["hang"]]
+    for a, b in zip(rings, rings[1:]):
+        for k in range(ROPE_SIDES):
+            m = (k + 1) % ROPE_SIDES
+            bm.faces.new((a[k], a[m], b[m], b[k]))
+    bm.faces.new(rings[0][::-1])
+    bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    o = camp.mesh_object("rope", bm, flat("heart"))
+    o.shape_key_add(name="Basis")
+    for name in ("haul", "tied"):
+        key = o.shape_key_add(name=name)
+        for v, p in zip(key.data, (p for ring in shapes[name] for p in ring)):
+            v.co = p * UNIT
 
 
 # ---------------------------------------------------------------- the kit on disk

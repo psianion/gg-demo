@@ -4,8 +4,9 @@ import * as THREE from 'three';
 import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV, ISLAND_RX } from '../hero/film/stages/hero.ts';
 import { build as buildKit, readPlan, type Plan } from '../island/kit';
 import { createBlockout, clocks, DRAWN, type Blockout } from '../island/blockout';
-import { stepLife } from '../island/life';
+import { LIFE, stepLife } from '../island/life';
 import { createFire, type Fire } from '../island/fire';
+import { createDock, type Dock, type DockAt } from '../island/dock';
 import { createHeroLife, type HeroLife } from '../hero/film/stages/heroLife.ts';
 import { rig } from '../hero/film/stages/trilayer.ts';
 import { prmAmbient } from '../hero/film/stages/rigs.ts';
@@ -14,7 +15,7 @@ import { HERO_DOLLY } from '../hero/film/motion.ts';
 import { clock, stepClock } from './clock';
 import { clamp, lerp, seg, smooth, smoother } from './ease';
 import {
-  solveFramings, islandPose, placeCamera, heldPose, prmDip, inRoom, ROOM_FROM, ROOM_TO,
+  solveFramings, frameDock, islandPose, placeCamera, heldPose, prmDip, inRoom, ROOM_FROM, ROOM_TO,
   type Framings, type Pose,
 } from './camera';
 import { buildWorld, newPropState } from './world';
@@ -23,11 +24,17 @@ import { frameHooks, stats, prm, sceneOut, live as bus, nav, capture } from './b
 
 const DEG = Math.PI / 180;
 
-// BEAT 0 (rebuild). The hero is the kit island; the old film takes over the moment the scroll begins,
-// until its beats are rebuilt too. The kit is in metres, about 5.2 from middle to rim, and its front
-// faces +Z; the hero camera stands on the -Z side of an island 2.6 units from middle to rim.
-const KIT_HERO_UNTIL = 0.06;
+// BEATS 0 AND 1 (rebuild). The hero is the kit island, and the kit docks it onto its map sheet over the first two
+// units of scroll (island/dock.ts); the old film takes over at the end of that, until its beats are rebuilt too.
+// The kit is in metres, about 5.2 from middle to rim, and its front faces +Z; the hero camera stands on the -Z
+// side of an island 2.6 units from middle to rim.
+const KIT_UNTIL = 2;
 const KIT_SCALE = ISLAND_RX / 7.2; // smaller than rim-to-rim, so its tall trees stay inside the hero frame
+// its rim, as the film's framings take one: docking ends on the film's own dock framing of it (camera.ts)
+const KIT_RIM = Array.from({ length: 48 }, (_, i) => {
+  const a = (i / 48) * Math.PI * 2;
+  return new THREE.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(5.1 * KIT_SCALE);
+});
 
 interface KitHero {
   scene: THREE.Scene; float: THREE.Group; root: THREE.Group; mixers: THREE.AnimationMixer[];
@@ -43,6 +50,10 @@ interface KitHero {
   fog: THREE.Fog;
   // the campfire's embers, smoke and flicker (fire.ts), once the models are in
   fire: Fire | null;
+  // the island's own space, and the docking in it (dock.ts), once the models are in
+  turn: THREE.Group; dock: Dock | null;
+  // a page that comes back mid-beat is not shown the entrance: the island is there, painted
+  skip: boolean;
 }
 interface Dolly { fps: number; az: number[]; el: number[]; d: number[] }
 
@@ -54,7 +65,7 @@ function dollyAt(move: Dolly, t: number) {
 }
 
 // how the kit island is first seen: from in front and lower than the old film's hero, so its side and the rock
-// under it show. The film's own hero pose takes over as the scroll begins.
+// under it show. Docking (dock.ts) moves on from here.
 const KIT_VIEW = { az: 3 * DEG, el: 23 * DEG };
 const CREEP = { rate: 0.2, most: 0.7 }; // seconds of the move spent per second of drawing at first, and at most
 // the rest goes a little slower than it was keyed, so it settles gently just after the paint has crossed, and
@@ -134,7 +145,7 @@ function kitHeroScene(plan: Plan, move: Dolly, since: number): KitHero {
   turn.scale.setScalar(KIT_SCALE);
   turn.add(float);
   scene.add(key, key.target, fill, turn);
-  return { scene, float, root, mixers: [], draw, since, loaded: false, ready: false, paintAt: null, move, sky, fog, fire: null };
+  return { scene, float, root, mixers: [], draw, since, loaded: false, ready: false, paintAt: null, move, sky, fog, fire: null, turn, dock: null, skip: false };
 }
 
 interface RoomPose { dir: THREE.Vector3; d: number; look: THREE.Vector3 }
@@ -147,6 +158,7 @@ function StageScene() {
   const dir = useRef<Director | null>(null);
   const ps = useMemo(() => newPropState(), []);
   const F = useRef<Framings | null>(null);
+  const kitDock = useRef<Pose | null>(null); // where docking leaves the camera: the film's dock framing of the kit island
   const pose = useMemo<Pose>(() => ({ look: new THREE.Vector3(), az: 0, el: 0, d: 1 }), []);
   const rtCam = useMemo(() => new THREE.PerspectiveCamera(HERO_FOV, 1.6, 0.1, 200), []);
   const rt = useRef<THREE.WebGLRenderTarget | null>(null);
@@ -191,14 +203,19 @@ function StageScene() {
         if (!on) return;
         const k = kitHeroScene(plan, move, live.current.t);
         kit.current = k;
-        return buildKit(mixers, plan).then((built) => {
-          if (!on) return;
-          k.root.add(built.root);
-          k.draw.attach(built.root);
-          k.fire = createFire(built.root, k.draw.popped);
-          k.mixers = mixers;
-          k.loaded = true;
-        });
+        if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__kit = k;
+        return buildKit(mixers, plan)
+          .then((built) => Promise.all([built, createDock(built, KIT_SCALE)]))
+          .then(([built, dock]) => {
+            if (!on) return;
+            k.root.add(built.root);
+            k.draw.attach(built.root);
+            k.fire = createFire(built.root, k.draw.popped);
+            k.turn.add(dock.sheet);
+            k.dock = dock;
+            k.mixers = mixers;
+            k.loaded = true;
+          });
       })
       .catch(() => {
         if (on) kit.current = null;
@@ -258,6 +275,7 @@ function StageScene() {
   useEffect(() => {
     const f = solveFramings(size.width, size.height);
     F.current = f;
+    kitDock.current = frameDock(size.width / Math.max(1, size.height), KIT_RIM);
     cam.fov = HERO_FOV;
     cam.near = 0.1;
     cam.far = 200;
@@ -438,23 +456,33 @@ function StageScene() {
 
     // ---- camera
     const roomMode = inRoom(u);
+    let docked: DockAt | null = null;
     if (!roomMode) {
       let p = reduced ? heldPose(u, f) : islandPose(u, f, pose);
-      const hero = u < KIT_HERO_UNTIL ? kit.current : null;
+      const hero = u <= KIT_UNTIL ? kit.current : null;
       if (hero) {
-        // the kit island's own view, easing into the film's as the scroll begins
-        if (p !== pose) {
-          pose.look.copy(p.look);
-          pose.d = p.d;
-          pose.az = p.az;
-          pose.el = p.el;
-          p = pose;
+        // the kit island's own view at rest, then docking: down and in, to the film's dock framing of the kit
+        // island (kitDock), along the move keyed in blender/dock.py
+        pose.look.copy(f.hero.look);
+        pose.d = f.hero.d;
+        pose.az = KIT_VIEW.az;
+        pose.el = KIT_VIEW.el;
+        p = pose;
+        docked = hero.dock?.at(u) ?? null;
+        const end = kitDock.current;
+        if (docked && end) {
+          p.look.lerp(end.look, docked.glide);
+          p.az = lerp(p.az, end.az, docked.turn);
+          p.el = lerp(p.el, end.el, docked.turn);
+          p.d = Math.exp(lerp(Math.log(p.d), Math.log(end.d), docked.dolly));
         }
-        const w = 1 - smooth(seg(u, 0, KIT_HERO_UNTIL));
-        p.az += (KIT_VIEW.az - f.hero.az) * w;
-        p.el += (KIT_VIEW.el - f.hero.el) * w;
-        if (hero.paintAt === null && hero.loaded && hero.ready && L.t - hero.since >= DRAWN) hero.paintAt = L.t;
-        if (!reduced) {
+        // the way in gives way to the scroll
+        const w = 1 - smooth(seg(u, 0, 0.06));
+        if (hero.paintAt === null && !hero.skip && hero.loaded && hero.ready && L.t - hero.since >= DRAWN) {
+          if (u > 0.02) hero.skip = true;
+          else hero.paintAt = L.t;
+        }
+        if (!reduced && !hero.skip) {
           // its way in: close over the drawing, creeping, then back and round to that view as the paint crosses
           const [drawing, painting] = clocks(L.t - hero.since, hero.paintAt === null ? -1 : L.t - hero.paintAt);
           const m = dollyAt(hero.move, moved(drawing, painting));
@@ -526,7 +554,9 @@ function StageScene() {
       return;
     }
     const canvas = gl.domElement;
-    canvas.style.opacity = reduced ? String(prmDip(u) * roomDip(u)) : '1';
+    // under reduced motion the docking scrubs through (no held cut inside it), and dips to paper at its cut to the film
+    const dip = u <= KIT_UNTIL + 0.18 && kit.current ? clamp(Math.abs(u - KIT_UNTIL) / 0.18) : prmDip(u);
+    canvas.style.opacity = reduced ? String(dip * roomDip(u)) : '1';
     if (!roomMode) {
       // the grid acquires edges: everything is clipped toward the laptop's 16:10 rect
       const s = u >= ROOM_TO ? 1 : smooth(seg(u, 12.6, ROOM_FROM));
@@ -538,32 +568,38 @@ function StageScene() {
         gl.clear();
         gl.render(world.island, cam);
         gl.setScissorTest(false);
-      } else if (!kit.current && !kitTried.current && u < KIT_HERO_UNTIL) {
+      } else if (!kit.current && !kitTried.current && u <= KIT_UNTIL) {
         // the kit's plan is still loading: leave the paper bare, so the drawing is the first thing seen
-      } else if (kit.current && u < KIT_HERO_UNTIL) {
-        // the hero: the kit island afloat (a slow bob and drift, held still under reduced motion), the goblin idling
+      } else if (kit.current && u <= KIT_UNTIL) {
+        // the hero: the kit island afloat (a slow bob and drift, held still under reduced motion), the goblin idling;
+        // then docking, which settles the bob, lifts the sky and clouds away and brings the sheet in under it.
+        // His clips were set for this u with the camera above, before his mixer runs here
         const k = kit.current;
         const m = reduced ? 0 : 1;
         for (const mixer of k.mixers) mixer.update(dt * m);
-        k.float.position.y = (Math.sin(L.t * 0.9) * 0.13 + Math.sin(L.t * 0.37) * 0.05) * m;
-        k.float.rotation.y = Math.sin(L.t * 0.27) * 0.1 * m;
-        // the page opens as paper: the sky comes in behind the island as the paint crosses it, and goes again
-        // as the scroll begins, since the film after this beat is still drawn on paper
-        const painted = reduced
+        const bob = (docked?.bob ?? 1) * m;
+        k.float.position.y = (Math.sin(L.t * 0.9) * 0.13 + Math.sin(L.t * 0.37) * 0.05) * bob;
+        k.float.rotation.y = Math.sin(L.t * 0.27) * 0.1 * bob;
+        // the page opens as paper: the sky comes in behind the island as the paint crosses it, and goes again as
+        // the island docks
+        const painted = reduced || k.skip
           ? k.draw.at(Infinity, k.loaded ? Infinity : -1)
           : k.draw.at(L.t - k.since, k.paintAt === null ? -1 : L.t - k.paintAt);
         // what lives on it once painted (life.ts, fire.ts): wind in the trees, drifting clouds, the fire. After
         // the entrance has set the lamps, since the fire's flicker rides on them
         stepLife(dt, m);
+        LIFE.uAway.value = docked?.away ?? 0;
         k.fire?.update(dt * m, m);
-        k.sky.uSky.value = painted * painted * (3 - 2 * painted) * (1 - smooth(seg(u, 0.015, KIT_HERO_UNTIL)));
+        if (k.dock) k.dock.rope.visible = k.draw.popped(k.dock.lip[0], k.dock.lip[1]) > 0.5;
+        const sky = docked?.sky ?? 1;
+        k.sky.uSky.value = painted * painted * (3 - 2 * painted) * sky;
         // the wash follows the island on the screen, and reaches as far as the island is wide there
         const reach = (5.2 * KIT_SCALE) / (cam.position.length() * Math.tan((cam.fov * DEG) / 2));
         tmpPos.set(0, 0, 0).project(cam);
         k.sky.uCentre.value.set(tmpPos.x, tmpPos.y);
         k.sky.uReach.value.set(reach / cam.aspect, reach);
-        // haze begins at the island's near rim and thickens behind it
-        k.fog.near = cam.position.length() - 5.2 * KIT_SCALE;
+        // haze begins at the island's near rim and thickens behind it; it clears with the sky, off the sheet
+        k.fog.near = cam.position.length() - 5.2 * KIT_SCALE + (1 - sky) * 400;
         k.fog.far = k.fog.near + 40 * KIT_SCALE;
         gl.render(k.scene, cam);
       } else gl.render(world.island, cam);

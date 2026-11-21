@@ -67,14 +67,15 @@ function frameIsland(
   az: number,
   el: number,
   want: { w: number; h: number; cx: number; bottom?: number; cy?: number },
+  pts: THREE.Vector3[] = RIM,
 ): Pose {
   const p: Pose = { look: new THREE.Vector3(), az, el, d: 10 };
   const right = new THREE.Vector3();
   for (let i = 0; i < 10; i++) {
-    let b = rimBox(p, aspect);
+    let b = rimBox(p, aspect, pts);
     const k = Math.max((b.x1 - b.x0) / want.w, (b.y1 - b.y0) / want.h);
     p.d *= k;
-    b = rimBox(p, aspect);
+    b = rimBox(p, aspect, pts);
     right.setFromMatrixColumn(tmpCam.matrixWorld, 0);
     const viewH = 2 * p.d * Math.tan((HERO_FOV * DEG) / 2);
     const ex = (b.x0 + b.x1) / 2 - want.cx;
@@ -103,20 +104,27 @@ export interface Framings {
 
 export const DIE_SPOT = new THREE.Vector3(0.35, 0, -0.5);
 
+/**
+ * Beat 1–2: a level camera, eye height (review 1). It looks a little above the island,
+ * so the island is a thin ellipse (≈ 0.16 tall:wide, seen from ≈ 13°) hugging the
+ * bottom edge, the goblin, signpost and trees stand tall against empty paper, and the
+ * ground grid recedes to a horizon just above mid-frame. `rim` is the island's rim, for
+ * an island other than the film's (the kit island docks into this framing, dock.ts).
+ */
+export function frameDock(aspect: number, rim: THREE.Vector3[] = RIM): Pose {
+  const DOCK_EL = 2 * DEG;
+  return aspect < 1
+    ? frameIsland(aspect, 0, DOCK_EL, { w: 1.04, h: 0.5, cx: 0.5, bottom: 0.9 }, rim)
+    : frameIsland(aspect, 0, DOCK_EL, { w: 0.92, h: 0.64, cx: 0.5, bottom: 1.02 }, rim);
+}
+
 export function solveFramings(width: number, height: number): Framings {
   const aspect = width / Math.max(1, height);
   const portrait = aspect < 1;
   const hf = heroFraming(width, height);
   const hero = poseFrom(hf.position, hf.look);
 
-  // Beat 1–2: a level camera, eye height (review 1). It looks a little above the island,
-  // so the island is a thin ellipse (≈ 0.16 tall:wide, seen from ≈ 13°) hugging the
-  // bottom edge, the goblin, signpost and trees stand tall against empty paper, and the
-  // ground grid recedes to a horizon just above mid-frame.
-  const DOCK_EL = 2 * DEG;
-  const dock = portrait
-    ? frameIsland(aspect, 0, DOCK_EL, { w: 1.04, h: 0.5, cx: 0.5, bottom: 0.9 })
-    : frameIsland(aspect, 0, DOCK_EL, { w: 0.92, h: 0.64, cx: 0.5, bottom: 1.02 });
+  const dock = frameDock(aspect);
   // Beat 5: the product-UI frame still wants the map readable, so ¾ top-down stays
   const SCREEN_EL = 52 * DEG;
 

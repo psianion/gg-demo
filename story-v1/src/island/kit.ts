@@ -21,7 +21,11 @@ type Instance = { slot: string; variant?: string; pos: [number, number, number];
 type Layout = { stage: { table_z: number }; instances: Instance[] };
 /** What stands where, without the models: two small files, enough to block the island out while they load. */
 export type Plan = { manifest: Manifest; layout: Layout };
-export type Built = { root: THREE.Group; loose: THREE.Group; tableY: number };
+/** `goblin`: his rig, its mixer, and every clip he has, for the beats that step them (dock.ts) */
+export type Built = {
+  root: THREE.Group; loose: THREE.Group; tableY: number;
+  goblin: { node: THREE.Object3D; mixer: THREE.AnimationMixer; clips: THREE.AnimationClip[] };
+};
 
 // the island's soft shadow on the table: the Blender lamp is 27 m wide, so it is a stain, not an outline
 export const STAIN = (() => {
@@ -153,8 +157,8 @@ export async function build(mixers: THREE.AnimationMixer[], plan?: Plan): Promis
   place(goblin, [-0.9, 0, 0], 48);
   goblin.userData.slot = 'goblin';
   const idle = rig.animations.find((a) => a.name === 'idle_alive');
+  const mixer = new THREE.AnimationMixer(goblin);
   if (idle) {
-    const mixer = new THREE.AnimationMixer(goblin);
     mixer.clipAction(idle).play();
     mixer.setTime(0); // the match view holds him on this frame
     if (PLAY || !PROOF) mixers.push(mixer);
@@ -163,5 +167,5 @@ export async function build(mixers: THREE.AnimationMixer[], plan?: Plan): Promis
   moving.add(goblin); // he stays a rig of separate parts
   root.add(batch(root, moving));
   loose.add(batch(loose, new Set()));
-  return { root, loose, tableY: layout.stage.table_z };
+  return { root, loose, tableY: layout.stage.table_z, goblin: { node: goblin, mixer, clips: rig.animations } };
 }

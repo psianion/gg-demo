@@ -54,6 +54,30 @@
       "seconds": 2.0,
       "loop": false,
       "use": "Crouch, hop with both arms thrown up, land with a squash, one more pump, settle."
+    },
+    {
+      "name": "take_rope",
+      "first": 0,
+      "last": 30,
+      "seconds": 1.25,
+      "loop": false,
+      "use": "Squats to the rope at his feet, takes it and straightens into the haul. Beat 1."
+    },
+    {
+      "name": "tie_off",
+      "first": 0,
+      "last": 48,
+      "seconds": 2.0,
+      "loop": false,
+      "use": "Takes the rope twice round a post in front of him, hauls it tight, lets go. Beat 1."
+    },
+    {
+      "name": "dust_hands",
+      "first": 0,
+      "last": 30,
+      "seconds": 1.25,
+      "loop": false,
+      "use": "Brushes his palms together, a pleased nod, arms drop. Beat 1."
     }
   ],
   "secondary_bones": [
