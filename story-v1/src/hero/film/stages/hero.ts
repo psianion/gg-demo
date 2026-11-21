@@ -121,6 +121,14 @@ export const COMP = {
   centerY: { landscape: 0.54, portrait: 0.56 },
 };
 
+// Where the kit island comes to rest against the authored comp: how far right, as a share of the
+// window's width, and at what size. Right of 0 and size of 1 for the film; the single-hero page
+// (Home.tsx) sets them, so its words have the left of the window and the island and its sky still
+// fit the right. The stage turns its lens to this as the paint crosses (Stage.tsx), rather than
+// moving the look: the kit view and its way in orbit the look, so a look off the island would
+// swing it about.
+export const HERO_REST = { right: 0, size: 1 };
+
 // P4d (FIX: rendered extent): the island RENDERS wider than its rim solve — the
 // strata lip (r 1.012), roughen bumps, the rim mark's jitter and stroke overshoot
 // add ~4.5% to the projected rim span (measured live at 768×895: 94vw rendered

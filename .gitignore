@@ -4,3 +4,11 @@ node-compile-cache/
 .DS_Store
 .impeccable/
 .playwright-mcp/
+
+# downloaded model packs and Blender renders (rebuilt by the scripts in blender/)
+blender/vendor/
+blender/out/
+__pycache__/
+
+# local tool config
+.claude/

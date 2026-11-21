@@ -1,0 +1,122 @@
+{
+  "module": "goblin__lp",
+  "file": "goblin__lp.glb",
+  "units": "metres",
+  "height": 1.1,
+  "origin": "between the feet, on the ground",
+  "faces": "-Y in Blender, +Z in glTF",
+  "fps": 24,
+  "clips": [
+    {
+      "name": "idle_alive",
+      "first": 0,
+      "last": 96,
+      "seconds": 4.0,
+      "loop": true,
+      "use": "Standing by: breathing, shifting weight, a look round, an ear flick, blinks."
+    },
+    {
+      "name": "greet",
+      "first": 0,
+      "last": 48,
+      "seconds": 2.0,
+      "loop": false,
+      "use": "Notices the visitor, waves with the whole body, settles."
+    },
+    {
+      "name": "walk",
+      "first": 0,
+      "last": 24,
+      "seconds": 1.0,
+      "loop": true,
+      "use": "Walk cycle in place: planted feet, hip sway, arms a beat behind the legs."
+    },
+    {
+      "name": "haul_rope",
+      "first": 0,
+      "last": 48,
+      "seconds": 2.0,
+      "loop": true,
+      "use": "Leaning back, hand over hand on a rope, heels dug in. Beat 1: hauling the island in."
+    },
+    {
+      "name": "pick_up",
+      "first": 0,
+      "last": 54,
+      "seconds": 2.25,
+      "loop": false,
+      "use": "Looks, squats, reaches with one hand, lifts with the legs, holds the find up to look at it."
+    },
+    {
+      "name": "cheer",
+      "first": 0,
+      "last": 48,
+      "seconds": 2.0,
+      "loop": false,
+      "use": "Crouch, hop with both arms thrown up, land with a squash, one more pump, settle."
+    },
+    {
+      "name": "take_rope",
+      "first": 0,
+      "last": 30,
+      "seconds": 1.25,
+      "loop": false,
+      "use": "Squats to the rope at his feet, takes it and straightens into the haul. Beat 1."
+    },
+    {
+      "name": "tie_off",
+      "first": 0,
+      "last": 48,
+      "seconds": 2.0,
+      "loop": false,
+      "use": "Takes the rope twice round a post in front of him, hauls it tight, lets go. Beat 1."
+    },
+    {
+      "name": "dust_hands",
+      "first": 0,
+      "last": 30,
+      "seconds": 1.25,
+      "loop": false,
+      "use": "Brushes his palms together, a pleased nod, arms drop. Beat 1."
+    }
+  ],
+  "secondary_bones": [
+    "ear.l.1",
+    "ear.l.2",
+    "ear.r.1",
+    "ear.r.2",
+    "pouch.1",
+    "rope",
+    "lid.l",
+    "lid.r"
+  ],
+  "swappable_parts": [
+    "gl_belt",
+    "gl_body",
+    "gl_bracer",
+    "gl_breeches",
+    "gl_buckle",
+    "gl_buckle_in",
+    "gl_ear",
+    "gl_earring",
+    "gl_eye",
+    "gl_finger",
+    "gl_head",
+    "gl_hood",
+    "gl_jerkin",
+    "gl_lid",
+    "gl_mantle",
+    "gl_patch",
+    "gl_pouch",
+    "gl_pouch_flap",
+    "gl_pouch_stud",
+    "gl_rope",
+    "gl_thumb",
+    "gl_toe",
+    "gl_tooth",
+    "gl_tusk",
+    "gl_wrap"
+  ],
+  "fallback_clips": "76 pack clips (Idle, Walking_A, Interact, Sit_Chair_Idle and so on) are kept in the out/lib .blend only",
+  "paint": "one flat colour a face, in vertex colour"
+}

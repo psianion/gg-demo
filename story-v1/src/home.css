@@ -1,0 +1,80 @@
+/* THE PAGE, for now: the single hero. Type and colour are the hero's brand block (hero.css):
+   Metamorphous for the name, Vollkorn for the words, Vollkorn italic in the quiet ink for the
+   beta line, all on the paper from styles.css, inside the sheet's margin. */
+
+.home {
+  --margin: clamp(18px, 2.6vw, 36px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100vh;
+}
+
+/* the stage's canvas fills the window behind the words, as the film's hero did (styles.css:
+   .stage-canvas) */
+.home-island {
+  position: fixed;
+  inset: 0;
+}
+
+/* the words keep to the left of the page; the island rests right of them (Home.tsx). They
+   start unwritten and come in with the paint (Home.tsx), or are simply there under reduced motion */
+.home-text {
+  position: relative;
+  width: 45vw;
+  padding: 0 var(--margin);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-text {
+    opacity: 1;
+  }
+}
+
+.home h1 {
+  margin: 0;
+  font-family: 'Metamorphous', var(--font-quiet);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 4.6vw, 4.8rem);
+  line-height: 1.05;
+}
+
+/* three lines, one sentence or two each. The size follows the column so the longest line
+   (about 33.5em) holds on one line; at the smallest desktop widths the size bottoms out and the
+   second line breaks between its two sentences, never inside one */
+.home-copy {
+  margin: 1.1rem 0 0;
+  font-family: var(--font-quiet);
+  font-size: clamp(0.9rem, calc((45vw - 2 * var(--margin)) / 33.5), 1.45rem);
+  line-height: 1.5;
+}
+.home-copy > span {
+  display: block;
+}
+.home-copy span span {
+  white-space: nowrap;
+}
+
+.home-beta {
+  margin: 1.4rem 0 0;
+  font-family: var(--font-quiet);
+  font-style: italic;
+  font-size: clamp(0.92rem, 1.1vw, 1.2rem);
+  letter-spacing: 0.01em;
+  color: var(--quiet);
+}
+
+/* narrow: the words across the top of the page, where the stage's portrait framing leaves the
+   paper for type (hero.ts compFor), and the island under them */
+@media (max-width: 1023.98px) {
+  .home {
+    align-items: flex-start;
+  }
+  .home-text {
+    width: 100%;
+    padding-top: 6vh;
+  }
+  .home-copy span span {
+    white-space: normal;
+  }
+}
