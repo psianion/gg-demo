@@ -6,7 +6,12 @@ import '@fontsource/cinzel/700.css';
 import '@fontsource/vollkorn/400.css';
 import '@fontsource/vollkorn/400-italic.css';
 import './styles.css';
-import App from './App';
+
+// The scroll film (App: the pinned story, its beats, the sections, the load gate and the return
+// visit) is paused, and the page is the single hero in Home. Set FILM to true to bring the film back.
+// Only the page chosen here is loaded, so neither one's styles or settings reach the other.
+const FILM = false;
+const Page = lazy(FILM ? () => import('./App') : () => import('./Home'));
 
 // ?art=1 — the artist's prop gallery (each prop with a reveal slider)
 const ART = new URLSearchParams(window.location.search).get('art') === '1';
@@ -28,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
         <Gallery />
       </Suspense>
     ) : (
-      <App />
+      <Suspense fallback={null}>
+        <Page />
+      </Suspense>
     )}
   </StrictMode>,
 );

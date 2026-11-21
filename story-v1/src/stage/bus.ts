@@ -21,7 +21,8 @@ export const nav = {
 export const live = {
   effective: null as null | ((u: number) => import('./state').Effective),
 };
-export const sceneOut = { night: 0, freeze: 0 };
+// painted: how far the hero island's paint has crossed it (0 to 1), for the page's words to follow
+export const sceneOut = { night: 0, freeze: 0, painted: 0 };
 /** the stage renders the after-page stills on request (data URLs) */
 export const capture = { fn: null as null | (() => Promise<string[]>) };
 

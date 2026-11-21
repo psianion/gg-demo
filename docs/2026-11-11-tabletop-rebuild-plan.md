@@ -81,6 +81,13 @@ modes, `WaitlistCard`, the after-sections and footer.
 
 ## 5. Steps
 
+**2026-11-21: the scroll film is paused.** The rest of the site is being built first, from a plain hero. The
+homepage is now one screen: the island hero across the whole window (the pencil blockout, the paint, the camera's
+way in, all as before), coming to rest a little right of centre and a little smaller, with "Good Goblin", three
+lines about the apps and "Closed beta starts December 2026" over the left (`story-v1/src/Home.tsx`; the date is
+`BETA_STARTS` there). No buttons, no scroll, no sections. The film's code is all still in place, unimported: set
+`FILM = true` in `story-v1/src/main.tsx` to bring the film back.
+
 Each step ends with frames at desktop and phone size and a verdict from Nayan: keep, change or drop.
 
 ### Step 0 — Look proof (blocks everything)

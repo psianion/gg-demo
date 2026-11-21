@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV, ISLAND_RX } from '../hero/film/stages/hero.ts';
+import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV, ISLAND_RX, HERO_REST } from '../hero/film/stages/hero.ts';
 import { build as buildKit, readPlan, type Plan } from '../island/kit';
 import { createBlockout, clocks, DRAWN, type Blockout } from '../island/blockout';
 import { LIFE, stepLife } from '../island/life';
@@ -585,16 +585,27 @@ function StageScene() {
         const painted = reduced || k.skip
           ? k.draw.at(Infinity, k.loaded ? Infinity : -1)
           : k.draw.at(L.t - k.since, k.paintAt === null ? -1 : L.t - k.paintAt);
+        sceneOut.painted = painted;
         // what lives on it once painted (life.ts, fire.ts): wind in the trees, drifting clouds, the fire. After
         // the entrance has set the lamps, since the fire's flicker rides on them
         stepLife(dt, m);
         LIFE.uAway.value = docked?.away ?? 0;
         k.fire?.update(dt * m, m);
         if (k.dock) k.dock.rope.visible = k.draw.popped(k.dock.lip[0], k.dock.lip[1]) > 0.5;
+        // the single-hero page rests the island right of centre (hero.ts HERO_REST): the lens turns to that as
+        // the paint crosses, so the drawing has the whole window and the painted island settles to the right
+        if (HERO_REST.right !== 0 || HERO_REST.size !== 1) {
+          const s = painted * painted * (3 - 2 * painted);
+          cam.zoom = lerp(1, HERO_REST.size, s);
+          cam.setViewOffset(W, Hh, -HERO_REST.right * W * s, 0, W, Hh);
+        } else if (cam.view?.enabled) {
+          cam.zoom = 1;
+          cam.clearViewOffset();
+        }
         const sky = docked?.sky ?? 1;
         k.sky.uSky.value = painted * painted * (3 - 2 * painted) * sky;
         // the wash follows the island on the screen, and reaches as far as the island is wide there
-        const reach = (5.2 * KIT_SCALE) / (cam.position.length() * Math.tan((cam.fov * DEG) / 2));
+        const reach = (5.2 * KIT_SCALE * cam.zoom) / (cam.position.length() * Math.tan((cam.fov * DEG) / 2));
         tmpPos.set(0, 0, 0).project(cam);
         k.sky.uCentre.value.set(tmpPos.x, tmpPos.y);
         k.sky.uReach.value.set(reach / cam.aspect, reach);
@@ -602,7 +613,11 @@ function StageScene() {
         k.fog.near = cam.position.length() - 5.2 * KIT_SCALE + (1 - sky) * 400;
         k.fog.far = k.fog.near + 40 * KIT_SCALE;
         gl.render(k.scene, cam);
-      } else gl.render(world.island, cam);
+      } else {
+        // the film's own island (past the docking, or if the kit could not load) has no paint to wait for
+        sceneOut.painted = 1;
+        gl.render(world.island, cam);
+      }
     } else {
       // island → texture through the screen camera (same pose as the last direct frame).
       // The texture is drawn at the resolution the screen actually covers on the page:
