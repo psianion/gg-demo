@@ -1,0 +1,1921 @@
+{
+ "unit": "metre",
+ "fps": 24,
+ "facing": "-Y",
+ "clips": "one glTF animation per clip name; loops are 96 frames and close",
+ "slots": {
+  "hero_tree": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "hero_tree__a.glb",
+     "blend": "hero_tree__a.blend",
+     "collection": "hero_tree__a",
+     "footprint": [
+      1.743,
+      1.833,
+      3.087
+     ],
+     "bounds": [
+      -0.872,
+      -0.917,
+      -0.255,
+      0.872,
+      0.917,
+      2.832
+     ],
+     "parts": [
+      {
+       "name": "trunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "crown_low",
+       "pivot": [
+        0.0004,
+        0.0,
+        0.3818
+       ],
+       "parent": "trunk"
+      },
+      {
+       "name": "crown_top",
+       "pivot": [
+        -0.0009,
+        -0.0015,
+        1.5018
+       ],
+       "parent": "crown_low"
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "trunk",
+        "crown_low",
+        "crown_top"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "b": {
+     "glb": "hero_tree__b.glb",
+     "blend": "hero_tree__b.blend",
+     "collection": "hero_tree__b",
+     "footprint": [
+      2.933,
+      2.422,
+      3.198
+     ],
+     "bounds": [
+      -1.393,
+      -1.16,
+      0.0,
+      1.54,
+      1.262,
+      3.198
+     ],
+     "parts": [
+      {
+       "name": "trunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "crown",
+       "pivot": [
+        0.1654,
+        0.091,
+        1.7726
+       ],
+       "parent": "trunk"
+      },
+      {
+       "name": "leaves_0",
+       "pivot": [
+        0.1818,
+        0.0454,
+        1.8181
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_1",
+       "pivot": [
+        -0.6802,
+        0.1365,
+        1.6143
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_2",
+       "pivot": [
+        0.8653,
+        -0.0908,
+        1.6583
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_3",
+       "pivot": [
+        0.0925,
+        -0.5454,
+        1.5909
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_4",
+       "pivot": [
+        0.0472,
+        0.591,
+        1.7499
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_5",
+       "pivot": [
+        -0.2704,
+        -0.0908,
+        2.4321
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_6",
+       "pivot": [
+        0.5933,
+        0.1365,
+        2.4085
+       ],
+       "parent": "crown"
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "trunk",
+        "crown",
+        "leaves_0",
+        "leaves_1",
+        "leaves_2",
+        "leaves_3",
+        "leaves_4",
+        "leaves_5",
+        "leaves_6"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "lp": {
+     "glb": "hero_tree__lp.glb",
+     "blend": "hero_tree__lp.blend",
+     "collection": "hero_tree__lp",
+     "footprint": [
+      2.956,
+      2.476,
+      3.254
+     ],
+     "bounds": [
+      -1.358,
+      -1.127,
+      -0.008,
+      1.598,
+      1.349,
+      3.246
+     ],
+     "parts": [
+      {
+       "name": "trunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "crown",
+       "pivot": [
+        0.1654,
+        0.091,
+        1.7726
+       ],
+       "parent": "trunk"
+      },
+      {
+       "name": "leaves_0",
+       "pivot": [
+        0.1818,
+        0.0454,
+        1.8181
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_1",
+       "pivot": [
+        -0.6802,
+        0.1365,
+        1.6143
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_2",
+       "pivot": [
+        0.8653,
+        -0.0908,
+        1.6583
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_3",
+       "pivot": [
+        0.0925,
+        -0.5454,
+        1.5909
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_4",
+       "pivot": [
+        0.0472,
+        0.591,
+        1.7499
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_5",
+       "pivot": [
+        -0.2704,
+        -0.0908,
+        2.4321
+       ],
+       "parent": "crown"
+      },
+      {
+       "name": "leaves_6",
+       "pivot": [
+        0.5933,
+        0.1365,
+        2.4085
+       ],
+       "parent": "crown"
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "trunk",
+        "crown",
+        "leaves_0",
+        "leaves_1",
+        "leaves_2",
+        "leaves_3",
+        "leaves_4",
+        "leaves_5",
+        "leaves_6"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    }
+   }
+  },
+  "pine": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "pine__a.glb",
+     "blend": "pine__a.blend",
+     "collection": "pine__a",
+     "footprint": [
+      1.304,
+      1.243,
+      2.719
+     ],
+     "bounds": [
+      -0.653,
+      -0.557,
+      -0.233,
+      0.651,
+      0.686,
+      2.486
+     ],
+     "parts": [
+      {
+       "name": "trunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "crown_low",
+       "pivot": [
+        0.0005,
+        0.0,
+        0.4318
+       ],
+       "parent": "trunk"
+      },
+      {
+       "name": "crown_top",
+       "pivot": [
+        -0.0005,
+        -0.0009,
+        1.1136
+       ],
+       "parent": "crown_low"
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "trunk",
+        "crown_low",
+        "crown_top"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "lp": {
+     "glb": "pine__lp.glb",
+     "blend": "pine__lp.blend",
+     "collection": "pine__lp",
+     "footprint": [
+      1.348,
+      1.264,
+      2.631
+     ],
+     "bounds": [
+      -0.68,
+      -0.613,
+      0.0,
+      0.668,
+      0.651,
+      2.631
+     ],
+     "parts": [
+      {
+       "name": "trunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "crown_0",
+       "pivot": [
+        0.0003,
+        0.0,
+        0.3636
+       ],
+       "parent": "trunk"
+      },
+      {
+       "name": "crown_1",
+       "pivot": [
+        -0.0002,
+        -0.0003,
+        0.7955
+       ],
+       "parent": "crown_0"
+      },
+      {
+       "name": "crown_2",
+       "pivot": [
+        0.0018,
+        0.0006,
+        1.2273
+       ],
+       "parent": "crown_1"
+      },
+      {
+       "name": "crown_3",
+       "pivot": [
+        -0.0024,
+        -0.0009,
+        1.6591
+       ],
+       "parent": "crown_2"
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "trunk",
+        "crown_0",
+        "crown_1",
+        "crown_2",
+        "crown_3"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    }
+   }
+  },
+  "rock_large": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "rock_large__a.glb",
+     "blend": "rock_large__a.blend",
+     "collection": "rock_large__a",
+     "footprint": [
+      1.331,
+      0.948,
+      0.531
+     ],
+     "bounds": [
+      -0.696,
+      -0.444,
+      -0.0,
+      0.635,
+      0.504,
+      0.531
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "b": {
+     "glb": "rock_large__b.glb",
+     "blend": "rock_large__b.blend",
+     "collection": "rock_large__b",
+     "footprint": [
+      0.909,
+      0.842,
+      0.637
+     ],
+     "bounds": [
+      -0.487,
+      -0.518,
+      -0.023,
+      0.422,
+      0.324,
+      0.614
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "lp": {
+     "glb": "rock_large__lp.glb",
+     "blend": "rock_large__lp.blend",
+     "collection": "rock_large__lp",
+     "footprint": [
+      1.098,
+      0.969,
+      0.627
+     ],
+     "bounds": [
+      -0.459,
+      -0.429,
+      -0.031,
+      0.639,
+      0.541,
+      0.595
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "rock_medium": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "rock_medium__a.glb",
+     "blend": "rock_medium__a.blend",
+     "collection": "rock_medium__a",
+     "footprint": [
+      1.016,
+      1.017,
+      0.575
+     ],
+     "bounds": [
+      -0.547,
+      -0.479,
+      -0.0,
+      0.469,
+      0.538,
+      0.575
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "b": {
+     "glb": "rock_medium__b.glb",
+     "blend": "rock_medium__b.blend",
+     "collection": "rock_medium__b",
+     "footprint": [
+      0.693,
+      0.563,
+      0.432
+     ],
+     "bounds": [
+      -0.389,
+      -0.3,
+      -0.018,
+      0.303,
+      0.263,
+      0.413
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "lp": {
+     "glb": "rock_medium__lp.glb",
+     "blend": "rock_medium__lp.blend",
+     "collection": "rock_medium__lp",
+     "footprint": [
+      0.798,
+      0.72,
+      0.453
+     ],
+     "bounds": [
+      -0.338,
+      -0.364,
+      -0.023,
+      0.46,
+      0.356,
+      0.43
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "rock_small": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "rock_small__a.glb",
+     "blend": "rock_small__a.blend",
+     "collection": "rock_small__a",
+     "footprint": [
+      0.847,
+      0.738,
+      0.398
+     ],
+     "bounds": [
+      -0.419,
+      -0.36,
+      -0.0,
+      0.427,
+      0.378,
+      0.398
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "b": {
+     "glb": "rock_small__b.glb",
+     "blend": "rock_small__b.blend",
+     "collection": "rock_small__b",
+     "footprint": [
+      0.684,
+      0.695,
+      0.463
+     ],
+     "bounds": [
+      -0.365,
+      -0.517,
+      -0.016,
+      0.319,
+      0.178,
+      0.447
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "lp": {
+     "glb": "rock_small__lp.glb",
+     "blend": "rock_small__lp.blend",
+     "collection": "rock_small__lp",
+     "footprint": [
+      0.571,
+      0.546,
+      0.305
+     ],
+     "bounds": [
+      -0.221,
+      -0.245,
+      -0.017,
+      0.35,
+      0.301,
+      0.288
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "grass": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "grass__a.glb",
+     "blend": "grass__a.blend",
+     "collection": "grass__a",
+     "footprint": [
+      0.317,
+      0.314,
+      0.354
+     ],
+     "bounds": [
+      -0.157,
+      -0.127,
+      0.0,
+      0.16,
+      0.188,
+      0.354
+     ],
+     "parts": [
+      {
+       "name": "tuft",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "tuft"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "b": {
+     "glb": "grass__b.glb",
+     "blend": "grass__b.blend",
+     "collection": "grass__b",
+     "footprint": [
+      0.18,
+      0.208,
+      0.376
+     ],
+     "bounds": [
+      -0.1,
+      -0.073,
+      -0.006,
+      0.08,
+      0.135,
+      0.37
+     ],
+     "parts": [
+      {
+       "name": "tuft",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "tuft"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "lp": {
+     "glb": "grass__lp.glb",
+     "blend": "grass__lp.blend",
+     "collection": "grass__lp",
+     "footprint": [
+      0.319,
+      0.358,
+      0.393
+     ],
+     "bounds": [
+      -0.178,
+      -0.176,
+      0.0,
+      0.141,
+      0.182,
+      0.393
+     ],
+     "parts": [
+      {
+       "name": "tuft",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "tuft"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    }
+   }
+  },
+  "flowers": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "flowers__a.glb",
+     "blend": "flowers__a.blend",
+     "collection": "flowers__a",
+     "footprint": [
+      0.636,
+      0.221,
+      0.501
+     ],
+     "bounds": [
+      -0.313,
+      -0.091,
+      0.0,
+      0.322,
+      0.13,
+      0.501
+     ],
+     "parts": [
+      {
+       "name": "flower_0",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "flower_1",
+       "pivot": [
+        -0.1455,
+        0.0455,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "flower_2",
+       "pivot": [
+        0.1364,
+        -0.0364,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "leaves",
+       "pivot": [
+        0.0,
+        0.0227,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "leaves",
+        "flower_2",
+        "flower_1",
+        "flower_0"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "lp": {
+     "glb": "flowers__lp.glb",
+     "blend": "flowers__lp.blend",
+     "collection": "flowers__lp",
+     "footprint": [
+      0.681,
+      0.309,
+      0.485
+     ],
+     "bounds": [
+      -0.333,
+      -0.154,
+      0.0,
+      0.348,
+      0.155,
+      0.485
+     ],
+     "parts": [
+      {
+       "name": "flower_0",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "flower_1",
+       "pivot": [
+        -0.1455,
+        0.0455,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "flower_2",
+       "pivot": [
+        0.1364,
+        -0.0364,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "leaves",
+       "pivot": [
+        0.0,
+        0.0227,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "leaves.001",
+        "flower_2",
+        "flower_1",
+        "flower_0"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    }
+   }
+  },
+  "mushroom": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "mushroom__a.glb",
+     "blend": "mushroom__a.blend",
+     "collection": "mushroom__a",
+     "footprint": [
+      0.369,
+      0.282,
+      0.255
+     ],
+     "bounds": [
+      -0.129,
+      -0.142,
+      0.0,
+      0.239,
+      0.14,
+      0.255
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "bush": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "bush__a.glb",
+     "blend": "bush__a.blend",
+     "collection": "bush__a",
+     "footprint": [
+      1.45,
+      1.142,
+      0.731
+     ],
+     "bounds": [
+      -0.714,
+      -0.538,
+      -0.042,
+      0.736,
+      0.603,
+      0.689
+     ],
+     "parts": [
+      {
+       "name": "clump_0",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_1",
+       "pivot": [
+        -0.3864,
+        0.0909,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_2",
+       "pivot": [
+        0.4,
+        -0.0455,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_3",
+       "pivot": [
+        0.0909,
+        -0.2818,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_4",
+       "pivot": [
+        -0.0909,
+        0.3182,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "clump_0",
+        "clump_1",
+        "clump_2",
+        "clump_3",
+        "clump_4"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    },
+    "lp": {
+     "glb": "bush__lp.glb",
+     "blend": "bush__lp.blend",
+     "collection": "bush__lp",
+     "footprint": [
+      1.408,
+      1.165,
+      0.734
+     ],
+     "bounds": [
+      -0.68,
+      -0.554,
+      -0.055,
+      0.728,
+      0.612,
+      0.679
+     ],
+     "parts": [
+      {
+       "name": "clump_0",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_1",
+       "pivot": [
+        -0.3864,
+        0.0909,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_2",
+       "pivot": [
+        0.4,
+        -0.0455,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_3",
+       "pivot": [
+        0.0909,
+        -0.2818,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "clump_4",
+       "pivot": [
+        -0.0909,
+        0.3182,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "sway",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "clump_0",
+        "clump_1",
+        "clump_2",
+        "clump_3",
+        "clump_4"
+       ],
+       "note": "phase by position: offset the clip by 0.11 s per metre along +X"
+      }
+     ]
+    }
+   }
+  },
+  "rubble": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "rubble__a.glb",
+     "blend": "rubble__a.blend",
+     "collection": "rubble__a",
+     "footprint": [
+      0.792,
+      0.829,
+      0.735
+     ],
+     "bounds": [
+      -0.405,
+      -0.419,
+      -0.384,
+      0.387,
+      0.41,
+      0.351
+     ],
+     "parts": [
+      {
+       "name": "chunk",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "float",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "chunk.001"
+       ],
+       "note": "phase by position, as the plants are"
+      }
+     ]
+    }
+   }
+  },
+  "cloud": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "cloud__a.glb",
+     "blend": "cloud__a.blend",
+     "collection": "cloud__a",
+     "footprint": [
+      1.702,
+      0.87,
+      0.592
+     ],
+     "bounds": [
+      -0.832,
+      -0.485,
+      0.0,
+      0.87,
+      0.385,
+      0.592
+     ],
+     "parts": [
+      {
+       "name": "cloud",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "drift",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "cloud.001"
+       ],
+       "note": "phase by position, as the plants are"
+      }
+     ]
+    },
+    "b": {
+     "glb": "cloud__b.glb",
+     "blend": "cloud__b.blend",
+     "collection": "cloud__b",
+     "footprint": [
+      1.386,
+      0.674,
+      0.433
+     ],
+     "bounds": [
+      -0.67,
+      -0.33,
+      0.0,
+      0.716,
+      0.344,
+      0.433
+     ],
+     "parts": [
+      {
+       "name": "cloud",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "drift",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "cloud.001"
+       ],
+       "note": "phase by position, as the plants are"
+      }
+     ]
+    }
+   }
+  },
+  "campfire": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "campfire__a.glb",
+     "blend": "campfire__a.blend",
+     "collection": "campfire__a",
+     "footprint": [
+      1.632,
+      1.603,
+      0.996
+     ],
+     "bounds": [
+      -0.825,
+      -0.796,
+      -0.018,
+      0.807,
+      0.807,
+      0.977
+     ],
+     "parts": [
+      {
+       "name": "tongue_0",
+       "pivot": [
+        0.0,
+        0.0227,
+        0.1136
+       ],
+       "parent": null
+      },
+      {
+       "name": "tongue_1",
+       "pivot": [
+        0.1273,
+        0.0,
+        0.1136
+       ],
+       "parent": null
+      },
+      {
+       "name": "tongue_2",
+       "pivot": [
+        -0.1182,
+        0.0545,
+        0.1136
+       ],
+       "parent": null
+      },
+      {
+       "name": "tongue_3",
+       "pivot": [
+        0.0091,
+        -0.1364,
+        0.1136
+       ],
+       "parent": null
+      },
+      {
+       "name": "core",
+       "pivot": [
+        0.0,
+        -0.0227,
+        0.1364
+       ],
+       "parent": null
+      },
+      {
+       "name": "light",
+       "pivot": [
+        0.0,
+        0.0,
+        0.6818
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "burn",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "tongue_0",
+        "tongue_1",
+        "tongue_2",
+        "tongue_3",
+        "core",
+        "light"
+       ],
+       "note": ""
+      }
+     ],
+     "light": {
+      "part": "light",
+      "intensity": "base_watts * scale.x",
+      "base_watts": 100.0
+     }
+    }
+   }
+  },
+  "signpost": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "signpost__a.glb",
+     "blend": "signpost__a.blend",
+     "collection": "signpost__a",
+     "footprint": [
+      1.866,
+      0.661,
+      2.464
+     ],
+     "bounds": [
+      -0.879,
+      -0.503,
+      -0.001,
+      0.987,
+      0.158,
+      2.464
+     ],
+     "parts": [
+      {
+       "name": "board_0",
+       "pivot": [
+        0.0015,
+        -0.108,
+        2.0227
+       ],
+       "parent": null
+      },
+      {
+       "name": "board_1",
+       "pivot": [
+        -0.0288,
+        0.108,
+        1.6591
+       ],
+       "parent": null
+      },
+      {
+       "name": "board_2",
+       "pivot": [
+        -0.0597,
+        -0.0989,
+        1.2955
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "creak",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "board_0",
+        "board_1",
+        "board_2"
+       ],
+       "note": ""
+      }
+     ]
+    }
+   }
+  },
+  "lantern_post": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "lantern_post__a.glb",
+     "blend": "lantern_post__a.blend",
+     "collection": "lantern_post__a",
+     "footprint": [
+      1.108,
+      0.327,
+      2.683
+     ],
+     "bounds": [
+      -0.162,
+      -0.164,
+      -0.001,
+      0.945,
+      0.164,
+      2.683
+     ],
+     "parts": [
+      {
+       "name": "lantern",
+       "pivot": [
+        0.7818,
+        0.0,
+        2.4773
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "swing",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "lantern"
+       ],
+       "note": ""
+      }
+     ]
+    }
+   }
+  },
+  "bench": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "bench__a.glb",
+     "blend": "bench__a.blend",
+     "collection": "bench__a",
+     "footprint": [
+      1.364,
+      0.327,
+      0.439
+     ],
+     "bounds": [
+      -0.682,
+      -0.164,
+      0.0,
+      0.682,
+      0.164,
+      0.439
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "seat_log": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "seat_log__a.glb",
+     "blend": "seat_log__a.blend",
+     "collection": "seat_log__a",
+     "footprint": [
+      1.378,
+      1.025,
+      0.529
+     ],
+     "bounds": [
+      -0.704,
+      -0.521,
+      -0.004,
+      0.674,
+      0.504,
+      0.525
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "table": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "table__a.glb",
+     "blend": "table__a.blend",
+     "collection": "table__a",
+     "footprint": [
+      1.091,
+      1.091,
+      0.667
+     ],
+     "bounds": [
+      -0.545,
+      -0.545,
+      0.0,
+      0.545,
+      0.545,
+      0.667
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "chest": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "chest__a.glb",
+     "blend": "chest__a.blend",
+     "collection": "chest__a",
+     "footprint": [
+      0.884,
+      0.761,
+      0.591
+     ],
+     "bounds": [
+      -0.442,
+      -0.385,
+      -0.0,
+      0.442,
+      0.376,
+      0.591
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "pivot": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "parent": null
+      },
+      {
+       "name": "lid",
+       "pivot": [
+        -0.0635,
+        0.2488,
+        0.2273
+       ],
+       "parent": "body"
+      }
+     ],
+     "clips": [
+      {
+       "name": "open",
+       "start": 0,
+       "end": 40,
+       "fps": 24,
+       "loop": false,
+       "parts": [
+        "lid",
+        "body"
+       ],
+       "note": ""
+      },
+      {
+       "name": "close",
+       "start": 0,
+       "end": 30,
+       "fps": 24,
+       "loop": false,
+       "parts": [
+        "lid",
+        "body"
+       ],
+       "note": ""
+      }
+     ]
+    }
+   }
+  },
+  "barrel": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "barrel__a.glb",
+     "blend": "barrel__a.blend",
+     "collection": "barrel__a",
+     "footprint": [
+      0.655,
+      0.655,
+      0.727
+     ],
+     "bounds": [
+      -0.327,
+      -0.327,
+      0.0,
+      0.327,
+      0.327,
+      0.727
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "crate": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "crate__a.glb",
+     "blend": "crate__a.blend",
+     "collection": "crate__a",
+     "footprint": [
+      0.723,
+      0.723,
+      0.58
+     ],
+     "bounds": [
+      -0.362,
+      -0.362,
+      0.0,
+      0.362,
+      0.362,
+      0.58
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "sack": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "sack__a.glb",
+     "blend": "sack__a.blend",
+     "collection": "sack__a",
+     "footprint": [
+      0.579,
+      0.657,
+      0.235
+     ],
+     "bounds": [
+      -0.298,
+      -0.31,
+      -0.009,
+      0.282,
+      0.347,
+      0.226
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "anvil": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "anvil__a.glb",
+     "blend": "anvil__a.blend",
+     "collection": "anvil__a",
+     "footprint": [
+      0.843,
+      0.683,
+      0.642
+     ],
+     "bounds": [
+      -0.341,
+      -0.334,
+      0.0,
+      0.501,
+      0.349,
+      0.642
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "banner": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "banner__a.glb",
+     "blend": "banner__a.blend",
+     "collection": "banner__a",
+     "footprint": [
+      0.865,
+      0.272,
+      2.541
+     ],
+     "bounds": [
+      -0.432,
+      -0.206,
+      0.0,
+      0.432,
+      0.066,
+      2.541
+     ],
+     "parts": [
+      {
+       "name": "cloth",
+       "pivot": [
+        0.0,
+        -0.0636,
+        2.2
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "wave",
+       "start": 0,
+       "end": 96,
+       "fps": 24,
+       "loop": true,
+       "parts": [
+        "billow_a",
+        "billow_b",
+        "ripple_a",
+        "ripple_b",
+        "cloth"
+       ],
+       "note": ""
+      }
+     ]
+    }
+   }
+  },
+  "path_stones": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "path_stones__a.glb",
+     "blend": "path_stones__a.blend",
+     "collection": "path_stones__a",
+     "footprint": [
+      2.377,
+      1.076,
+      0.259
+     ],
+     "bounds": [
+      -1.282,
+      -0.558,
+      -0.127,
+      1.094,
+      0.518,
+      0.131
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  },
+  "d20": {
+   "default": "a",
+   "variants": {
+    "a": {
+     "glb": "d20__a.glb",
+     "blend": "d20__a.blend",
+     "collection": "d20__a",
+     "footprint": [
+      0.694,
+      0.638,
+      0.62
+     ],
+     "bounds": [
+      -0.347,
+      -0.319,
+      -0.003,
+      0.347,
+      0.319,
+      0.617
+     ],
+     "parts": [
+      {
+       "name": "die",
+       "pivot": [
+        0.0,
+        0.0,
+        0.307
+       ],
+       "parent": null
+      }
+     ],
+     "clips": [
+      {
+       "name": "roll",
+       "start": 0,
+       "end": 72,
+       "fps": 24,
+       "loop": false,
+       "parts": [
+        "die"
+       ],
+       "note": "lands with 20 up; the root marks where it stops"
+      }
+     ]
+    }
+   }
+  },
+  "island": {
+   "default": "lp",
+   "variants": {
+    "a": {
+     "glb": "island__a.glb",
+     "blend": "island__a.blend",
+     "collection": "island__a",
+     "footprint": [
+      10.021,
+      10.352,
+      3.749
+     ],
+     "bounds": [
+      -5.047,
+      -5.224,
+      -3.5,
+      4.974,
+      5.128,
+      0.249
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "lp": {
+     "glb": "island__lp.glb",
+     "blend": "island__lp.blend",
+     "collection": "island__lp",
+     "footprint": [
+      10.204,
+      10.651,
+      3.812
+     ],
+     "bounds": [
+      -5.097,
+      -5.493,
+      -3.555,
+      5.106,
+      5.158,
+      0.257
+     ],
+     "parts": [],
+     "clips": []
+    },
+    "b": {
+     "glb": "island__b.glb",
+     "blend": "island__b.blend",
+     "collection": "island__b",
+     "footprint": [
+      10.021,
+      10.352,
+      3.706
+     ],
+     "bounds": [
+      -5.047,
+      -5.224,
+      -3.45,
+      4.974,
+      5.128,
+      0.256
+     ],
+     "parts": [],
+     "clips": []
+    }
+   }
+  }
+ }
+}

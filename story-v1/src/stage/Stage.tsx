@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV } from '../hero/film/stages/hero.ts';
+import { heroFraming, solveGoblinRim, solveGoblinScale, stageHeroRig, parkHeroRig, HERO_FOV, ISLAND_RX } from '../hero/film/stages/hero.ts';
+import { build as buildKit, readPlan, type Plan } from '../island/kit';
+import { createBlockout, clocks, DRAWN, type Blockout } from '../island/blockout';
 import { createHeroLife, type HeroLife } from '../hero/film/stages/heroLife.ts';
 import { rig } from '../hero/film/stages/trilayer.ts';
 import { prmAmbient } from '../hero/film/stages/rigs.ts';
@@ -18,6 +20,118 @@ import { createDirector, type Director } from './director';
 import { frameHooks, stats, prm, sceneOut, live as bus, nav, capture } from './bus';
 
 const DEG = Math.PI / 180;
+
+// BEAT 0 (rebuild). The hero is the kit island; the old film takes over the moment the scroll begins,
+// until its beats are rebuilt too. The kit is in metres, about 5.2 from middle to rim, and its front
+// faces +Z; the hero camera stands on the -Z side of an island 2.6 units from middle to rim.
+const KIT_HERO_UNTIL = 0.06;
+const KIT_SCALE = ISLAND_RX / 7.2; // smaller than rim-to-rim, so its tall trees stay inside the hero frame
+
+interface KitHero {
+  scene: THREE.Scene; float: THREE.Group; root: THREE.Group; mixers: THREE.AnimationMixer[];
+  // the entrance (blockout.ts): drawn as a pencil blockout, then painted. The pencil starts with the plan
+  // (`since`) and is what the visitor watches while the page loads; the paint starts (`paintAt`) once the
+  // models are in (`loaded`), the load gate has opened (`ready`) and the drawing is whole
+  draw: Blockout; since: number; loaded: boolean; ready: boolean; paintAt: number | null;
+  // the camera's way in (blender/hero_dolly.py): where it is, frame by frame, relative to where it rests.
+  // While the page loads it only creeps along the start of the move; the rest is run with the paint
+  move: Dolly;
+  // the wash of sky round the island: how far in it is (0 to 1, with the paint), its middle and reach on screen
+  sky: { uSky: THREE.IUniform<number>; uCentre: THREE.IUniform<THREE.Vector2>; uReach: THREE.IUniform<THREE.Vector2> };
+  fog: THREE.Fog;
+}
+interface Dolly { fps: number; az: number[]; el: number[]; d: number[] }
+
+/** Where the camera is `t` seconds into its move: round and up from rest in radians, and its distance over rest's. */
+function dollyAt(move: Dolly, t: number) {
+  const at = Math.min(move.az.length - 1, Math.max(0, t * move.fps));
+  const i = Math.min(move.az.length - 2, Math.floor(at)), k = at - i;
+  return { az: lerp(move.az[i], move.az[i + 1], k), el: lerp(move.el[i], move.el[i + 1], k), d: lerp(move.d[i], move.d[i + 1], k) };
+}
+
+// how the kit island is first seen: from in front and lower than the old film's hero, so its side and the rock
+// under it show. The film's own hero pose takes over as the scroll begins.
+const KIT_VIEW = { az: 3 * DEG, el: 23 * DEG };
+const CREEP = { rate: 0.2, most: 0.7 }; // seconds of the move spent per second of drawing at first, and at most
+// the rest goes a little slower than it was keyed, so it settles gently just after the paint has crossed, and
+// takes this long to gather that speed
+const RUN = { rate: 0.85, gather: 1.4 };
+
+/** How far into its move the camera is, in the move's own seconds: creeping ever slower while the pencil works,
+ *  never quite stopping, then gathering speed from that creep as the paint starts. No step in speed anywhere. */
+function moved(drawing: number, painting: number) {
+  const creep = (t: number) => CREEP.most * (1 - Math.exp((-t * CREEP.rate) / CREEP.most));
+  if (painting <= 0) return creep(drawing);
+  const began = drawing - painting;
+  const slow = CREEP.rate * Math.exp((-began * CREEP.rate) / CREEP.most);
+  const k = Math.min(1, painting / RUN.gather);
+  // the speed eases from the creep's to the run's; this is that ease summed
+  const gathered = RUN.gather * (k * k * k - (k * k * k * k) / 2) + Math.max(0, painting - RUN.gather);
+  return creep(began) + slow * painting + (RUN.rate - slow) * gathered;
+}
+
+// The island hangs in its own pocket of warm, hazy sky (blender/out/look/island_sky.png): a wash round it, peach
+// under it and pale blue over it, thinning to the bare page well before the page's edge. The colours are written
+// as the screen shows them.
+const HAZE = '#f3dcc0';
+const SKY = /* glsl */ `
+  uniform float uSky;
+  uniform vec2 uCentre;
+  uniform vec2 uReach;
+  varying vec2 vNdc;
+  void main() {
+    vec2 q = (vNdc - uCentre) / uReach; // 1 at the island's rim
+    vec3 low = vec3(0.961, 0.824, 0.651), mid = vec3(0.973, 0.918, 0.824), high = vec3(0.914, 0.937, 0.941);
+    float t = clamp(0.5 + q.y * 0.22, 0.0, 1.0);
+    vec3 c = t < 0.5 ? mix(low, mid, t * 2.0) : mix(mid, high, t * 2.0 - 1.0);
+    float a = uSky * (1.0 - smoothstep(1.0, 2.3, length(q))) * (1.0 - smoothstep(0.75, 1.0, abs(vNdc.y)));
+    gl_FragColor = vec4(c * a, a);
+  }
+`;
+
+function kitHeroScene(plan: Plan, move: Dolly, since: number): KitHero {
+  const draw = createBlockout(plan, KIT_SCALE);
+  const root = new THREE.Group(); // the drawing now, and the models beside it when they arrive
+  root.add(draw.group);
+  const scene = new THREE.Scene();
+  const fog = new THREE.Fog(HAZE, 1, 100);
+  scene.fog = fog;
+  const sky = { uSky: { value: 0 }, uCentre: { value: new THREE.Vector2() }, uReach: { value: new THREE.Vector2(1, 1) } };
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: sky,
+      vertexShader: 'varying vec2 vNdc; void main() { vNdc = position.xy; gl_Position = vec4(position.xy, 1.0, 1.0); }',
+      fragmentShader: SKY,
+      // drawn at the far plane after everything solid, so it fills only what the island and clouds left empty
+      transparent: true, premultipliedAlpha: true, depthWrite: false,
+    }),
+  );
+  backdrop.frustumCulled = false;
+  scene.add(backdrop);
+  scene.add(new THREE.HemisphereLight('#e6ecff', '#7a6650', 1.15));
+  const key = new THREE.DirectionalLight('#ffd9a8', 1.75);
+  key.position.set(0.52, 0.74, -0.42).multiplyScalar(22);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  const sc = key.shadow.camera;
+  sc.left = sc.bottom = -3.5;
+  sc.right = sc.top = 3.5;
+  sc.near = 8;
+  sc.far = 40;
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.015;
+  const fill = new THREE.DirectionalLight('#ccdeff', 0.6);
+  fill.position.set(-27, 18, -23);
+  const float = new THREE.Group();
+  float.add(root);
+  const turn = new THREE.Group();
+  turn.rotation.y = Math.PI;
+  turn.scale.setScalar(KIT_SCALE);
+  turn.add(float);
+  scene.add(key, key.target, fill, turn);
+  return { scene, float, root, mixers: [], draw, since, loaded: false, ready: false, paintAt: null, move, sky, fog };
+}
 
 interface RoomPose { dir: THREE.Vector3; d: number; look: THREE.Vector3 }
 
@@ -59,6 +173,47 @@ function StageScene() {
       parkHeroRig();
     };
   }, [world, gl, camera]);
+
+  // ---- the kit island for the hero. Its plan is two small files, and the drawing starts as soon as they are
+  // in: that is the loading screen. The models follow, and the load gate below waits for them. If any of it
+  // cannot load, the old hero stays
+  const kit = useRef<KitHero | null>(null);
+  const kitTried = useRef(false); // until the plan has loaded or failed the hero draws nothing: the page opens blank
+  useEffect(() => {
+    let on = true;
+    const mixers: THREE.AnimationMixer[] = [];
+    const made = Promise.all([readPlan(), fetch('/models/kit/hero_dolly.json').then((r) => r.json() as Promise<Dolly>)])
+      .then(([plan, move]) => {
+        if (!on) return;
+        const k = kitHeroScene(plan, move, live.current.t);
+        kit.current = k;
+        return buildKit(mixers, plan).then((built) => {
+          if (!on) return;
+          k.root.add(built.root);
+          k.draw.attach(built.root);
+          k.mixers = mixers;
+          k.loaded = true;
+        });
+      })
+      .catch(() => {
+        if (on) kit.current = null;
+      })
+      .then(() => {
+        if (on) kitTried.current = true;
+      });
+    world.loading.push(made);
+    // the paint waits for the load gate, so none of it is spent on a page still warming up
+    const begin = () => {
+      if (kit.current) kit.current.ready = true;
+    };
+    window.addEventListener('gg-ready', begin);
+    return () => {
+      on = false;
+      kit.current = null;
+      kitTried.current = false;
+      window.removeEventListener('gg-ready', begin);
+    };
+  }, [world, cam]);
 
   // ---- pointer: hover rotates the island (heavy), touch drags it
   useEffect(() => {
@@ -279,7 +434,30 @@ function StageScene() {
     // ---- camera
     const roomMode = inRoom(u);
     if (!roomMode) {
-      const p = reduced ? heldPose(u, f) : islandPose(u, f, pose);
+      let p = reduced ? heldPose(u, f) : islandPose(u, f, pose);
+      const hero = u < KIT_HERO_UNTIL ? kit.current : null;
+      if (hero) {
+        // the kit island's own view, easing into the film's as the scroll begins
+        if (p !== pose) {
+          pose.look.copy(p.look);
+          pose.d = p.d;
+          pose.az = p.az;
+          pose.el = p.el;
+          p = pose;
+        }
+        const w = 1 - smooth(seg(u, 0, KIT_HERO_UNTIL));
+        p.az += (KIT_VIEW.az - f.hero.az) * w;
+        p.el += (KIT_VIEW.el - f.hero.el) * w;
+        if (hero.paintAt === null && hero.loaded && hero.ready && L.t - hero.since >= DRAWN) hero.paintAt = L.t;
+        if (!reduced) {
+          // its way in: close over the drawing, creeping, then back and round to that view as the paint crosses
+          const [drawing, painting] = clocks(L.t - hero.since, hero.paintAt === null ? -1 : L.t - hero.paintAt);
+          const m = dollyAt(hero.move, moved(drawing, painting));
+          p.az += m.az * w;
+          p.el += m.el * w;
+          p.d *= 1 + (m.d - 1) * w;
+        }
+      }
       placeCamera(cam, p);
       cam.updateMatrixWorld();
       // breath (still under reduced motion) + the hover orbit about the island's centre
@@ -355,6 +533,30 @@ function StageScene() {
         gl.clear();
         gl.render(world.island, cam);
         gl.setScissorTest(false);
+      } else if (!kit.current && !kitTried.current && u < KIT_HERO_UNTIL) {
+        // the kit's plan is still loading: leave the paper bare, so the drawing is the first thing seen
+      } else if (kit.current && u < KIT_HERO_UNTIL) {
+        // the hero: the kit island afloat (a slow bob and drift, held still under reduced motion), the goblin idling
+        const k = kit.current;
+        const m = reduced ? 0 : 1;
+        for (const mixer of k.mixers) mixer.update(dt * m);
+        k.float.position.y = (Math.sin(L.t * 0.9) * 0.13 + Math.sin(L.t * 0.37) * 0.05) * m;
+        k.float.rotation.y = Math.sin(L.t * 0.27) * 0.1 * m;
+        // the page opens as paper: the sky comes in behind the island as the paint crosses it, and goes again
+        // as the scroll begins, since the film after this beat is still drawn on paper
+        const painted = reduced
+          ? k.draw.at(Infinity, k.loaded ? Infinity : -1)
+          : k.draw.at(L.t - k.since, k.paintAt === null ? -1 : L.t - k.paintAt);
+        k.sky.uSky.value = painted * painted * (3 - 2 * painted) * (1 - smooth(seg(u, 0.015, KIT_HERO_UNTIL)));
+        // the wash follows the island on the screen, and reaches as far as the island is wide there
+        const reach = (5.2 * KIT_SCALE) / (cam.position.length() * Math.tan((cam.fov * DEG) / 2));
+        tmpPos.set(0, 0, 0).project(cam);
+        k.sky.uCentre.value.set(tmpPos.x, tmpPos.y);
+        k.sky.uReach.value.set(reach / cam.aspect, reach);
+        // haze begins at the island's near rim and thickens behind it
+        k.fog.near = cam.position.length() - 5.2 * KIT_SCALE;
+        k.fog.far = k.fog.near + 40 * KIT_SCALE;
+        gl.render(k.scene, cam);
       } else gl.render(world.island, cam);
     } else {
       // island → texture through the screen camera (same pose as the last direct frame).

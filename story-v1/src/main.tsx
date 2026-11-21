@@ -13,9 +13,17 @@ const ART = new URLSearchParams(window.location.search).get('art') === '1';
 const galleries = import.meta.glob('./art/Gallery.tsx') as Record<string, () => Promise<{ default: React.ComponentType }>>;
 const Gallery = ART && galleries['./art/Gallery.tsx'] ? lazy(galleries['./art/Gallery.tsx']) : null;
 
+// ?island=1 — the pipeline proof: the Blender-built camp island, loaded from the kit
+const ISLAND = new URLSearchParams(window.location.search).get('island') === '1';
+const IslandProof = ISLAND ? lazy(() => import('./island/IslandProof')) : null;
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {Gallery ? (
+    {IslandProof ? (
+      <Suspense fallback={null}>
+        <IslandProof />
+      </Suspense>
+    ) : Gallery ? (
       <Suspense fallback={null}>
         <Gallery />
       </Suspense>
