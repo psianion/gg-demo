@@ -1,0 +1,1450 @@
+/* THE SITE: the system (tokens, type, the pill controls, the mounted frames, states, motion), the shell
+   (the floating nav, the phone menu, the footer, the waitlist dialog) and the inner pages.
+
+   Shape rule: every interactive control is a pill (buttons, tabs, inputs, nav items); every picture,
+   demo slot and panel sits in a mounted frame (an outer tray holding an inner core of a concentric,
+   smaller radius). Colour: paper, ink and quiet ink (styles.css) and one accent, pine. Motion: one curve
+   family (--ease), transforms and opacity only, all of it off under reduced motion. */
+
+:root {
+  /* type: each family behind one token, so a font change is one edit */
+  --font-display: 'Metamorphous', Georgia, serif;
+  --font-text: 'Vollkorn', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Vollkorn', Georgia, 'Times New Roman', serif;
+
+  --gutter: clamp(16px, 4vw, 48px);
+  --container: 1240px;
+  --col-gap: 24px;
+  --header-h: 84px;
+  --section: clamp(112px, 13vw, 192px);
+
+  --ink: var(--line);
+  --pine: #2f6b3f; /* 5.9:1 against paper text */
+  --pine-deep: #24532f;
+  --paper-2: #efece5;
+  --paper-3: #e7e3da;
+  --rule: color-mix(in srgb, var(--ink) 12%, transparent);
+  --ring: color-mix(in srgb, var(--ink) 9%, transparent);
+  --ring-strong: color-mix(in srgb, var(--ink) 26%, transparent);
+  --tray: color-mix(in srgb, var(--ink) 4%, transparent);
+  --glass: color-mix(in srgb, var(--paper) 74%, transparent);
+  --warm: 74 58 38; /* shadows carry the paper's warmth, never black */
+  --shadow-soft: 0 1px 2px rgb(var(--warm) / 0.06), 0 14px 32px -16px rgb(var(--warm) / 0.24);
+  --shadow-float: 0 1px 2px rgb(var(--warm) / 0.06), 0 22px 50px -20px rgb(var(--warm) / 0.34);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+  --r-pill: 999px;
+  --r-tray: 28px;
+  --bezel: 7px;
+  --r-core: calc(var(--r-tray) - var(--bezel));
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --fast: 240ms;
+  --mid: 520ms;
+  --slow: 800ms;
+
+  --z-menu: 30;
+  --z-header: 40;
+  --z-skip: 50;
+}
+
+/* body clips sideways instead of scrolling, so the docs sidebar can stick (styles.css hides it, which
+   makes the body its own scroll box) */
+body {
+  overflow-x: clip;
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Lenis (Site.tsx) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped,
+html.menu-open {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--fast) var(--ease);
+}
+
+:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 3px;
+}
+main:focus {
+  outline: none;
+}
+[id] {
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+
+.skip {
+  position: fixed;
+  left: var(--gutter);
+  top: 12px;
+  z-index: var(--z-skip);
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  background: var(--pine);
+  color: var(--paper);
+  font-weight: 600;
+  text-decoration: none;
+  translate: 0 -200%;
+}
+.skip:focus {
+  translate: 0 0;
+  color: var(--paper);
+}
+
+/* ---- the container: one width for nav, hero, sections and footer ---------------------- */
+.wrap {
+  width: min(var(--container), 100% - 2 * var(--gutter));
+  margin-inline: auto;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ---- the quiet mark on placeholder content, one per block ----------------------------- */
+.sample {
+  display: inline-block;
+  margin-left: 0.4em;
+  font-family: var(--font-text);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  vertical-align: 0.1em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--quiet) 85%, var(--paper));
+}
+
+/* ---- the reveal: blocks come in once as they enter view (meta.ts), a heavy fade up with a slight blur
+   clearing, their children a beat apart. Direct children are wrappers, so their own transitions stay
+   their own. ------------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] > * {
+    opacity: 0;
+    translate: 0 32px;
+    filter: blur(6px);
+    transition:
+      opacity var(--slow) var(--ease),
+      translate var(--slow) var(--ease),
+      filter var(--slow) var(--ease);
+    transition-delay: calc(var(--i, 0) * 90ms);
+  }
+  [data-reveal].in > * {
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+  [data-reveal] > :nth-child(2) { --i: 1; }
+  [data-reveal] > :nth-child(3) { --i: 2; }
+  [data-reveal] > :nth-child(4) { --i: 3; }
+  [data-reveal] > :nth-child(5) { --i: 4; }
+  [data-reveal] > :nth-child(6) { --i: 5; }
+  [data-reveal] > :nth-child(7) { --i: 6; }
+  [data-reveal] > :nth-child(8) { --i: 7; }
+}
+
+/* ---- pill buttons: the trailing arrow in its own circle, flush with the right padding ----- */
+.btn {
+  --btn-bg: var(--pine);
+  --btn-fg: var(--paper);
+  --ic-bg: rgb(255 255 255 / 0.16);
+  --ic: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 8px 20px -12px rgb(var(--warm) / 0.5);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+.btn:has(.btn-ic) {
+  padding-right: calc((48px - var(--ic)) / 2);
+}
+.btn:hover {
+  --btn-bg: var(--pine-deep);
+  color: var(--btn-fg);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--ic);
+  height: var(--ic);
+  border-radius: 50%;
+  background: var(--ic-bg);
+  transition: transform var(--mid) var(--ease), background-color var(--fast) var(--ease);
+}
+.btn-ic svg {
+  width: 16px;
+  height: 16px;
+}
+.btn:hover .btn-ic,
+a:hover > .btn-ic,
+a:hover .cap .btn-ic {
+  transform: translate(2px, -2px) scale(1.06);
+}
+.btn-lg {
+  --ic: 44px;
+  min-height: 56px;
+  padding-left: 28px;
+  font-size: 1.0625rem;
+}
+.btn-lg:has(.btn-ic) {
+  padding-right: 6px;
+}
+.btn-sm {
+  --ic: 32px;
+  min-height: 42px;
+  padding-left: 18px;
+  gap: 10px;
+  font-size: 0.96875rem;
+}
+.btn-sm:has(.btn-ic) {
+  padding-right: 5px;
+}
+.btn.quiet {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  --ic-bg: color-mix(in srgb, var(--ink) 7%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+}
+.btn.quiet:hover {
+  --btn-bg: color-mix(in srgb, var(--ink) 4%, transparent);
+  --ic-bg: var(--pine);
+  color: var(--ink);
+}
+.btn.quiet:hover .btn-ic {
+  color: var(--paper);
+}
+
+/* text links: the underline draws in from the left */
+.ul,
+.link-arrow > span {
+  position: relative;
+  text-decoration: none;
+}
+.ul::after,
+.link-arrow > span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--mid) var(--ease);
+}
+.ul:hover::after,
+.ul:focus-visible::after,
+.link-arrow:hover > span::after,
+a:hover .link-arrow > span::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+.ul:hover {
+  color: var(--pine);
+}
+
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--fast) var(--ease);
+}
+.link-arrow svg {
+  transition: transform var(--mid) var(--ease);
+}
+.link-arrow:hover,
+a:hover .link-arrow {
+  color: var(--pine);
+}
+.link-arrow:hover svg,
+a:hover .link-arrow svg {
+  transform: translateX(4px);
+}
+
+/* a small status pill: release kinds, roadmap stages */
+.kind {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--quiet);
+}
+.kind.hotfix,
+.kind.now {
+  background: color-mix(in srgb, var(--pine) 11%, var(--paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pine) 35%, transparent);
+  color: var(--pine-deep);
+}
+
+/* ---- mounted frames: a tray holding a core, concentric radii, a soft highlight on the core ---- */
+.mount {
+  padding: var(--bezel);
+  border-radius: var(--r-tray);
+  background: var(--tray);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+.mount-core {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--r-core);
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+.mount-core::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: var(--highlight), inset 0 0 0 1px rgb(255 255 255 / 0.22);
+  pointer-events: none;
+}
+.mount img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms var(--ease);
+}
+a:hover .mount img,
+.mount:hover img {
+  transform: scale(1.04);
+}
+
+/* ---- the floating nav ------------------------------------------------------------------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  height: var(--header-h);
+  pointer-events: none;
+  view-transition-name: site-header;
+}
+.site-header-in {
+  display: flex;
+  justify-content: center;
+}
+.pill-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 56px;
+  padding: 7px;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 0 0 1px var(--ring), var(--highlight), var(--shadow-float);
+  pointer-events: auto;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .pill-nav {
+    background: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* the name folds away while the hero's title carries it */
+.mark-slot {
+  display: grid;
+  grid-template-columns: 1fr;
+  transition: grid-template-columns var(--mid) var(--ease), opacity var(--fast) var(--ease), visibility 0s;
+}
+.mark-slot > div {
+  min-width: 0;
+  overflow: hidden;
+}
+:root.hero-title-in .mark-slot {
+  grid-template-columns: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-columns var(--mid) var(--ease), opacity var(--fast) var(--ease), visibility 0s var(--mid);
+}
+.site-mark {
+  display: block;
+  padding: 0 14px 0 13px;
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  line-height: 42px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.site-mark:hover {
+  color: var(--pine);
+}
+
+.nav-links {
+  position: relative;
+}
+.nav-links ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nav-links a {
+  display: block;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 42px;
+  color: var(--quiet);
+  text-decoration: none;
+  transition: color var(--fast) var(--ease), background-color var(--fast) var(--ease);
+}
+.nav-links a:hover {
+  background: var(--tray);
+  color: var(--ink);
+}
+.nav-links a[aria-current='page'] {
+  color: var(--ink);
+}
+/* the bar under the current page, sliding between items (ui.tsx useMarker) */
+.nav-bar {
+  position: absolute;
+  left: 0;
+  bottom: 5px;
+  width: 16px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--pine);
+  opacity: 0;
+  transform: translateX(calc(var(--mx, 0px) + var(--mw, 16px) / 2 - 8px));
+  pointer-events: none;
+}
+.nav-links[data-marked] .nav-bar {
+  opacity: 1;
+}
+.nav-links[data-ready] .nav-bar {
+  transition: transform var(--mid) var(--ease), opacity var(--fast) var(--ease);
+}
+.nav-join {
+  margin-left: 4px;
+}
+
+/* the menu button: two lines that turn into an X */
+.menu-btn {
+  display: none;
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  transition: transform var(--fast) var(--ease);
+}
+.menu-btn:active {
+  transform: scale(0.94);
+}
+.menu-btn span {
+  position: absolute;
+  left: 13px;
+  top: 20px;
+  width: 16px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--paper);
+  transition: transform var(--mid) var(--ease);
+}
+.menu-btn span:first-child {
+  transform: translateY(-3.5px);
+}
+.menu-btn span:last-child {
+  transform: translateY(3.5px);
+}
+.menu-btn.open span:first-child {
+  transform: rotate(45deg);
+}
+.menu-btn.open span:last-child {
+  transform: rotate(-45deg);
+}
+
+/* the phone menu: a paper-glass sheet over everything, the links rising in a stagger */
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(var(--header-h) + 24px) var(--gutter) max(28px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  backdrop-filter: blur(28px) saturate(1.3);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--mid) var(--ease), visibility 0s var(--mid);
+}
+.menu.open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--mid) var(--ease), visibility 0s;
+}
+.menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu li {
+  overflow: hidden;
+}
+.menu li a {
+  display: block;
+  padding: 6px 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.375rem, 11vw, 3.25rem);
+  line-height: 1.2;
+  text-decoration: none;
+}
+.menu li a[aria-current='page'] {
+  color: var(--pine);
+}
+.menu li a,
+.menu-foot {
+  translate: 0 100%;
+  opacity: 0;
+  transition: translate var(--slow) var(--ease), opacity var(--mid) var(--ease);
+}
+.menu.open li a,
+.menu.open .menu-foot {
+  translate: 0 0;
+  opacity: 1;
+  transition-delay: calc(80ms + var(--i, 0) * 60ms);
+}
+.menu-foot {
+  display: grid;
+  gap: 14px;
+}
+.menu-foot p {
+  margin: 0;
+  text-align: center;
+  color: var(--quiet);
+  font-style: italic;
+}
+
+@media (max-width: 860px) {
+  .site-header-in {
+    justify-content: stretch;
+  }
+  .pill-nav {
+    flex: 1;
+    height: 56px;
+    transition: background-color var(--mid) var(--ease), box-shadow var(--mid) var(--ease);
+  }
+  /* over the hero (and over the open menu) the pill has nothing to hold but the button: it clears away */
+  :root.hero-title-in .pill-nav,
+  :root.menu-open .pill-nav {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .nav-links,
+  .nav-join {
+    display: none;
+  }
+  .menu-btn {
+    display: block;
+  }
+  .menu {
+    display: flex;
+  }
+}
+
+/* ---- footer: the links, then the name across the whole container ------------------------ */
+.site-footer {
+  margin-top: var(--section);
+  padding-top: 64px;
+  box-shadow: inset 0 1px 0 var(--rule);
+  overflow: hidden;
+}
+.foot-top {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+  row-gap: 40px;
+}
+.foot-brand {
+  grid-column: 1 / 6;
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 20px;
+}
+.foot-brand p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+  line-height: 1.2;
+}
+.foot-nav {
+  grid-column: 8 / 13;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.foot-h {
+  margin: 0 0 14px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--quiet);
+}
+.foot-nav ul {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.foot-nav .sample {
+  margin: 10px 0 0;
+}
+.foot-licence {
+  margin: 56px 0 0;
+  font-size: 0.9375rem;
+  color: var(--quiet);
+}
+/* the name, sized to the container's width (container query units) */
+.foot-mark {
+  container-type: inline-size;
+  margin-top: clamp(24px, 4vw, 48px);
+  user-select: none;
+}
+.foot-mark span {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15.2cqi;
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--ink);
+  padding-bottom: 0.06em;
+}
+@media (max-width: 760px) {
+  .foot-brand,
+  .foot-nav {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- the waitlist dialog: the card (overlay.css .card.static) as the core of a mounted frame ---- */
+.waitlist {
+  padding: var(--bezel);
+  border: 0;
+  border-radius: var(--r-tray);
+  background: color-mix(in srgb, var(--paper-2) 88%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ring), var(--shadow-float);
+  overflow: visible;
+  max-width: none;
+  color: var(--ink);
+}
+.waitlist::backdrop {
+  background: color-mix(in srgb, var(--paper) 66%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .waitlist[open] {
+    animation: pop var(--mid) var(--ease);
+  }
+  .waitlist[open]::backdrop {
+    animation: fade var(--mid) var(--ease);
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+.waitlist .card {
+  width: min(100vw - 2 * var(--gutter) - 2 * var(--bezel), 460px);
+  padding: 40px 32px 30px;
+  border-radius: var(--r-core);
+  box-shadow: var(--highlight), var(--shadow-soft);
+}
+.waitlist .card-line {
+  font-family: var(--font-display);
+}
+.waitlist .card-form {
+  position: relative;
+  flex-wrap: wrap;
+  text-align: left;
+}
+.waitlist .card-form label {
+  position: static;
+  width: 100%;
+  height: auto;
+  margin: 0 0 2px 20px;
+  clip: auto;
+  overflow: visible;
+  white-space: normal;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.waitlist .card-form input {
+  min-height: 56px;
+  padding: 0 112px 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+  font-family: var(--font-text);
+}
+.waitlist .card-form input:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 2px;
+}
+.waitlist .card-form button {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: var(--r-pill);
+  background: var(--pine);
+  font-family: var(--font-ui) !important;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.waitlist .card-form button:hover {
+  background: var(--pine-deep);
+}
+.waitlist .card-form button:active {
+  transform: scale(0.98);
+}
+.waitlist .card-form button:hover,
+.waitlist .card-form button:focus-visible,
+.waitlist .card-links button:hover,
+.waitlist .card-links button:focus-visible {
+  outline-color: var(--pine);
+}
+.waitlist .card-links button {
+  color: var(--ink);
+  cursor: pointer;
+}
+.waitlist .card-links button:hover {
+  color: var(--pine);
+  text-decoration-color: var(--pine);
+}
+.waitlist-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color var(--fast) var(--ease), transform var(--mid) var(--ease);
+}
+.waitlist-close:hover {
+  background: var(--tray);
+  transform: rotate(90deg);
+}
+
+/* ---- the route crossfade (view transitions, Site.tsx); the nav holds still across it ------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 380ms;
+  animation-timing-function: var(--ease);
+}
+
+/* ---- inner pages ------------------------------------------------------------------------ */
+main.page {
+  min-height: 100dvh;
+  padding-top: var(--header-h);
+}
+.page-inner {
+  padding-top: clamp(56px, 8vw, 112px);
+}
+.page-head {
+  max-width: 48rem;
+  margin-bottom: clamp(48px, 6vw, 80px);
+}
+.page-inner h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.75rem, 6vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+}
+.lede {
+  margin: 20px 0 0;
+  max-width: 40rem;
+  font-size: clamp(1.1875rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+  color: var(--quiet);
+}
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0 14px 0 6px;
+  min-height: 36px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: var(--quiet);
+  text-decoration: none;
+  transition: color var(--fast) var(--ease), background-color var(--fast) var(--ease);
+}
+.crumb svg {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--tray);
+  transition: transform var(--mid) var(--ease);
+}
+.crumb:hover {
+  color: var(--ink);
+  background: var(--tray);
+}
+.crumb:hover svg {
+  transform: translateX(-3px);
+}
+.prose {
+  max-width: 65ch;
+}
+.prose p,
+.prose li {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+.prose h2 {
+  margin: 2.4rem 0 0.6rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+
+/* small caps label: the docs sidebar groups */
+.label {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  font-variant-caps: all-small-caps;
+  color: var(--quiet);
+}
+
+/* docs: the tree beside the page, folded above it on a phone */
+.docs {
+  align-items: start;
+}
+.docs-side {
+  grid-column: 1 / 4;
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+  max-height: calc(100dvh - var(--header-h) - 48px);
+  overflow-y: auto;
+  padding-bottom: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+.docs-body {
+  grid-column: 4 / 13;
+}
+/* no guide is written yet (a production build before launch): the landing takes the whole row */
+.docs-body:only-child {
+  grid-column: 1 / -1;
+}
+.docs-fold-mount {
+  display: none;
+}
+.docs-tree,
+.docs-tree ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-tree-box {
+  position: relative;
+}
+.docs-tree > li + li {
+  margin-top: 20px;
+}
+.docs-tree .label {
+  margin-bottom: 6px;
+}
+.docs-tree a {
+  display: block;
+  padding: 4px 0 4px 16px;
+  box-shadow: inset 1px 0 0 var(--rule);
+  font-size: 0.96875rem;
+  color: var(--quiet);
+  text-decoration: none;
+  transition: color var(--fast) var(--ease), translate var(--mid) var(--ease);
+}
+.docs-tree a:hover {
+  color: var(--ink);
+  translate: 3px 0;
+}
+.docs-tree a[aria-current='page'] {
+  color: var(--pine);
+  font-weight: 600;
+}
+/* the marker slides to the current guide (ui.tsx useMarker) */
+.tree-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: var(--mh, 0px);
+  border-radius: 2px;
+  background: var(--pine);
+  opacity: 0;
+  transform: translateY(var(--my, 0px));
+  pointer-events: none;
+}
+.docs-tree-box[data-marked] .tree-marker {
+  opacity: 1;
+}
+.docs-tree-box[data-ready] .tree-marker {
+  transition: transform var(--mid) var(--ease), opacity var(--fast) var(--ease);
+}
+
+.docs-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--col-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-group .mount-core {
+  display: flex;
+  flex-direction: column;
+  padding: 30px 30px 22px;
+  background: var(--paper);
+}
+.docs-group h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.3125rem;
+  line-height: 1.3;
+}
+.docs-group .mount-core > p {
+  margin: 6px 0 20px;
+  font-size: 0.9875rem;
+  color: var(--quiet);
+}
+.docs-group ul {
+  display: grid;
+  gap: 2px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+.docs-group li a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -12px;
+  padding: 9px 12px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.docs-group li a:hover {
+  background: var(--tray);
+  color: var(--pine);
+}
+.docs-group li a svg {
+  opacity: 0;
+  transform: translate(-6px, 0);
+  transition: opacity var(--fast) var(--ease), transform var(--mid) var(--ease);
+}
+.docs-group li a:hover svg {
+  opacity: 1;
+  transform: none;
+}
+.docs-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--col-gap);
+  max-width: 65ch;
+  margin-top: 80px;
+}
+.docs-pager a {
+  display: block;
+  text-decoration: none;
+}
+.docs-pager .mount-core {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 24px;
+  background: var(--paper);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: background-color var(--fast) var(--ease);
+}
+.docs-pager a:hover .mount-core {
+  background: var(--paper-2);
+}
+.docs-pager span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  font-size: 0.9375rem;
+  color: var(--quiet);
+}
+.docs-pager svg {
+  transition: transform var(--mid) var(--ease);
+}
+.docs-pager a[rel='prev']:hover svg {
+  transform: translateX(-4px);
+}
+.docs-pager a[rel='next']:hover svg {
+  transform: translateX(4px);
+}
+.docs-pager a[rel='next'] {
+  grid-column: 2;
+}
+.docs-pager a[rel='next'] .mount-core {
+  align-items: flex-end;
+  text-align: right;
+}
+@media (max-width: 860px) {
+  .docs-side {
+    display: none;
+  }
+  .docs-body {
+    grid-column: 1 / -1;
+  }
+  .docs-fold-mount {
+    display: block;
+    grid-column: 1 / -1;
+    margin-bottom: 40px;
+  }
+  .docs-fold {
+    background: var(--paper);
+  }
+  .docs-fold summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: 0 8px 0 20px;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+  .docs-fold summary::-webkit-details-marker {
+    display: none;
+  }
+  .docs-fold summary .btn-ic {
+    --ic: 36px;
+    background: var(--tray);
+  }
+  .docs-fold summary svg {
+    transition: transform var(--mid) var(--ease);
+  }
+  .docs-fold[open] summary svg {
+    transform: rotate(180deg);
+  }
+  .docs-fold nav {
+    padding: 4px 20px 22px;
+  }
+  .docs-groups,
+  .docs-pager {
+    grid-template-columns: 1fr;
+  }
+  .docs-pager a[rel='next'] {
+    grid-column: 1;
+  }
+}
+
+/* changelog: each release a row, its version pill and date on the left */
+.releases {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.release {
+  padding: 36px 0;
+  box-shadow: inset 0 1px 0 var(--rule);
+  row-gap: 12px;
+}
+.release-when {
+  grid-column: 1 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ver {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.release-when .date {
+  color: var(--quiet);
+  font-size: 0.9375rem;
+}
+.release-body {
+  grid-column: 4 / 11;
+}
+.release-body h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 1.8vw, 1.5rem);
+  line-height: 1.35;
+}
+.release-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 24px;
+  color: var(--quiet);
+}
+.release-meta .kind {
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .release-when,
+  .release-body {
+    grid-column: 1 / -1;
+  }
+  .release-when {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+}
+
+/* roadmap: a pill segmented control with a sliding thumb, a pill sort, rows that glide to their places */
+.road-note {
+  margin: 18px 0 0;
+  color: var(--quiet);
+}
+.road-note a {
+  color: var(--ink);
+}
+.road-main {
+  grid-column: 1 / 10;
+}
+@media (max-width: 1023.98px) {
+  .road-main {
+    grid-column: 1 / -1;
+  }
+}
+.road-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.road-tabs {
+  position: relative;
+  display: inline-grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: var(--tray);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+.road-thumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc((100% - 10px) / var(--n, 5));
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: var(--highlight), 0 0 0 1px var(--ring), var(--shadow-soft);
+  transform: translateX(calc(var(--at, 0) * 100%));
+  transition: transform var(--mid) var(--ease);
+}
+.road-tabs button {
+  position: relative;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--quiet);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease);
+}
+.road-tabs button:hover,
+.road-tabs button[aria-selected='true'] {
+  color: var(--ink);
+}
+.road-panel:focus-visible {
+  outline-offset: 8px;
+}
+.road-list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.road-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px 32px;
+  padding: 26px 0;
+  box-shadow: inset 0 1px 0 var(--rule);
+}
+.road-item h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.1875rem;
+  line-height: 1.35;
+}
+.road-item p {
+  margin: 0;
+  color: var(--quiet);
+}
+.road-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .road-tabs {
+    width: 100%;
+  }
+  .road-tabs button {
+    padding: 0 4px;
+    font-size: 0.9375rem;
+  }
+  .road-item {
+    grid-template-columns: 1fr;
+  }
+  .road-side {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* about: a large lead, then each section with its heading on the left (sticky) and the text on the right */
+.about-lead {
+  max-width: 24em;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 3vw, 2.5rem);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+.about-sections {
+  margin-top: clamp(72px, 9vw, 128px);
+}
+.about-row {
+  padding: 44px 0;
+  box-shadow: inset 0 1px 0 var(--rule);
+  align-items: start;
+}
+.about-row > h2 {
+  grid-column: 1 / 5;
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+.about-row > div {
+  grid-column: 5 / 12;
+}
+.about-row p {
+  margin: 0 0 1em;
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+.about-row p:last-child {
+  margin-bottom: 0;
+}
+.sign-off {
+  font-style: italic;
+  font-size: 1.375rem !important;
+}
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.contact + .sample {
+  margin: 14px 0 0;
+}
+@media (max-width: 760px) {
+  .about-row > h2,
+  .about-row > div {
+    grid-column: 1 / -1;
+  }
+  .about-row > h2 {
+    position: static;
+    margin-bottom: 14px;
+  }
+}
+
+/* not found: the goblin in his frame and the way home */
+.lost {
+  align-items: center;
+  row-gap: 48px;
+}
+.lost-frame {
+  grid-column: 2 / 6;
+  aspect-ratio: 3 / 4;
+}
+.lost-text {
+  grid-column: 7 / 12;
+}
+.lost-text .btn {
+  margin-top: 36px;
+}
+@media (max-width: 760px) {
+  .lost-frame {
+    grid-column: 3 / 11;
+  }
+  .lost-text {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- reduced motion: everything in place, nothing moves -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+  }
+}

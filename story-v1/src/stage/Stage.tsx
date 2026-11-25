@@ -23,6 +23,8 @@ import { createDirector, type Director } from './director';
 import { frameHooks, stats, prm, sceneOut, live as bus, nav, capture } from './bus';
 
 const DEG = Math.PI / 180;
+/** how far the island leans toward the mouse at the window's edge, in degrees */
+const FOLLOW = { yaw: 16, pitch: 6 };
 
 // BEATS 0 AND 1 (rebuild). The hero is the kit island, and the kit docks it onto its map sheet over the first two
 // units of scroll (island/dock.ts); the old film takes over at the end of that, until its beats are rebuilt too.
@@ -237,15 +239,16 @@ function StageScene() {
     };
   }, [world, cam]);
 
-  // ---- pointer: hover rotates the island (heavy), touch drags it
+  // ---- pointer: the island leans toward the mouse (the heavy spring in tick eases it), and back to rest
+  // when the mouse leaves the window; touch drags it instead. Under reduced motion tick zeroes it (hw)
   useEffect(() => {
     const L = live.current;
     const move = (e: PointerEvent) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = -(e.clientY / window.innerHeight) * 2 + 1;
       if (e.pointerType === 'mouse') {
-        L.hover.ty = nx * 25;
-        L.hover.tp = ny * 8;
+        L.hover.ty = nx * FOLLOW.yaw;
+        L.hover.tp = ny * FOLLOW.pitch;
         life.current?.onPointer(nx, ny, camera, false);
       } else if (L.drag) {
         L.hover.ty = clamp(L.drag.ty + ((e.clientX - L.drag.x) / window.innerWidth) * 70, -25, 25);
@@ -258,12 +261,18 @@ function StageScene() {
       life.current?.glance();
     };
     const up = () => (L.drag = null);
+    const rest = () => {
+      L.hover.ty = 0;
+      L.hover.tp = 0;
+    };
     const el = gl.domElement;
     window.addEventListener('pointermove', move, { passive: true });
     el.addEventListener('pointerdown', down, { passive: true });
     window.addEventListener('pointerup', up, { passive: true });
     window.addEventListener('pointercancel', up, { passive: true });
+    document.documentElement.addEventListener('mouseleave', rest);
     return () => {
+      document.documentElement.removeEventListener('mouseleave', rest);
       window.removeEventListener('pointermove', move);
       el.removeEventListener('pointerdown', down);
       window.removeEventListener('pointerup', up);
@@ -493,6 +502,14 @@ function StageScene() {
       }
       placeCamera(cam, p);
       cam.updateMatrixWorld();
+      if (hero) {
+        // where the kit island's centre and reach fall in the lens at this pose, before the breath, the lean and
+        // HERO_REST's own turn of the lens (hero.ts): the homepage's glide works in these
+        tmpPos.set(0, 0, 0).applyMatrix4(cam.matrixWorldInverse);
+        const t = Math.tan((cam.fov * DEG) / 2);
+        const z = -tmpPos.z;
+        Object.assign(HERO_REST.seen, { w: size.width, h: size.height, x: tmpPos.x / (z * t * cam.aspect), y: tmpPos.y / (z * t), r: (5.2 * KIT_SCALE) / (z * t) });
+      }
       // breath (still under reduced motion) + the hover orbit about the island's centre
       const breath = 1 + HERO_DOLLY.amp * prmAmbient() * Math.sin((L.t * Math.PI * 2) / HERO_DOLLY.periodS) * hw;
       tmpPos.copy(cam.position).sub(p.look).multiplyScalar(breath).add(p.look);
@@ -594,10 +611,11 @@ function StageScene() {
         if (k.dock) k.dock.rope.visible = k.draw.popped(k.dock.lip[0], k.dock.lip[1]) > 0.5;
         // the single-hero page rests the island right of centre (hero.ts HERO_REST): the lens turns to that as
         // the paint crosses, so the drawing has the whole window and the painted island settles to the right
-        if (HERO_REST.right !== 0 || HERO_REST.size !== 1) {
+        HERO_REST.fit?.(W, Hh);
+        if (HERO_REST.right !== 0 || HERO_REST.size !== 1 || HERO_REST.down !== 0) {
           const s = painted * painted * (3 - 2 * painted);
           cam.zoom = lerp(1, HERO_REST.size, s);
-          cam.setViewOffset(W, Hh, -HERO_REST.right * W * s, 0, W, Hh);
+          cam.setViewOffset(W, Hh, -HERO_REST.right * W * s, -HERO_REST.down * Hh * s, W, Hh);
         } else if (cam.view?.enabled) {
           cam.zoom = 1;
           cam.clearViewOffset();
@@ -710,6 +728,8 @@ export default function Stage() {
   return (
     <Canvas
       className="stage-canvas"
+      // sized by its layout box, so a transform on a wrapper (the homepage's scroll curtain) never resizes it
+      resize={{ offsetSize: true }}
       flat
       shadows="percentage"
       dpr={[1, 2]}

@@ -127,7 +127,25 @@ export const COMP = {
 // fit the right. The stage turns its lens to this as the paint crosses (Stage.tsx), rather than
 // moving the look: the kit view and its way in orbit the look, so a look off the island would
 // swing it about.
-export const HERO_REST = { right: 0, size: 1 };
+//
+// `down` lowers it, as a share of the window's height, and `fit`, while set, is asked for all three
+// on every frame with the canvas size about to be drawn: the homepage's way into the story (Home.tsx)
+// glides the island from its columns to the film's framing while the canvas changes size under it.
+// `seen` is where the stage last framed the island before any of this, for the canvas size it drew
+// (w, h): its centre (x, y) and its reach (r) in the lens's own units, -1 to 1 across the canvas.
+export const HERO_REST: {
+  right: number;
+  size: number;
+  down: number;
+  fit: null | ((width: number, height: number) => void);
+  seen: { w: number; h: number; x: number; y: number; r: number };
+} = {
+  right: 0,
+  size: 1,
+  down: 0,
+  fit: null,
+  seen: { w: 0, h: 0, x: 0, y: 0, r: 0 },
+};
 
 // P4d (FIX: rendered extent): the island RENDERS wider than its rim solve — the
 // strata lip (r 1.012), roughen bumps, the rim mark's jitter and stroke overshoot
