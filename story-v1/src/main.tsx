@@ -5,13 +5,17 @@ import '@fontsource/cinzel/400.css';
 import '@fontsource/cinzel/700.css';
 import '@fontsource/vollkorn/400.css';
 import '@fontsource/vollkorn/400-italic.css';
+import '@fontsource/vollkorn/500.css';
+import '@fontsource/vollkorn/600.css';
 import './styles.css';
 
 // The scroll film (App: the pinned story, its beats, the sections, the load gate and the return
-// visit) is paused, and the page is the single hero in Home. Set FILM to true to bring the film back.
-// Only the page chosen here is loaded, so neither one's styles or settings reach the other.
+// visit) is paused, and the homepage is the hero in Home. Set FILM to true to put the film back on /.
+// Only the page chosen here is loaded, so neither one's styles or settings reach the other. Every
+// other route is the site's (site/Site.tsx).
 const FILM = false;
-const Page = lazy(FILM ? () => import('./App') : () => import('./Home'));
+const HomePage = lazy(FILM ? () => import('./App') : () => import('./Home'));
+const Site = lazy(() => import('./site/Site'));
 
 // ?art=1 — the artist's prop gallery (each prop with a reveal slider)
 const ART = new URLSearchParams(window.location.search).get('art') === '1';
@@ -34,7 +38,7 @@ createRoot(document.getElementById('root')!).render(
       </Suspense>
     ) : (
       <Suspense fallback={null}>
-        <Page />
+        <Site Home={HomePage} />
       </Suspense>
     )}
   </StrictMode>,

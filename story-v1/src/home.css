@@ -1,29 +1,43 @@
-/* THE PAGE, for now: the single hero. Type and colour are the hero's brand block (hero.css):
-   Metamorphous for the name, Vollkorn for the words, Vollkorn italic in the quiet ink for the
-   beta line, all on the paper from styles.css, inside the sheet's margin. */
+/* THE HOMEPAGE: the hero, then the sections below it. The system (tokens, pills, mounted frames, the
+   reveal) is site.css; this is the homepage's own composition. */
 
+/* ---- the hero ------------------------------------------------------------------------- */
 .home {
-  --margin: clamp(18px, 2.6vw, 36px);
   position: relative;
-  display: flex;
-  align-items: center;
-  height: 100vh;
+  min-height: 100dvh;
 }
 
-/* the stage's canvas fills the window behind the words, as the film's hero did (styles.css:
-   .stage-canvas) */
+/* the stage's canvas fills the first screen under the nav, behind the words (styles.css .stage-canvas),
+   and scrolls away with it; its top edge fades, so a high cloud never meets a line. The curtain
+   (Home.tsx) moves only .home-curtain, about the island's side of the screen */
 .home-island {
-  position: fixed;
+  position: absolute;
+  inset: var(--header-h) 0 0;
+  -webkit-mask-image: linear-gradient(transparent, #000 24px);
+  mask-image: linear-gradient(transparent, #000 24px);
+}
+.home-curtain {
+  position: absolute;
   inset: 0;
+  transform-origin: 72% 55%;
 }
 
-/* the words keep to the left of the page; the island rests right of them (Home.tsx). They
-   start unwritten and come in with the paint (Home.tsx), or are simply there under reduced motion */
-.home-text {
+/* the words on columns 1 to 5, the island's columns 6 to 12 (Home.tsx fits the island to them and
+   brings the words level with it). The grid lets pointers through to the island, but not the words */
+.home-grid {
   position: relative;
-  width: 45vw;
-  padding: 0 var(--margin);
+  min-height: 100dvh;
+  align-items: center;
+  pointer-events: none;
+}
+.home-text {
+  grid-column: 1 / 6;
+  pointer-events: auto;
   opacity: 0;
+}
+.home-slot {
+  grid-column: 6 / 13;
+  align-self: stretch;
 }
 @media (prefers-reduced-motion: reduce) {
   .home-text {
@@ -31,50 +45,825 @@
   }
 }
 
-.home h1 {
-  margin: 0;
-  font-family: 'Metamorphous', var(--font-quiet);
-  font-weight: 400;
-  font-size: clamp(2.6rem, 4.6vw, 4.8rem);
-  line-height: 1.05;
-}
-
-/* three lines, one sentence or two each. The size follows the column so the longest line
-   (about 33.5em) holds on one line; at the smallest desktop widths the size bottoms out and the
-   second line breaks between its two sentences, never inside one */
-.home-copy {
-  margin: 1.1rem 0 0;
-  font-family: var(--font-quiet);
-  font-size: clamp(0.9rem, calc((45vw - 2 * var(--margin)) / 33.5), 1.45rem);
-  line-height: 1.5;
-}
-.home-copy > span {
-  display: block;
-}
-.home-copy span span {
-  white-space: nowrap;
-}
-
+/* the one eyebrow on the page: the beta date, as a small pill */
 .home-beta {
-  margin: 1.4rem 0 0;
-  font-family: var(--font-quiet);
-  font-style: italic;
-  font-size: clamp(0.92rem, 1.1vw, 1.2rem);
-  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  font-variant-caps: all-small-caps;
+  font-variant-numeric: lining-nums;
   color: var(--quiet);
 }
 
-/* narrow: the words across the top of the page, where the stage's portrait framing leaves the
-   paper for type (hero.ts compFor), and the island under them */
+.home h1 {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.75rem, 5vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+/* three lines, one sentence or two each; a line wraps inside the column where it must */
+.home-copy {
+  margin: 22px 0 0;
+  max-width: 31em;
+  font-size: clamp(1.125rem, 1.3vw, 1.3125rem);
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 88%, var(--paper));
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+}
+.home-actions .btn.quiet {
+  background: var(--glass);
+}
+
+/* narrow: the words across the top of the page, and the island in its own box under them */
 @media (max-width: 1023.98px) {
   .home {
-    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .home-grid {
+    order: 0;
+    min-height: 0;
+    padding-top: calc(var(--header-h) + clamp(20px, 5vw, 48px));
   }
   .home-text {
-    width: 100%;
-    padding-top: 6vh;
+    grid-column: 1 / -1;
   }
-  .home-copy span span {
-    white-space: normal;
+  .home-slot {
+    display: none;
+  }
+  .home-island {
+    position: relative;
+    inset: auto;
+    order: 1;
+    /* wider than tall, so the stage keeps its landscape framing (hero.ts compFor) */
+    height: clamp(300px, 92vw, 620px);
+    margin-top: 8px;
+    -webkit-mask-image: linear-gradient(transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(transparent, #000 10%, #000 90%, transparent);
+  }
+  .home-copy {
+    max-width: 34em;
+  }
+}
+@media (max-width: 480px) {
+  .home h1 {
+    font-size: clamp(2.5rem, 12vw, 3.25rem);
+  }
+  .home-copy {
+    font-size: 1.0625rem;
+  }
+  .home-actions .btn {
+    flex: 1 1 auto;
+    justify-content: space-between;
+  }
+}
+
+/* ---- the story (Home.tsx, Story.tsx) ---------------------------------------------------------
+   "See for yourself" takes the island out of its box to the whole window, where the film frames it,
+   and sends the nav up out of sight while the story holds the stage. The story's own DOM (the hint,
+   the captions, the chip rail, the card) rides a fixed layer over the canvas, moved with it by the
+   unpin ramp */
+.home.story .home-island {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  margin: 0;
+  -webkit-mask-image: none;
+  mask-image: none;
+  will-change: transform;
+}
+:root.story .site-header {
+  transition: transform var(--mid) var(--ease);
+}
+:root.story-pinned .site-header {
+  transform: translateY(-120%);
+}
+.story-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+  animation: story-in 0.3s ease-out;
+}
+@keyframes story-in {
+  from {
+    opacity: 0;
+  }
+}
+/* at the very top: the way back to the page and the way past the story, either side of the hint */
+.story-top {
+  position: absolute;
+  inset: auto calc(clamp(18px, 2.6vw, 36px) + 12px) calc(clamp(18px, 2.6vw, 36px) + 12px);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 10;
+}
+.story-top .btn {
+  pointer-events: auto;
+  background: var(--glass);
+}
+/* a phone has no room either side of the hint: the two sit together above it */
+@media (max-width: 600px) {
+  .story-top {
+    bottom: calc(clamp(18px, 2.6vw, 36px) + 72px);
+    justify-content: center;
+  }
+}
+html.gg-loading .story-top {
+  visibility: hidden !important;
+}
+
+/* ---- below the hero: the sections (site/HomeSections.tsx) ---------------------------------- */
+.hs {
+  padding-top: var(--section);
+}
+.hs h2,
+.hs h3,
+.hs p {
+  margin: 0;
+}
+.hs ul,
+.hs ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hs-title {
+  margin: 0 0 clamp(40px, 5vw, 72px) !important;
+  max-width: 18em;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.25rem, 4.4vw, 3.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+}
+.hs h3 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+/* why: one statement in display type, a small picture set into the line after each point, then what
+   each point means as a staggered run */
+.hs-kicker {
+  margin-bottom: 28px !important;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--quiet);
+}
+.why-line {
+  font-family: var(--font-display);
+  font-size: clamp(2.125rem, 4.4vw, 4rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+.why-end {
+  white-space: nowrap;
+}
+.why-pic {
+  display: inline-block;
+  width: 2.1em;
+  height: 0.9em;
+  margin: 0 0.06em 0 0.24em;
+  vertical-align: -0.06em;
+  border-radius: var(--r-pill);
+  background: var(--paper-2) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px var(--ring), var(--shadow-soft);
+}
+.why-run {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+  row-gap: 40px;
+  margin-top: clamp(56px, 7vw, 104px) !important;
+}
+.why-run li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.why-run li:nth-child(1) {
+  grid-column: 1 / 5;
+}
+.why-run li:nth-child(2) {
+  grid-column: 5 / 9;
+  margin-top: 56px;
+}
+.why-run li:nth-child(3) {
+  grid-column: 9 / 13;
+  margin-top: 112px;
+}
+.why-ic {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong), var(--shadow-soft);
+  color: var(--pine);
+}
+.why-run p {
+  padding-top: 10px;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--quiet);
+}
+
+/* the products: a bento of mounted frames, the map editor across two rows, the other two stacked */
+.hs-products {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  column-gap: var(--col-gap);
+  row-gap: 36px;
+}
+.hs-product {
+  grid-column: 8 / 13;
+}
+.hs-product.big {
+  grid-column: 1 / 8;
+  grid-row: span 2;
+}
+.hs-product-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+}
+.hs-product-link:hover {
+  color: inherit;
+}
+.hs-product-frame {
+  aspect-ratio: 16 / 10;
+}
+.hs-product:last-child .hs-product-frame {
+  aspect-ratio: 21 / 10;
+}
+.hs-product.big .hs-product-frame {
+  flex: 1 1 auto;
+  min-height: 380px;
+  aspect-ratio: auto;
+}
+.cap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 8px 0;
+}
+.hs-product.big h3 {
+  font-size: 1.625rem;
+}
+.cap p {
+  margin-top: 6px !important;
+  max-width: 34em;
+  color: var(--quiet);
+}
+.cap-go .btn-ic {
+  --ic: 44px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong);
+  transition: transform var(--mid) var(--ease), background-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.hs-product-link:hover .cap-go .btn-ic {
+  background: var(--pine);
+  color: var(--paper);
+  transform: translate(2px, -2px) scale(1.06);
+}
+
+/* at the table: 2fr 1fr over 1fr 2fr; the rows of each card share their tracks (subgrid), so the
+   frames, titles and links of a row line up */
+.hs-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+}
+.hs-feature {
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  align-content: start;
+}
+.hs-feature.t0,
+.hs-feature.t3 {
+  grid-column: span 2;
+}
+.hs-feature.t0 .link-arrow,
+.hs-feature.t1 .link-arrow {
+  margin-bottom: clamp(56px, 7vw, 96px);
+}
+.demo {
+  margin-bottom: 24px;
+}
+.demo-in {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+.hs-feature.t0 .demo-in,
+.hs-feature.t3 .demo-in {
+  aspect-ratio: 16 / 9;
+}
+/* the slots vary: a map's grid, a pine wash, a deeper paper, a warm glow */
+.hs-feature.t0 .demo-in,
+.hs-feature.t3 .demo-in {
+  background-image: linear-gradient(var(--ring) 1px, transparent 1px), linear-gradient(90deg, var(--ring) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-position: center;
+}
+.hs-feature.t3 .demo-in {
+  background-color: color-mix(in srgb, #d9a35b 10%, var(--paper));
+}
+.hs-feature.t1 .demo-in {
+  background-color: color-mix(in srgb, var(--pine) 10%, var(--paper));
+}
+.hs-feature.t2 .demo-in {
+  background-color: var(--paper-3);
+}
+.play-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 20px 6px 6px;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--ring), var(--highlight), var(--shadow-soft);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.96875rem;
+  transition: transform var(--mid) var(--ease);
+}
+.play-pill .btn-ic {
+  --ic: 40px;
+  background: var(--pine);
+  color: var(--paper);
+}
+.play-pill .btn-ic svg {
+  width: 15px;
+  height: 15px;
+  margin-left: 2px;
+}
+.hs-feature:hover .play-pill {
+  transform: scale(1.04);
+}
+.hs-feature:hover .play-pill .btn-ic {
+  transform: scale(1.08);
+}
+.hs-tag {
+  margin: 0 0 4px 0 !important;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  font-variant-caps: all-small-caps;
+  color: var(--pine);
+}
+.hs-feature > p:not(.hs-tag) {
+  margin: 6px 0 16px !important;
+  max-width: 34em;
+  color: var(--quiet);
+}
+.hs-feature .link-arrow {
+  justify-self: start;
+  align-self: start;
+}
+
+/* the smaller things: the page's one marquee, edge to edge, fading at both ends */
+.hs-small .hs-title {
+  max-width: none;
+}
+.marquee {
+  overflow: hidden;
+  padding: 10px 0 18px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+}
+.marquee-list {
+  display: flex;
+  gap: 14px;
+  padding-right: 14px !important;
+}
+/* scoped to the marquee: the story's chip rail (overlay.css) has a .chip of its own */
+.marquee-list .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 26px 7px 7px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring), var(--highlight), var(--shadow-soft);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1.125rem;
+  white-space: nowrap;
+}
+.chip-ic {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--tray);
+  color: var(--pine);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-track {
+    animation: marquee 56s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+/* still: one wrapped row on the container */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    width: min(var(--container), 100% - 2 * var(--gutter));
+    margin-inline: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    width: auto;
+  }
+  .marquee-list {
+    flex-wrap: wrap;
+  }
+  .marquee-list[aria-hidden] {
+    display: none !important;
+  }
+}
+
+/* start here: a dashed switchback; three stops out along the top, three back along the bottom. The
+   numbered pills sit on the line, their lines under them */
+.route {
+  --row-gap: 72px;
+  --pill-h: 52px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: 1fr 1fr;
+  row-gap: var(--row-gap);
+  column-gap: var(--col-gap);
+}
+.route::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--pill-h) / 2);
+  bottom: calc(50% - var(--row-gap) / 2 - var(--pill-h) / 2);
+  left: calc(100% / 6);
+  right: 0;
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 50%, transparent);
+  border-left: 0;
+  border-radius: 0 calc(var(--row-gap) * 0.9) calc(var(--row-gap) * 0.9) 0;
+  pointer-events: none;
+}
+.stop.s0 { grid-area: 1 / 1; }
+.stop.s1 { grid-area: 1 / 2; }
+.stop.s2 { grid-area: 1 / 3; }
+.stop.s3 { grid-area: 2 / 3; }
+.stop.s4 { grid-area: 2 / 2; }
+.stop.s5 { grid-area: 2 / 1; }
+.stop a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+.stop-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--pill-h);
+  padding: 6px 22px 6px 6px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong), var(--highlight), var(--shadow-soft);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.2;
+  text-align: left;
+  transition: transform var(--mid) var(--ease), box-shadow var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.stop-n {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 1rem;
+  transition: background-color var(--fast) var(--ease);
+}
+.stop-line {
+  max-width: 18em;
+  font-size: 0.9375rem;
+  color: var(--quiet);
+}
+.stop a:hover .stop-pill {
+  transform: translateY(-3px);
+  color: var(--pine);
+  box-shadow: inset 0 0 0 1px var(--pine), var(--highlight), var(--shadow-float);
+}
+.stop a:hover .stop-n {
+  background: var(--pine);
+}
+.stop a:active .stop-pill {
+  transform: scale(0.98);
+}
+
+/* the close: the date across the container, then the field beside the campfire */
+.close-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.75rem, 8.6vw, 7rem);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+.close-title span {
+  display: block;
+}
+.close-title span + span {
+  padding-left: 1.6em;
+  color: var(--pine);
+}
+.close-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--col-gap);
+  row-gap: 40px;
+  align-items: end;
+  margin-top: clamp(48px, 6vw, 88px);
+}
+.close-join {
+  grid-column: 1 / 6;
+  padding-bottom: 8px;
+}
+.close-join > p {
+  margin-bottom: 32px !important;
+  max-width: 22em;
+  font-size: clamp(1.1875rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+}
+.close-frame {
+  grid-column: 6 / 13;
+  aspect-ratio: 16 / 11;
+}
+.close-frame img {
+  object-position: 62% 60%;
+}
+
+/* the inline waitlist: a pill field with the pill button inside it */
+.join label {
+  display: block;
+  margin: 0 0 8px 22px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.join-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ring-strong), var(--shadow-soft);
+  transition: box-shadow var(--fast) var(--ease);
+}
+.join-field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--pine), var(--shadow-float);
+}
+.join-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 8px 0 16px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+.join-field input::placeholder {
+  color: var(--quiet);
+  opacity: 0.85;
+}
+.join-field input:focus {
+  outline: none;
+}
+.join-field:has([aria-invalid='true']) {
+  box-shadow: inset 0 0 0 1.5px #9b3b2b, var(--shadow-soft);
+}
+.join-error {
+  min-height: 1.5em;
+  margin: 10px 0 0 22px !important;
+  font-size: 0.9375rem;
+  color: #8a3122; /* 6.6:1 on paper */
+}
+.join-done {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 6px 24px 6px 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--pine) 9%, var(--paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pine) 30%, transparent);
+  font-size: 1.0625rem;
+  font-style: italic;
+}
+.join-tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--pine);
+  color: var(--paper);
+}
+.join-tick svg {
+  width: 22px;
+  height: 22px;
+}
+/* the tick draws itself in, left to right */
+@media (prefers-reduced-motion: no-preference) {
+  .join-done {
+    animation: fade var(--mid) var(--ease);
+  }
+  .join-tick {
+    animation: tick-pop var(--slow) var(--ease);
+  }
+  .join-tick svg {
+    animation: tick-draw 700ms 160ms var(--ease) both;
+  }
+}
+@keyframes tick-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes tick-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+/* ---- the sections on a narrow window ---------------------------------------------------- */
+@media (max-width: 1023.98px) {
+  .why-run li:nth-child(n) {
+    grid-column: span 6;
+    margin-top: 0;
+  }
+  .why-run li:nth-child(2) {
+    margin-top: 48px;
+  }
+  .why-run li:nth-child(3) {
+    grid-column: 4 / 10;
+  }
+  .close-join,
+  .close-frame {
+    grid-column: 1 / -1;
+  }
+  .close-frame {
+    order: -1;
+  }
+}
+@media (max-width: 760px) {
+  .why-run li:nth-child(n) {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+  .why-run {
+    row-gap: 28px;
+  }
+  .hs-product,
+  .hs-product.big {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .hs-product.big .hs-product-frame {
+    flex: none;
+    min-height: 0;
+    aspect-ratio: 5 / 4;
+  }
+  .hs-features {
+    grid-template-columns: 1fr;
+    row-gap: 64px;
+  }
+  .hs-feature,
+  .hs-feature.t0,
+  .hs-feature.t3 {
+    display: flex;
+    flex-direction: column;
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .hs-feature .demo-in {
+    aspect-ratio: 16 / 10 !important;
+  }
+  .hs-feature .link-arrow {
+    margin-bottom: 0 !important;
+    align-self: flex-start;
+  }
+  .marquee-list .chip {
+    font-size: 1.0625rem;
+  }
+  /* the route turns down the page: the line runs through the numbers */
+  .route {
+    --row-gap: 0px;
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    row-gap: 28px;
+  }
+  .route::before {
+    top: 26px;
+    bottom: 60px;
+    left: 25px;
+    right: auto;
+    width: 0;
+    border: 0;
+    border-left: 1.5px dashed color-mix(in srgb, var(--ink) 40%, transparent);
+    border-radius: 0;
+  }
+  .stop.s0,
+  .stop.s1,
+  .stop.s2,
+  .stop.s3,
+  .stop.s4,
+  .stop.s5 {
+    grid-area: auto;
+  }
+  .stop a {
+    align-items: flex-start;
+    gap: 8px;
+    text-align: left;
+  }
+  .stop-line {
+    padding-left: 58px;
+  }
+  .close-title span + span {
+    padding-left: 0;
+  }
+  .join-field .btn {
+    padding-left: 18px;
+  }
+}
+@media (max-width: 400px) {
+  .join-field {
+    flex-wrap: wrap;
+    border-radius: calc(var(--r-tray) - 2px);
+  }
+  .join-field input {
+    flex-basis: 100%;
+  }
+  .join-field .btn {
+    flex: 1;
+    justify-content: space-between;
   }
 }
